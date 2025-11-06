@@ -14,7 +14,7 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
 ## Setup
 
 ### Prerequisites
-- Python 3.10.5
+- Python 3.12+
 - AWS CLI configured
 - AWS SAM CLI (for deployment)
 
@@ -40,8 +40,9 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
    source venv/bin/activate
    ```
 
-4. **Install dependencies**
+4. **Upgrade pip and install dependencies**
    ```bash
+   pip install --upgrade pip
    pip install -r requirements.txt
    ```
 
