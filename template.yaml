@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Drug Analytics API - Serverless application for drug discovery data processing
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Environment name for resource naming
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 30
+    MemorySize: 512
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref Environment
+        AWS_REGION: !Ref AWS::Region
+        API_TITLE: Drug Analytics API
+        API_VERSION: 1.0.0
+
+Resources:
+  # S3 Bucket for CSV file uploads
+  DrugDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'drug-analytics-${Environment}-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldFiles
+            Status: Enabled
+            ExpirationInDays: 90
+            NoncurrentVersionExpirationInDays: 30
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: DrugAnalytics
+
+  # DynamoDB Table for drug data storage
+  DrugDataTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'DrugData-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: DrugAnalytics
+
+  # CloudWatch Log Group for API access logs
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/apigateway/drug-analytics-${Environment}'
+      RetentionInDays: 30
+
+  # HTTP API Gateway
+  DrugAnalyticsApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Environment
+      Description: !Sub 'Drug Analytics API - ${Environment}'
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowHeaders:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        MaxAge: 600
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 100
+        ThrottlingRateLimit: 50
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiAccessLogGroup.Arn
+        Format: '$context.requestId $context.error.message $context.error.messageString'
+      Tags:
+        Environment: !Ref Environment
+        Application: DrugAnalytics
+
+  # API Lambda Function (FastAPI)
+  DrugApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'drug-api-${Environment}'
+      CodeUri: .
+      Handler: src.main.handler
+      Description: FastAPI application for drug analytics REST API
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref DrugDataBucket
+          DYNAMODB_TABLE_NAME: !Ref DrugDataTable
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref DrugDataBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DrugDataTable
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref DrugAnalyticsApi
+            Path: /{proxy+}
+            Method: ANY
+      Tags:
+        Environment: !Ref Environment
+        Application: DrugAnalytics
+
+  # CSV Processor Lambda Function (S3-triggered)
+  CsvProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'csv-processor-${Environment}'
+      CodeUri: .
+      Handler: lambda_functions.csv_processor.handler
+      Description: Processes CSV files uploaded to S3 and saves to DynamoDB
+      Timeout: 300
+      MemorySize: 1024
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref DrugDataBucket
+          DYNAMODB_TABLE_NAME: !Ref DrugDataTable
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref DrugDataBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DrugDataTable
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref DrugDataBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: uploads/
+                  - Name: suffix
+                    Value: .csv
+      Tags:
+        Environment: !Ref Environment
+        Application: DrugAnalytics
+
+Outputs:
+  S3BucketName:
+    Description: S3 bucket name for CSV uploads
+    Value: !Ref DrugDataBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-S3Bucket'
+
+  DynamoDBTableName:
+    Description: DynamoDB table name for drug data
+    Value: !Ref DrugDataTable
+    Export:
+      Name: !Sub '${AWS::StackName}-DynamoDBTable'
+
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${DrugAnalyticsApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/'
+
+  ApiId:
+    Description: API Gateway ID
+    Value: !Ref DrugAnalyticsApi
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiId'
+
+  CsvProcessorFunctionArn:
+    Description: CSV Processor Lambda function ARN
+    Value: !GetAtt CsvProcessorFunction.Arn
