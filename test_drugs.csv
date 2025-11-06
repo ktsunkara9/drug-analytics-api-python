@@ -1,0 +1,11 @@
+drug_name,target,efficacy
+Aspirin,COX-2,85.5
+Ibuprofen,COX-1,78.3
+Paracetamol,COX-3,92.1
+Metformin,AMPK,88.7
+Atorvastatin,HMG-CoA,95.2
+Lisinopril,ACE,82.4
+Omeprazole,H+/K+ ATPase,90.8
+Amoxicillin,PBP,87.6
+Simvastatin,HMG-CoA,93.5
+Losartan,AT1,79.2

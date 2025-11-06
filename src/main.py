@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from mangum import Mangum
 from src.core.config import settings
 from src.core.exception_handler import register_exception_handlers
-from src.api.routes import health_routes
+from src.api.routes import health_routes, drug_routes
 
 # Create FastAPI application
 app = FastAPI(
@@ -20,6 +20,7 @@ register_exception_handlers(app)
 
 # Register routes
 app.include_router(health_routes.router)
+app.include_router(drug_routes.router)
 
 # Lambda handler for AWS
 handler = Mangum(app)
