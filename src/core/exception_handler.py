@@ -1,6 +1,6 @@
 """
 Global exception handler for the Drug Analytics API.
-Provides centralized error handling similar to Spring's @ControllerAdvice.
+Provides centralized error handling for all API exceptions.
 """
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

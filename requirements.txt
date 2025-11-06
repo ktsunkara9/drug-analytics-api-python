@@ -8,6 +8,7 @@ boto3
 
 # Data validation and parsing
 pydantic
+pydantic-settings
 python-multipart
 
 # CSV processing
