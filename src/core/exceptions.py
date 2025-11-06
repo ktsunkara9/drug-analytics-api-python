@@ -21,8 +21,8 @@ class DrugNotFoundException(DrugAnalyticsException):
     pass
 
 
-class S3UploadException(DrugAnalyticsException):
-    """Raised when S3 upload operation fails."""
+class S3Exception(DrugAnalyticsException):
+    """Raised when S3 operation fails."""
     pass
 
 

@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from .exceptions import (
     DrugNotFoundException,
     ValidationException,
-    S3UploadException,
+    S3Exception,
     DynamoDBException,
     CSVProcessingException
 )
@@ -30,11 +30,11 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={"error": "Validation Error", "message": exc.message}
         )
     
-    @app.exception_handler(S3UploadException)
-    async def handle_s3_error(request: Request, exc: S3UploadException):
+    @app.exception_handler(S3Exception)
+    async def handle_s3_error(request: Request, exc: S3Exception):
         return JSONResponse(
             status_code=500,
-            content={"error": "S3 Upload Failed", "message": exc.message}
+            content={"error": "S3 Operation Failed", "message": exc.message}
         )
     
     @app.exception_handler(DynamoDBException)
