@@ -46,6 +46,20 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
    pip install -r requirements.txt
    ```
 
+5. **Run the application**
+   ```bash
+   # Method 1: Using Python module
+   python -m src.main
+   
+   # Method 2: Using uvicorn with live reload (recommended for development)
+   uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+6. **Access the application**
+   - API: http://localhost:8000
+   - Swagger UI: http://localhost:8000/docs
+   - Health Check: http://localhost:8000/api/health
+
 ## API Endpoints
 
 - `POST /upload` - Upload CSV file with drug data
