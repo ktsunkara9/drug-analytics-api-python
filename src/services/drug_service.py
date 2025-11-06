@@ -129,9 +129,11 @@ class DrugService:
         # Parse CSV
         drugs = self.file_service.parse_csv_to_drugs(file_content)
         
-        # Save each drug to DynamoDB
+        # Set s3_key for all drugs
         for drug in drugs:
-            drug.s3_key = s3_key  # Link to source file
-            self.dynamo_repository.save(drug)
+            drug.s3_key = s3_key
+        
+        # Batch save to DynamoDB (efficient!)
+        self.dynamo_repository.batch_save(drugs)
         
         return len(drugs)

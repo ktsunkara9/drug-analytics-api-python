@@ -101,6 +101,35 @@ class DynamoRepository:
         except Exception as e:
             raise DynamoDBException(f"Unexpected error scanning drug data: {str(e)}") from e
     
+    def batch_save(self, drugs: List[Drug]) -> None:
+        """
+        Save multiple drugs in batches.
+        DynamoDB batch_writer automatically handles batching (25 items per batch).
+        
+        Args:
+            drugs: List of Drug objects to save
+            
+        Raises:
+            DynamoDBException: If batch save fails
+        """
+        try:
+            with self.table.batch_writer() as batch:
+                for drug in drugs:
+                    item = {
+                        'PK': self._create_pk(drug.drug_name),
+                        'SK': self._create_sk(drug.upload_timestamp),
+                        'drug_name': drug.drug_name,
+                        'target': drug.target,
+                        'efficacy': drug.efficacy,
+                        'upload_timestamp': drug.upload_timestamp.isoformat(),
+                        's3_key': drug.s3_key
+                    }
+                    batch.put_item(Item=item)
+        except ClientError as e:
+            raise DynamoDBException(f"Failed to batch save drug data: {str(e)}") from e
+        except Exception as e:
+            raise DynamoDBException(f"Unexpected error during batch save: {str(e)}") from e
+    
     def _create_pk(self, drug_name: str) -> str:
         """Create partition key for drug."""
         return f"DRUG#{drug_name}"
