@@ -2,13 +2,13 @@
 set -e
 
 ENVIRONMENT=${1:-dev}
-STACK_NAME="drug-analytics-api-stack"
+STACK_NAME="drug-analytics-api"
 
 echo "Building SAM application..."
-sam build
+"/c/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd" build
 
 echo "Deploying stack to ${ENVIRONMENT}..."
-sam deploy --parameter-overrides Environment=${ENVIRONMENT}
+"/c/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd" deploy --parameter-overrides Environment=${ENVIRONMENT}
 
 echo "Configuring S3 trigger..."
 BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name ${STACK_NAME} --query 'Stacks[0].Outputs[?OutputKey==`S3BucketName`].OutputValue' --output text)

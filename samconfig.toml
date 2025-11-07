@@ -5,8 +5,11 @@ version = 0.1
 [default.deploy.parameters]
 stack_name = "drug-analytics-api"
 s3_prefix = "drug-analytics-api"
-region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_NAMED_IAM"
-parameter_overrides = "Environment=dev"
+parameter_overrides = "Environment=\"dev\""
 image_repositories = []
+resolve_s3 = true
+
+[default.global.parameters]
+region = "us-east-1"
