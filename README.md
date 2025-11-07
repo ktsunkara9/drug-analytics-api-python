@@ -83,6 +83,6 @@ Required fields:
 - [ ] Testing
 - [ ] Deployment
 
-Test Lambda:
+Waiting for changeset to be created..
 
-aws lambda invoke --function-name drug-api-dev --payload '{"version": "2.0", "routeKey": "GET /v1/api/health", "rawPath": "/dev/v1/api/health", "requestContext": {"http": {"method": "GET", "path": "/dev/v1/api/health"}}}' response.json && cat response.json
+Error: Failed to create changeset for the stack: drug-analytics-api, ex: Waiter ChangeSetCreateComplete failed: Waiter encountered a terminal failure state: For expression "Status" we matched expected path: "FAILED" Status: FAILED. Reason: Circular dependency between resources: [DrugApiFunctionApiEventPermission, CsvProcessorFunctionS3EventPermission, DrugAnalyticsApi, DrugApiFunction, DrugAnalyticsApiStage, DrugDataBucket, CsvProcessorFunction]
