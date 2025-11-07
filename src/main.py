@@ -12,7 +12,8 @@ from src.api.routes import health_routes, drug_routes
 app = FastAPI(
     title=settings.api_title,
     version=settings.api_version,
-    description="A cloud-based analytics service for drug discovery data"
+    description="A cloud-based analytics service for drug discovery data",
+    root_path=f"/{settings.environment}"
 )
 
 # Register exception handlers
