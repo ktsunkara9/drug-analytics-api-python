@@ -2,6 +2,7 @@
 Drug Service for business logic.
 Orchestrates drug data operations between API and repositories.
 """
+import io
 import uuid
 from typing import List, BinaryIO
 from src.models.drug_model import Drug
@@ -126,8 +127,11 @@ class DrugService:
         # Get file from S3
         file_content = self.s3_repository.get_file(s3_key)
         
+        # Wrap bytes in BytesIO to provide file-like interface
+        file_obj = io.BytesIO(file_content)
+        
         # Parse CSV
-        drugs = self.file_service.parse_csv_to_drugs(file_content)
+        drugs = self.file_service.parse_csv_to_drugs(file_obj)
         
         # Set s3_key for all drugs
         for drug in drugs:
