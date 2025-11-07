@@ -7,7 +7,7 @@ from src.services.drug_service import DrugService
 from src.core.dependencies import get_drug_service
 from src.models.dto.drug_dto import DrugUploadResponse, DrugListResponse
 
-router = APIRouter(prefix="/api/drugs", tags=["Drugs"])
+router = APIRouter(prefix="/v1/api/drugs", tags=["Drugs"])
 
 
 @router.post("/upload", response_model=DrugUploadResponse, status_code=status.HTTP_202_ACCEPTED)
