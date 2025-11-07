@@ -55,6 +55,20 @@ Resources:
       LogGroupName: !Sub '/aws/apigateway/drug-analytics-${Environment}'
       RetentionInDays: 30
 
+  # CloudWatch Log Group for API Lambda
+  ApiLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/drug-api-${Environment}'
+      RetentionInDays: 30
+
+  # CloudWatch Log Group for CSV Processor Lambda
+  CsvProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/csv-processor-${Environment}'
+      RetentionInDays: 30
+
   # S3 Bucket for CSV file uploads
   DrugDataBucket:
     Type: AWS::S3::Bucket
