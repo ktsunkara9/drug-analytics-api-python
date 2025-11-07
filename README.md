@@ -82,3 +82,7 @@ Required fields:
 - [ ] AWS integration
 - [ ] Testing
 - [ ] Deployment
+
+Test Lambda:
+
+aws lambda invoke --function-name drug-api-dev --payload '{"version": "2.0", "routeKey": "GET /v1/api/health", "rawPath": "/dev/v1/api/health", "requestContext": {"http": {"method": "GET", "path": "/dev/v1/api/health"}}}' response.json && cat response.json
