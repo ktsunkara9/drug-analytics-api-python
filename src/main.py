@@ -2,7 +2,7 @@
 Main FastAPI application entry point.
 Configures and initializes the Drug Analytics API.
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from mangum import Mangum
 from src.core.config import settings
 from src.core.exception_handler import register_exception_handlers
@@ -21,6 +21,13 @@ register_exception_handlers(app)
 # Register routes
 app.include_router(health_routes.router)
 app.include_router(drug_routes.router)
+
+# Middleware to log request paths
+@app.middleware("http")
+async def log_request(request: Request, call_next):
+    print(f"Request path: {request.url.path}")
+    response = await call_next(request)
+    return response
 
 # Lambda handler for AWS
 handler = Mangum(app, lifespan="off")
