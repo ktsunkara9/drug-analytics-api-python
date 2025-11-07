@@ -82,7 +82,3 @@ Required fields:
 - [ ] AWS integration
 - [ ] Testing
 - [ ] Deployment
-
-Waiting for changeset to be created..
-
-Error: Failed to create changeset for the stack: drug-analytics-api, ex: Waiter ChangeSetCreateComplete failed: Waiter encountered a terminal failure state: For expression "Status" we matched expected path: "FAILED" Status: FAILED. Reason: Circular dependency between resources: [DrugApiFunctionApiEventPermission, CsvProcessorFunctionS3EventPermission, DrugAnalyticsApi, DrugApiFunction, DrugAnalyticsApiStage, DrugDataBucket, CsvProcessorFunction]
