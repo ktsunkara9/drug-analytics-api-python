@@ -23,7 +23,7 @@ app.include_router(health_routes.router)
 app.include_router(drug_routes.router)
 
 # Lambda handler for AWS
-handler = Mangum(app)
+handler = Mangum(app, lifespan="off")
 
 
 # For local development
