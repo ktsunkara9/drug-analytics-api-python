@@ -220,7 +220,7 @@ Resources:
         Environment: !Ref Environment
         Application: DrugAnalytics
 
-  # CSV Processor Lambda Function (S3-triggered)
+  # CSV Processor Lambda Function (NO S3 event trigger - will add manually)
   CsvProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -235,19 +235,6 @@ Resources:
         Variables:
           S3_BUCKET_NAME: !Ref DrugDataBucket
           DYNAMODB_TABLE_NAME: !Ref DrugDataTable
-      Events:
-        S3Event:
-          Type: S3
-          Properties:
-            Bucket: !Ref DrugDataBucket
-            Events: s3:ObjectCreated:*
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: uploads/
-                  - Name: suffix
-                    Value: .csv
       Tags:
         Environment: !Ref Environment
         Application: DrugAnalytics
