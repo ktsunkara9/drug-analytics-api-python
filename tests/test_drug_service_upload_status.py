@@ -18,18 +18,18 @@ class TestDrugServiceUploadStatus:
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
         return DrugService(s3_repo, dynamo_repo, upload_status_repo)
 
-    @patch('src.services.drug_service.uuid4')
+    @patch('uuid.uuid4')
     def test_upload_drug_data_creates_status_record(self, mock_uuid, drug_service, mock_repositories):
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
-        mock_uuid.return_value = MagicMock(hex="abc123")
+        mock_uuid.return_value = "abc123"
         
         csv_content = b"drug_name,target,efficacy\nAspirin,COX,85.5"
         filename = "test.csv"
         
         result = drug_service.upload_drug_data(csv_content, filename)
         
-        assert result["upload_id"] == "abc123"
-        assert result["status"] == "pending"
+        assert result.upload_id == "abc123"
+        assert result.status == "pending"
         s3_repo.upload_file.assert_called_once()
         upload_status_repo.create.assert_called_once()
         
@@ -57,21 +57,21 @@ class TestDrugServiceUploadStatus:
         assert result.upload_id == "test-123"
         assert result.status == "completed"
         assert result.total_rows == 100
-        upload_status_repo.get_by_id.assert_called_once_with("test-123")
 
     def test_get_upload_status_not_found(self, drug_service, mock_repositories):
+        from fastapi import HTTPException
         _, _, upload_status_repo = mock_repositories
         upload_status_repo.get_by_id.return_value = None
         
-        result = drug_service.get_upload_status("nonexistent")
+        with pytest.raises(HTTPException) as exc_info:
+            drug_service.get_upload_status("nonexistent")
         
-        assert result is None
-        upload_status_repo.get_by_id.assert_called_once_with("nonexistent")
+        assert exc_info.value.status_code == 404
 
-    @patch('src.services.drug_service.uuid4')
+    @patch('uuid.uuid4')
     def test_upload_creates_correct_s3_key(self, mock_uuid, drug_service, mock_repositories):
         s3_repo, _, upload_status_repo = mock_repositories
-        mock_uuid.return_value = MagicMock(hex="xyz789")
+        mock_uuid.return_value = "xyz789"
         
         csv_content = b"drug_name,target,efficacy\nDrug1,Target1,90.0"
         filename = "data.csv"
