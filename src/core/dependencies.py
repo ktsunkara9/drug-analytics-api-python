@@ -5,6 +5,7 @@ Provides singleton-like behavior for services and repositories.
 from functools import lru_cache
 from src.repositories.s3_repository import S3Repository
 from src.repositories.dynamo_repository import DynamoRepository
+from src.repositories.upload_status_repository import UploadStatusRepository
 from src.services.file_service import FileService
 from src.services.drug_service import DrugService
 
@@ -22,6 +23,12 @@ def get_dynamo_repository() -> DynamoRepository:
 
 
 @lru_cache()
+def get_upload_status_repository() -> UploadStatusRepository:
+    """Get UploadStatusRepository singleton instance."""
+    return UploadStatusRepository()
+
+
+@lru_cache()
 def get_file_service() -> FileService:
     """Get FileService singleton instance."""
     return FileService()
@@ -33,5 +40,6 @@ def get_drug_service() -> DrugService:
     return DrugService(
         s3_repository=get_s3_repository(),
         dynamo_repository=get_dynamo_repository(),
+        upload_status_repository=get_upload_status_repository(),
         file_service=get_file_service()
     )
