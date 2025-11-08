@@ -20,7 +20,7 @@ class TestAPIIntegration:
         os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
         os.environ['AWS_REGION'] = 'us-east-1'
         os.environ['S3_BUCKET_NAME'] = 'test-bucket'
-        os.environ['DYNAMODB_TABLE_NAME'] = 'DrugData-test'
+        os.environ['DYNAMODB_TABLE_NAME'] = 'DrugData-dev'
         os.environ['ENVIRONMENT'] = 'test'
         
         # Clear dependency injection cache
@@ -47,7 +47,7 @@ class TestAPIIntegration:
         
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         dynamodb.create_table(
-            TableName='DrugData-test',
+            TableName='DrugData-dev',
             KeySchema=[
                 {'AttributeName': 'PK', 'KeyType': 'HASH'},
                 {'AttributeName': 'SK', 'KeyType': 'RANGE'}
@@ -80,7 +80,7 @@ class TestAPIIntegration:
         
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         dynamodb.create_table(
-            TableName='DrugData-test',
+            TableName='DrugData-dev',
             KeySchema=[
                 {'AttributeName': 'PK', 'KeyType': 'HASH'},
                 {'AttributeName': 'SK', 'KeyType': 'RANGE'}
@@ -111,7 +111,7 @@ class TestAPIIntegration:
         
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         dynamodb.create_table(
-            TableName='DrugData-test',
+            TableName='DrugData-dev',
             KeySchema=[
                 {'AttributeName': 'PK', 'KeyType': 'HASH'},
                 {'AttributeName': 'SK', 'KeyType': 'RANGE'}
@@ -147,7 +147,7 @@ class TestAPIIntegration:
         
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         dynamodb.create_table(
-            TableName='DrugData-test',
+            TableName='DrugData-dev',
             KeySchema=[
                 {'AttributeName': 'PK', 'KeyType': 'HASH'},
                 {'AttributeName': 'SK', 'KeyType': 'RANGE'}
@@ -179,7 +179,7 @@ class TestAPIIntegration:
         
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         dynamodb.create_table(
-            TableName='DrugData-test',
+            TableName='DrugData-dev',
             KeySchema=[
                 {'AttributeName': 'PK', 'KeyType': 'HASH'},
                 {'AttributeName': 'SK', 'KeyType': 'RANGE'}
@@ -212,7 +212,7 @@ class TestAPIIntegration:
         
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         dynamodb.create_table(
-            TableName='DrugData-test',
+            TableName='DrugData-dev',
             KeySchema=[
                 {'AttributeName': 'PK', 'KeyType': 'HASH'},
                 {'AttributeName': 'SK', 'KeyType': 'RANGE'}
@@ -247,7 +247,7 @@ class TestAPIIntegration:
         
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         dynamodb.create_table(
-            TableName='DrugData-test',
+            TableName='DrugData-dev',
             KeySchema=[
                 {'AttributeName': 'PK', 'KeyType': 'HASH'},
                 {'AttributeName': 'SK', 'KeyType': 'RANGE'}
@@ -282,7 +282,7 @@ class TestAPIIntegration:
         
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
         dynamodb.create_table(
-            TableName='DrugData-test',
+            TableName='DrugData-dev',
             KeySchema=[
                 {'AttributeName': 'PK', 'KeyType': 'HASH'},
                 {'AttributeName': 'SK', 'KeyType': 'RANGE'}
