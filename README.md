@@ -140,6 +140,17 @@ open htmlcov/index.html
 ```
 
 
+## Troubleshooting
+
+For known issues and workarounds, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+Key issues covered:
+- Python 3.13 compatibility with Moto
+- SAM circular dependency with S3/Lambda
+- Settings import patterns for testing
+- API Gateway routing
+- DynamoDB type conversions
+
 ## Development Status
 
 - [x] Project setup
