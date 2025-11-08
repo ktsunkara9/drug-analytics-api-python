@@ -1,4 +1,4 @@
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\ -v
+PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\ -v -s
 ========================================================== test session starts ===========================================================
 platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\ktsun\AppData\Local\Programs\Python\Python312\python.exe
 cachedir: .pytest_cache
@@ -7,53 +7,59 @@ plugins: anyio-4.11.0, asyncio-1.2.0, cov-7.0.0
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
 collected 42 items                                                                                                                        
 
-tests/test_api_integration.py::TestAPIIntegration::test_health_check PASSED                                                         [  2%]
-tests/test_api_integration.py::TestAPIIntegration::test_hello_endpoint PASSED                                                       [  4%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success PASSED                                                   [  7%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_file_type PASSED                                         [  9%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_missing_columns PASSED                                           [ 11%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data PASSED                                              [ 14%]
-tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty FAILED                                                  [ 16%]
-tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found FAILED                                           [ 19%]
-tests/test_drug_service.py::TestDrugService::test_upload_drug_data_success PASSED                                                   [ 21%] 
-tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_success PASSED                                                   [ 23%] 
-tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_multiple_versions PASSED                                         [ 26%] 
-tests/test_drug_service.py::TestDrugService::test_get_all_drugs_success PASSED                                                      [ 28%] 
-tests/test_drug_service.py::TestDrugService::test_get_all_drugs_empty PASSED                                                        [ 30%] 
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success PASSED                                               [ 33%] 
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records PASSED                                      [ 35%] 
-tests/test_dynamo_repository.py::TestDynamoRepository::test_save_drug_success PASSED                                                [ 38%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_not_found PASSED                                      [ 40%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_success PASSED                                                 [ 42%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_success PASSED                                               [ 45%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_save_generic_exception PASSED                                           [ 47%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_generic_exception PASSED                              [ 50%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_generic_exception PASSED                                       [ 52%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_generic_exception PASSED                                     [ 54%]
-tests/test_file_service.py::TestFileService::test_validate_csv_structure_success PASSED                                             [ 57%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_missing_columns PASSED                                               [ 59%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_invalid_encoding PASSED                                              [ 61%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_generic_exception PASSED                                             [ 64%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_success PASSED                                                          [ 66%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_file PASSED                                                       [ 69%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_drug_name PASSED                                                  [ 71%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_target PASSED                                                     [ 73%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_invalid_efficacy_format PASSED                                          [ 76%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_low PASSED                                        [ 78%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_high PASSED                                       [ 80%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values PASSED                                                  [ 83%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace PASSED                                                [ 85%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_generic_exception PASSED                                                [ 88%] 
-tests/test_file_service.py::TestFileService::test_row_to_drug_generic_exception PASSED                                              [ 90%] 
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success PASSED                                                      [ 92%]
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys PASSED                                        [ 95%]
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success PASSED                                                         [ 97%]
-tests/test_s3_repository.py::TestS3Repository::test_get_file_not_found PASSED                                                       [100%]
+tests/test_api_integration.py::TestAPIIntegration::test_health_check PASSED
+tests/test_api_integration.py::TestAPIIntegration::test_hello_endpoint PASSED
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success PASSED
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_file_type PASSED
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_missing_columns PASSED
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data PASSED
+tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty
+Error response: 500
+Response body: {"error":"Database Error","message":"Failed to scan drug data: An error occurred (ResourceNotFoundException) when calling the Scan operation: Requested resource not found"}
+FAILED
+tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found
+Error response: 500
+Response body: {"error":"Database Error","message":"Failed to query drug data: An error occurred (ResourceNotFoundException) when calling the Query operation: Requested resource not found"}
+FAILED
+tests/test_drug_service.py::TestDrugService::test_upload_drug_data_success PASSED
+tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_success PASSED
+tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_multiple_versions PASSED
+tests/test_drug_service.py::TestDrugService::test_get_all_drugs_success PASSED
+tests/test_drug_service.py::TestDrugService::test_get_all_drugs_empty PASSED
+tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success PASSED
+tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records PASSED
+tests/test_dynamo_repository.py::TestDynamoRepository::test_save_drug_success PASSED
+tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_not_found PASSED
+tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_success PASSED
+tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_success PASSED
+tests/test_dynamo_repository.py::TestDynamoRepository::test_save_generic_exception PASSED
+tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_generic_exception PASSED
+tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_generic_exception PASSED
+tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_generic_exception PASSED
+tests/test_file_service.py::TestFileService::test_validate_csv_structure_success PASSED
+tests/test_file_service.py::TestFileService::test_validate_csv_missing_columns PASSED
+tests/test_file_service.py::TestFileService::test_validate_csv_invalid_encoding PASSED
+tests/test_file_service.py::TestFileService::test_validate_csv_generic_exception PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_success PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_empty_file PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_empty_drug_name PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_empty_target PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_invalid_efficacy_format PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_low PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_high PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace PASSED
+tests/test_file_service.py::TestFileService::test_parse_csv_generic_exception PASSED
+tests/test_file_service.py::TestFileService::test_row_to_drug_generic_exception PASSED
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_success PASSED
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys PASSED
+tests/test_s3_repository.py::TestS3Repository::test_get_file_success PASSED
+tests/test_s3_repository.py::TestS3Repository::test_get_file_not_found PASSED
 
 ================================================================ FAILURES ================================================================ 
 ______________________________________________ TestAPIIntegration.test_get_all_drugs_empty _______________________________________________ 
 
-self = <tests.test_api_integration.TestAPIIntegration object at 0x0000013BED610620>
+self = <tests.test_api_integration.TestAPIIntegration object at 0x000002A88913FA10>
 
     @mock_aws
     def test_get_all_drugs_empty(self):
@@ -82,14 +88,17 @@ self = <tests.test_api_integration.TestAPIIntegration object at 0x0000013BED6106
         client = TestClient(app)
 
         response = client.get("/v1/api/drugs/")
+        if response.status_code != 200:
+            print(f"\nError response: {response.status_code}")
+            print(f"Response body: {response.text}")
 >       assert response.status_code == 200
 E       assert 500 == 200
 E        +  where 500 = <Response [500 Internal Server Error]>.status_code
 
-tests\test_api_integration.py:259: AssertionError
+tests\test_api_integration.py:269: AssertionError
 ___________________________________________ TestAPIIntegration.test_get_drug_by_name_not_found ___________________________________________ 
 
-self = <tests.test_api_integration.TestAPIIntegration object at 0x0000013BED6107A0>
+self = <tests.test_api_integration.TestAPIIntegration object at 0x000002A88913FB90>
 
     @mock_aws
     def test_get_drug_by_name_not_found(self):
@@ -118,11 +127,14 @@ self = <tests.test_api_integration.TestAPIIntegration object at 0x0000013BED6107
         client = TestClient(app)
 
         response = client.get("/v1/api/drugs/NonExistent")
+        if response.status_code not in [404, 200]:
+            print(f"\nError response: {response.status_code}")
+            print(f"Response body: {response.text}")
 >       assert response.status_code == 404
 E       assert 500 == 404
 E        +  where 500 = <Response [500 Internal Server Error]>.status_code
 
-tests\test_api_integration.py:291: AssertionError
+tests\test_api_integration.py:304: AssertionError
 ============================================================ warnings summary ============================================================ 
 src\models\dto\drug_dto.py:31
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
@@ -166,200 +178,5 @@ tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace
 ======================================================== short test summary info ========================================================= 
 FAILED tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty - assert 500 == 200
 FAILED tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found - assert 500 == 404
-=============================================== 2 failed, 40 passed, 23 warnings in 5.24s ================================================ 
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> git add .\report
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> git commit -m "test report"
-[main c36d778] test report
- 1 file changed, 3 insertions(+), 3 deletions(-)
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> git push
-Enumerating objects: 5, done.
-Counting objects: 100% (5/5), done.
-Delta compression using up to 4 threads
-Compressing objects: 100% (3/3), done.
-Writing objects: 100% (3/3), 343 bytes | 343.00 KiB/s, done.
-Total 3 (delta 2), reused 0 (delta 0), pack-reused 0
-remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
-To https://github.com/ktsunkara9/drug-analytics-api-python.git
-   1834636..c36d778  main -> main
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> git pull
-remote: Enumerating objects: 7, done.
-remote: Counting objects: 100% (7/7), done.
-remote: Compressing objects: 100% (1/1), done.
-remote: Total 4 (delta 3), reused 4 (delta 3), pack-reused 0 (from 0)
-Unpacking objects: 100% (4/4), 450 bytes | 3.00 KiB/s, done.
-From https://github.com/ktsunkara9/drug-analytics-api-python
-   c36d778..a04018f  main       -> origin/main
-Updating c36d778..a04018f
-Fast-forward
- tests/test_api_integration.py | 7 +++++++
- 1 file changed, 7 insertions(+)
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\ -v
-========================================================== test session starts ===========================================================
-platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\ktsun\AppData\Local\Programs\Python\Python312\python.exe
-cachedir: .pytest_cache
-rootdir: D:\coding\GIT_Work_Space\drug-analytics-api-python
-plugins: anyio-4.11.0, asyncio-1.2.0, cov-7.0.0
-asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 42 items                                                                                                                        
-
-tests/test_api_integration.py::TestAPIIntegration::test_health_check PASSED                                                         [  2%]
-tests/test_api_integration.py::TestAPIIntegration::test_hello_endpoint PASSED                                                       [  4%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success PASSED                                                   [  7%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_file_type PASSED                                         [  9%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_missing_columns PASSED                                           [ 11%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data PASSED                                              [ 14%]
-tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty FAILED                                                  [ 16%]
-tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found FAILED                                           [ 19%]
-tests/test_drug_service.py::TestDrugService::test_upload_drug_data_success PASSED                                                   [ 21%] 
-tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_success PASSED                                                   [ 23%] 
-tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_multiple_versions PASSED                                         [ 26%] 
-tests/test_drug_service.py::TestDrugService::test_get_all_drugs_success PASSED                                                      [ 28%] 
-tests/test_drug_service.py::TestDrugService::test_get_all_drugs_empty PASSED                                                        [ 30%] 
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success PASSED                                               [ 33%] 
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records PASSED                                      [ 35%] 
-tests/test_dynamo_repository.py::TestDynamoRepository::test_save_drug_success PASSED                                                [ 38%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_not_found PASSED                                      [ 40%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_success PASSED                                                 [ 42%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_success PASSED                                               [ 45%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_save_generic_exception PASSED                                           [ 47%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_generic_exception PASSED                              [ 50%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_generic_exception PASSED                                       [ 52%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_generic_exception PASSED                                     [ 54%]
-tests/test_file_service.py::TestFileService::test_validate_csv_structure_success PASSED                                             [ 57%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_missing_columns PASSED                                               [ 59%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_invalid_encoding PASSED                                              [ 61%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_generic_exception PASSED                                             [ 64%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_success PASSED                                                          [ 66%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_file PASSED                                                       [ 69%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_drug_name PASSED                                                  [ 71%]
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_target PASSED                                                     [ 73%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_invalid_efficacy_format PASSED                                          [ 76%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_low PASSED                                        [ 78%]
-tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_high PASSED                                       [ 80%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values PASSED                                                  [ 83%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace PASSED                                                [ 85%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_generic_exception PASSED                                                [ 88%] 
-tests/test_file_service.py::TestFileService::test_row_to_drug_generic_exception PASSED                                              [ 90%] 
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success PASSED                                                      [ 92%]
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys PASSED                                        [ 95%]
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success PASSED                                                         [ 97%]
-tests/test_s3_repository.py::TestS3Repository::test_get_file_not_found PASSED                                                       [100%]
-
-================================================================ FAILURES ================================================================ 
-______________________________________________ TestAPIIntegration.test_get_all_drugs_empty _______________________________________________ 
-
-self = <tests.test_api_integration.TestAPIIntegration object at 0x000001494B2E0620>
-
-    @mock_aws
-    def test_get_all_drugs_empty(self):
-        """Test getting all drugs when database is empty."""
-        from src.core import config
-        config.settings = config.Settings()
-
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
-
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        dynamodb.create_table(
-            TableName='DrugData-test',
-            KeySchema=[
-                {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'PK', 'AttributeType': 'S'},
-                {'AttributeName': 'SK', 'AttributeType': 'S'}
-            ],
-            BillingMode='PAY_PER_REQUEST'
-        )
-
-        from src.main import app
-        client = TestClient(app)
-
-        response = client.get("/v1/api/drugs/")
->       assert response.status_code == 200
-E       assert 500 == 200
-E        +  where 500 = <Response [500 Internal Server Error]>.status_code
-
-tests\test_api_integration.py:266: AssertionError
-___________________________________________ TestAPIIntegration.test_get_drug_by_name_not_found ___________________________________________ 
-
-self = <tests.test_api_integration.TestAPIIntegration object at 0x000001494B2E07A0>
-
-    @mock_aws
-    def test_get_drug_by_name_not_found(self):
-        """Test getting non-existent drug."""
-        from src.core import config
-        config.settings = config.Settings()
-
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
-
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        dynamodb.create_table(
-            TableName='DrugData-test',
-            KeySchema=[
-                {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'PK', 'AttributeType': 'S'},
-                {'AttributeName': 'SK', 'AttributeType': 'S'}
-            ],
-            BillingMode='PAY_PER_REQUEST'
-        )
-
-        from src.main import app
-        client = TestClient(app)
-
-        response = client.get("/v1/api/drugs/NonExistent")
->       assert response.status_code == 404
-E       assert 500 == 404
-E        +  where 500 = <Response [500 Internal Server Error]>.status_code
-
-tests\test_api_integration.py:298: AssertionError
-============================================================ warnings summary ============================================================ 
-src\models\dto\drug_dto.py:31
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
-    class DrugResponse(BaseModel):
-
-src\core\config.py:9
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\core\config.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
-    class Settings(BaseSettings):
-
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:68: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    now = datetime.utcnow()
-
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:54: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    'upload_timestamp': datetime.utcnow().isoformat()
-
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
-tests/test_file_service.py::TestFileService::test_parse_csv_success
-tests/test_file_service.py::TestFileService::test_parse_csv_success
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values
-tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\drug_model.py:23: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    self.upload_timestamp = upload_timestamp or datetime.utcnow()
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-======================================================== short test summary info ========================================================= 
-FAILED tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty - assert 500 == 200
-FAILED tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found - assert 500 == 404
-=============================================== 2 failed, 40 passed, 23 warnings in 5.53s ================================================ 
+=============================================== 2 failed, 40 passed, 23 warnings in 5.46s ================================================ 
 PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
