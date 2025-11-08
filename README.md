@@ -60,6 +60,40 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
    - Swagger UI: http://localhost:8000/docs
    - Health Check: http://localhost:8000/api/health
 
+## AWS Deployment
+
+### Prerequisites
+- AWS CLI configured with appropriate credentials
+- AWS SAM CLI installed
+- PowerShell (Windows) or Bash (Linux/Mac)
+
+### Deploy to AWS
+
+1. **Run deployment script**
+   ```bash
+   # Windows (PowerShell)
+   .\deploy.sh dev
+   
+   # Linux/Mac
+   ./deploy.sh dev
+   ```
+
+   The script will:
+   - Build the SAM application
+   - Deploy infrastructure (S3, DynamoDB, Lambda, API Gateway)
+   - Configure S3 event trigger for CSV processing
+
+2. **Get API endpoint**
+   After deployment, the API Gateway URL will be displayed in the output:
+   ```
+   https://<api-id>.execute-api.us-east-1.amazonaws.com/dev/
+   ```
+
+3. **Access deployed API**
+   - API: `https://<api-id>.execute-api.us-east-1.amazonaws.com/dev/v1/api/`
+   - Health Check: `https://<api-id>.execute-api.us-east-1.amazonaws.com/dev/v1/api/health`
+   - Swagger UI: `https://<api-id>.execute-api.us-east-1.amazonaws.com/dev/docs`
+
 ## API Endpoints
 
 - `POST /upload` - Upload CSV file with drug data
@@ -77,8 +111,8 @@ Required fields:
 
 - [x] Project setup
 - [x] Dependencies installed
-- [ ] Core structure
-- [ ] FastAPI implementation
-- [ ] AWS integration
+- [x] Core structure
+- [x] FastAPI implementation
+- [x] AWS integration
 - [ ] Testing
-- [ ] Deployment
+- [x] Deployment
