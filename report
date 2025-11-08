@@ -1,0 +1,79 @@
+PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest tests/ --cov=src --cov-report=term-missing
+========================================================== test session starts ===========================================================
+platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\coding\GIT_Work_Space\drug-analytics-api-python
+plugins: anyio-4.11.0, asyncio-1.2.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 30 items                                                                                                                        
+
+tests\test_drug_service.py .......                                                                                                  [ 23%]
+tests\test_dynamo_repository.py ....                                                                                                [ 36%]
+tests\test_file_service.py ...............                                                                                          [ 86%]
+tests\test_s3_repository.py ....                                                                                                    [100%]
+
+============================================================ warnings summary ============================================================
+src\models\dto\drug_dto.py:31
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class DrugResponse(BaseModel):
+
+src\core\config.py:9
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\core\config.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class Settings(BaseSettings):
+
+tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success
+tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
+tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
+tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
+tests/test_file_service.py::TestFileService::test_parse_csv_success
+tests/test_file_service.py::TestFileService::test_parse_csv_success
+tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values
+tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values
+tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\drug_model.py:23: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.upload_timestamp = upload_timestamp or datetime.utcnow()
+
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
+tests/test_s3_repository.py::TestS3Repository::test_get_file_success
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:68: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
+tests/test_s3_repository.py::TestS3Repository::test_get_file_success
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:54: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    'upload_timestamp': datetime.utcnow().isoformat()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================================================= tests coverage ============================================================= 
+____________________________________________ coverage: platform win32, python 3.12.7-final-0 _____________________________________________ 
+
+Name                                    Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------
+src\__init__.py                             0      0   100%
+src\api\__init__.py                         0      0   100%
+src\api\routes\__init__.py                  0      0   100%
+src\api\routes\drug_routes.py              17     17     0%   5-53
+src\api\routes\health_routes.py             8      8     0%   4-18
+src\core\__init__.py                        0      0   100%
+src\core\config.py                         13      0   100%
+src\core\dependencies.py                   17     17     0%   5-33
+src\core\exception_handler.py              22     22     0%   5-56
+src\core\exceptions.py                     14      0   100%
+src\main.py                                13     13     0%   5-33
+src\models\__init__.py                      0      0   100%
+src\models\drug_model.py                   11      1    91%   27
+src\models\dto\__init__.py                  0      0   100%
+src\models\dto\drug_dto.py                 27      3    89%   18-20
+src\repositories\__init__.py                0      0   100%
+src\repositories\dynamo_repository.py      58     16    72%   45-48, 79-82, 100-103, 129-132
+src\repositories\s3_repository.py          31      4    87%   57-60
+src\services\__init__.py                    0      0   100%
+src\services\drug_service.py               34      0   100%
+src\services\file_service.py               62      1    98%   108
+---------------------------------------------------------------------
+TOTAL                                     327    102    69%
+==================================================== 30 passed, 19 warnings in 4.39s ===================================================== 
+PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
