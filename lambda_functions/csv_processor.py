@@ -124,7 +124,7 @@ def handler(event, context):
 def _extract_upload_id(s3_key: str) -> str:
     """
     Extract upload_id from S3 key.
-    Expected format: uploads/YYYY/MM/DD/upload_id.csv
+    Expected format: uploads/upload_id/filename.csv
     
     Args:
         s3_key: S3 object key
@@ -132,6 +132,6 @@ def _extract_upload_id(s3_key: str) -> str:
     Returns:
         upload_id or None if not found
     """
-    # Match UUID pattern in filename
-    match = re.search(r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', s3_key)
+    # Match UUID pattern (case-insensitive)
+    match = re.search(r'([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})', s3_key)
     return match.group(1) if match else None

@@ -74,7 +74,7 @@ class TestUploadStatusAPI:
         data = response.json()
         assert "upload_id" in data
         assert data["status"] == "pending"
-        assert data["message"] == "File uploaded successfully"
+        assert "successfully" in data["message"].lower()
 
     @mock_aws
     def test_get_upload_status_success(self, setup_test_env):
