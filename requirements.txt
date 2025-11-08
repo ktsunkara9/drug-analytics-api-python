@@ -18,6 +18,7 @@ pandas
 pytest
 pytest-asyncio
 moto
+pytest-cov
 
 # Development
 python-dotenv

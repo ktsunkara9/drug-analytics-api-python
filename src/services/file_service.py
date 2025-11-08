@@ -37,6 +37,8 @@ class FileService:
                     f"Missing required columns: {', '.join(missing_columns)}"
                 )
                 
+        except ValidationException:
+            raise
         except UnicodeDecodeError as e:
             raise ValidationException("File must be a valid UTF-8 encoded CSV") from e
         except Exception as e:
