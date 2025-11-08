@@ -1,4 +1,4 @@
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\test_drug_service_upload_status.py -v      
+PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\test_drug_service_upload_status.py -v
 ========================================================== test session starts ===========================================================
 platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\ktsun\AppData\Local\Programs\Python\Python312\python.exe
 cachedir: .pytest_cache
@@ -15,60 +15,67 @@ tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_uplo
 ================================================================ FAILURES ================================================================ 
 ________________________________ TestDrugServiceUploadStatus.test_upload_drug_data_creates_status_record _________________________________ 
 
-args = (<tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x00000279E64634D0>,)
-keywargs = {'drug_service': <src.services.drug_service.DrugService object at 0x00000279E913FA40>, 'mock_repositories': (<Mock id='2722624698704'>, <Mock id='2722624698800'>, <Mock id='2722624699136'>)}
+self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x0000020422643560>
+mock_uuid = <MagicMock name='uuid4' id='2216779480336'>
+drug_service = <src.services.drug_service.DrugService object at 0x0000020422643CE0>
+mock_repositories = (<Mock id='2216780119456'>, <Mock id='2216780119360'>, <Mock id='2216780119552'>)
 
-    @wraps(func)
-    def patched(*args, **keywargs):
->       with self.decoration_helper(patched,
-                                    args,
-                                    keywargs) as (newargs, newkeywargs):
+    @patch('uuid.uuid4')
+    def test_upload_drug_data_creates_status_record(self, mock_uuid, drug_service, mock_repositories):
+        s3_repo, dynamo_repo, upload_status_repo = mock_repositories
+        mock_uuid.return_value = "abc123"
 
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1392:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:137: in __enter__
-    return next(self.gen)
-           ^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1374: in decoration_helper
-    arg = exit_stack.enter_context(patching)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:526: in enter_context
-    result = _enter(cm)
-             ^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1463: in __enter__
-    original, local = self.get_original()
-                      ^^^^^^^^^^^^^^^^^^^
+        csv_content = b"drug_name,target,efficacy\nAspirin,COX,85.5"
+        filename = "test.csv"
+
+>       result = drug_service.upload_drug_data(csv_content, filename)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_drug_service_upload_status.py:29:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <unittest.mock._patch object at 0x00000279E913F140>
+self = <src.services.drug_service.DrugService object at 0x0000020422643CE0>, file = b'drug_name,target,efficacy\nAspirin,COX,85.5'
+filename = 'test.csv'
 
-    def get_original(self):
-        target = self.getter()
-        name = self.attribute
+    def upload_drug_data(self, file: BinaryIO, filename: str) -> DrugUploadResponse:
+        """
+        Handle drug data upload workflow.
 
-        original = DEFAULT
-        local = False
+        Args:
+            file: CSV file containing drug data
+            filename: Original filename
 
-        try:
-            original = target.__dict__[name]
-        except (AttributeError, KeyError):
-            original = getattr(target, name, DEFAULT)
-        else:
-            local = True
+        Returns:
+            DrugUploadResponse with upload details
 
-        if name in _builtins and isinstance(target, ModuleType):
-            self.create = True
+        Raises:
+            ValidationException: If CSV validation fails
+            S3Exception: If S3 upload fails
+        """
+        # Validate CSV structure
+        self.file_service.validate_csv_structure(file)
 
-        if not self.create and original is DEFAULT:
->           raise AttributeError(
-                "%s does not have the attribute %r" % (target, name)
-            )
-E           AttributeError: <module 'src.services.drug_service' from 'D:\\coding\\GIT_Work_Space\\drug-analytics-api-python\\src\\services\\drug_service.py'> does not have the attribute 'uuid4'
+        # Generate upload ID
+        upload_id = str(uuid.uuid4())
 
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1436: AttributeError
+        # Upload file to S3
+        upload_result = self.s3_repository.upload_file(file, filename)
+
+        # Create upload status record
+        upload_status = UploadStatus(
+            upload_id=upload_id,
+            status="pending",
+            filename=filename,
+>           s3_key=upload_result['s3_key'],
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+            created_at=datetime.utcnow()
+        )
+E       TypeError: 'Mock' object is not subscriptable
+
+src\services\drug_service.py:62: TypeError
 _______________________________________ TestDrugServiceUploadStatus.test_get_upload_status_success _______________________________________ 
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000279E919ACF0>, upload_id = 'test-123'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x0000020424059C10>, upload_id = 'test-123'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
@@ -107,7 +114,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
     request_dict = self._serializer.serialize_to_request(
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.validate.ParamValidationDecorator object at 0x00000279EABAB950>
+self = <botocore.validate.ParamValidationDecorator object at 0x00000204240C4770>
 parameters = {'Key': {'upload_id': {'S': 'test-123'}}, 'TableName': ''}, operation_model = OperationModel(name=GetItem)
 
     def serialize_to_request(self, parameters, operation_model):
@@ -125,9 +132,9 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x00000279E913F350>
-drug_service = <src.services.drug_service.DrugService object at 0x00000279EABA8FE0>
-mock_repositories = (<Mock id='2722652393728'>, <Mock id='2722652393968'>, <Mock id='2722652394352'>)
+self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x0000020422643680>
+drug_service = <src.services.drug_service.DrugService object at 0x0000020424059250>
+mock_repositories = (<Mock id='2216807469744'>, <Mock id='2216807471376'>, <Mock id='2216807470224'>)
 
     def test_get_upload_status_success(self, drug_service, mock_repositories):
         _, _, upload_status_repo = mock_repositories
@@ -153,7 +160,7 @@ src\services\drug_service.py:173: in get_upload_status
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000279E919ACF0>, upload_id = 'test-123'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x0000020424059C10>, upload_id = 'test-123'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
@@ -187,7 +194,7 @@ E           Invalid length for parameter TableName, value: 0, valid min length: 
 src\repositories\upload_status_repository.py:77: DynamoDBException
 ______________________________________ TestDrugServiceUploadStatus.test_get_upload_status_not_found ______________________________________ 
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000279EACB2E10>, upload_id = 'nonexistent'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002042402DDF0>, upload_id = 'nonexistent'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
@@ -226,7 +233,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
     request_dict = self._serializer.serialize_to_request(
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.validate.ParamValidationDecorator object at 0x00000279EAC60DA0>
+self = <botocore.validate.ParamValidationDecorator object at 0x00000204240F3B60>
 parameters = {'Key': {'upload_id': {'S': 'nonexistent'}}, 'TableName': ''}, operation_model = OperationModel(name=GetItem)
 
     def serialize_to_request(self, parameters, operation_model):
@@ -244,30 +251,31 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x00000279E913F530>
-drug_service = <src.services.drug_service.DrugService object at 0x00000279EACB3230>
-mock_repositories = (<Mock id='2722653477280'>, <Mock id='2722653480496'>, <Mock id='2722653486688'>)
+self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x0000020422643800>
+drug_service = <src.services.drug_service.DrugService object at 0x000002042402DE80>
+mock_repositories = (<Mock id='2216807292688'>, <Mock id='2216807292880'>, <Mock id='2216807292448'>)
 
     def test_get_upload_status_not_found(self, drug_service, mock_repositories):
+        from fastapi import HTTPException
         _, _, upload_status_repo = mock_repositories
         upload_status_repo.get_by_id.return_value = None
 
->       result = drug_service.get_upload_status("nonexistent")
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        with pytest.raises(HTTPException) as exc_info:
+>           drug_service.get_upload_status("nonexistent")
 
-tests\test_drug_service_upload_status.py:66:
+tests\test_drug_service_upload_status.py:67:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 src\services\drug_service.py:173: in get_upload_status
     upload_status = self.upload_status_repository.get_by_id(upload_id)
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000279EACB2E10>, upload_id = 'nonexistent'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002042402DDF0>, upload_id = 'nonexistent'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
         Retrieve upload status by ID.
-    
+
         Args:
             upload_id: Upload identifier
 
@@ -296,57 +304,63 @@ E           Invalid length for parameter TableName, value: 0, valid min length: 
 src\repositories\upload_status_repository.py:77: DynamoDBException
 _____________________________________ TestDrugServiceUploadStatus.test_upload_creates_correct_s3_key _____________________________________ 
 
-args = (<tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x00000279E913F6B0>,)
-keywargs = {'drug_service': <src.services.drug_service.DrugService object at 0x00000279EACA2270>, 'mock_repositories': (<Mock id='2722653419424'>, <Mock id='2722653413760'>, <Mock id='2722617175952'>)}
+self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x0000020422643980>
+mock_uuid = <MagicMock name='uuid4' id='2216812372640'>
+drug_service = <src.services.drug_service.DrugService object at 0x00000204245063C0>
+mock_repositories = (<Mock id='2216812372064'>, <Mock id='2216812372352'>, <Mock id='2216812374416'>)
 
-    @wraps(func)
-    def patched(*args, **keywargs):
->       with self.decoration_helper(patched,
-                                    args,
-                                    keywargs) as (newargs, newkeywargs):
+    @patch('uuid.uuid4')
+    def test_upload_creates_correct_s3_key(self, mock_uuid, drug_service, mock_repositories):
+        s3_repo, _, upload_status_repo = mock_repositories
+        mock_uuid.return_value = "xyz789"
 
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1392:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:137: in __enter__
-    return next(self.gen)
-           ^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1374: in decoration_helper
-    arg = exit_stack.enter_context(patching)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\contextlib.py:526: in enter_context
-    result = _enter(cm)
-             ^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1463: in __enter__
-    original, local = self.get_original()
-                      ^^^^^^^^^^^^^^^^^^^
+        csv_content = b"drug_name,target,efficacy\nDrug1,Target1,90.0"
+        filename = "data.csv"
+
+>       drug_service.upload_drug_data(csv_content, filename)
+
+tests\test_drug_service_upload_status.py:79:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <unittest.mock._patch object at 0x00000279E913F1A0>
+self = <src.services.drug_service.DrugService object at 0x00000204245063C0>, file = b'drug_name,target,efficacy\nDrug1,Target1,90.0'       
+filename = 'data.csv'
 
-    def get_original(self):
-        target = self.getter()
-        name = self.attribute
+    def upload_drug_data(self, file: BinaryIO, filename: str) -> DrugUploadResponse:
+        """
+        Handle drug data upload workflow.
 
-        original = DEFAULT
-        local = False
+        Args:
+            file: CSV file containing drug data
+            filename: Original filename
 
-        try:
-            original = target.__dict__[name]
-        except (AttributeError, KeyError):
-            original = getattr(target, name, DEFAULT)
-        else:
-            local = True
+        Returns:
+            DrugUploadResponse with upload details
 
-        if name in _builtins and isinstance(target, ModuleType):
-            self.create = True
+        Raises:
+            ValidationException: If CSV validation fails
+            S3Exception: If S3 upload fails
+        """
+        # Validate CSV structure
+        self.file_service.validate_csv_structure(file)
 
-        if not self.create and original is DEFAULT:
->           raise AttributeError(
-                "%s does not have the attribute %r" % (target, name)
-            )
-E           AttributeError: <module 'src.services.drug_service' from 'D:\\coding\\GIT_Work_Space\\drug-analytics-api-python\\src\\services\\drug_service.py'> does not have the attribute 'uuid4'
+        # Generate upload ID
+        upload_id = str(uuid.uuid4())
 
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py:1436: AttributeError
+        # Upload file to S3
+        upload_result = self.s3_repository.upload_file(file, filename)
+
+        # Create upload status record
+        upload_status = UploadStatus(
+            upload_id=upload_id,
+            status="pending",
+            filename=filename,
+>           s3_key=upload_result['s3_key'],
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+            created_at=datetime.utcnow()
+        )
+E       TypeError: 'Mock' object is not subscriptable
+
+src\services\drug_service.py:62: TypeError
 ============================================================ warnings summary ============================================================ 
 src\models\dto\drug_dto.py:31
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
@@ -358,9 +372,9 @@ src\core\config.py:9
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 ======================================================== short test summary info ========================================================= 
-FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_drug_data_creates_status_record - AttributeError: <module 'src.services.drug_service' from 'D:\\coding\\GIT_Work_Space\\drug-analytics-api-python\\src\\services\\drug_s...
+FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_drug_data_creates_status_record - TypeError: 'Mock' object is not subscriptable
 FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_get_upload_status_success - src.core.exceptions.DynamoDBException: Unexpected error getting upload status: Parameter validation failed:
 FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_get_upload_status_not_found - src.core.exceptions.DynamoDBException: Unexpected error getting upload status: Parameter validation failed:
-FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_creates_correct_s3_key - AttributeError: <module 'src.services.drug_service' from 'D:\\coding\\GIT_Work_Space\\drug-analytics-api-python\\src\\services\\drug_s...
-===================================================== 4 failed, 2 warnings in 1.21s ====================================================== 
+FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_creates_correct_s3_key - TypeError: 'Mock' object is not subscriptable
+===================================================== 4 failed, 2 warnings in 1.10s ====================================================== 
 PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
