@@ -18,13 +18,13 @@ class S3Repository:
         self.s3_client = boto3.client('s3', region_name=config.settings.aws_region)
         self.bucket_name = config.settings.s3_bucket_name
     
-    def upload_file(self, file: BinaryIO, filename: str) -> dict:
+    def upload_file(self, file: BinaryIO, s3_key: str) -> dict:
         """
         Upload a file to S3.
         
         Args:
             file: File object to upload
-            filename: Original filename
+            s3_key: S3 key to use for the file
             
         Returns:
             dict: Upload metadata including s3_key and location
@@ -33,10 +33,7 @@ class S3Repository:
             S3Exception: If upload fails
         """
         try:
-            # Generate unique S3 key
-            s3_key = self._generate_s3_key(filename)
-            
-            # Upload to S3
+            # Upload to S3 using provided key
             self.s3_client.upload_fileobj(
                 file,
                 self.bucket_name,

@@ -51,18 +51,22 @@ class DrugService:
         # Generate upload ID
         upload_id = str(uuid.uuid4())
         
-        # Upload file to S3
-        upload_result = self.s3_repository.upload_file(file, filename)
+        # Pre-generate S3 key with upload_id
+        s3_key = f"uploads/{upload_id}/{filename}"
         
-        # Create upload status record
+        # Create upload status record FIRST (before S3 upload to avoid race condition)
+        # S3 upload triggers Lambda immediately, which might complete before this finishes
         upload_status = UploadStatus(
             upload_id=upload_id,
             status="pending",
             filename=filename,
-            s3_key=upload_result['s3_key'],
+            s3_key=s3_key,
             created_at=datetime.utcnow()
         )
         self.upload_status_repository.create(upload_status)
+        
+        # Upload file to S3 (triggers Lambda processing)
+        upload_result = self.s3_repository.upload_file(file, s3_key)
         
         return DrugUploadResponse(
             upload_id=upload_id,
