@@ -38,7 +38,8 @@ class TestUploadStatusRepository:
             upload_id="test-uuid-123",
             status="pending",
             filename="test.csv",
-            s3_key="uploads/test-uuid-123/test.csv"
+            s3_key="uploads/test-uuid-123/test.csv",
+            created_at=datetime.now()
         )
         
         repo.create(upload_status)
@@ -86,7 +87,7 @@ class TestUploadStatusRepository:
         })
         
         repo = UploadStatusRepository()
-        repo.update("test-uuid-789", status="processing")
+        repo.update("test-uuid-789", {"status": "processing"})
         
         response = dynamodb_table.get_item(Key={"upload_id": "test-uuid-789"})
         assert response["Item"]["status"] == "processing"
@@ -102,7 +103,7 @@ class TestUploadStatusRepository:
         })
         
         repo = UploadStatusRepository()
-        repo.update("test-uuid-999", status="completed", total_rows=50, processed_rows=50)
+        repo.update("test-uuid-999", {"status": "completed", "total_rows": 50, "processed_rows": 50})
         
         response = dynamodb_table.get_item(Key={"upload_id": "test-uuid-999"})
         assert response["Item"]["status"] == "completed"
@@ -116,7 +117,8 @@ class TestUploadStatusRepository:
             upload_id="test-uuid-error",
             status="pending",
             filename="test.csv",
-            s3_key="uploads/test.csv"
+            s3_key="uploads/test.csv",
+            created_at=datetime.now()
         )
         
         dynamodb_table.delete()
@@ -138,4 +140,4 @@ class TestUploadStatusRepository:
         dynamodb_table.delete()
         
         with pytest.raises(ClientError):
-            repo.update("test-uuid", status="completed")
+            repo.update("test-uuid", {"status": "completed"})
