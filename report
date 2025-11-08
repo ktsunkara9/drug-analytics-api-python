@@ -1,171 +1,55 @@
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\ -v
+S D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\test_upload_status_repository.py -v
 ========================================================== test session starts ===========================================================
 platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\ktsun\AppData\Local\Programs\Python\Python312\python.exe
 cachedir: .pytest_cache
 rootdir: D:\coding\GIT_Work_Space\drug-analytics-api-python
 plugins: anyio-4.11.0, asyncio-1.2.0, cov-7.0.0
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 42 items                                                                                                                        
+collected 8 items                                                                                                                         
 
-tests/test_api_integration.py::TestAPIIntegration::test_health_check PASSED                                                         [  2%]
-tests/test_api_integration.py::TestAPIIntegration::test_hello_endpoint PASSED                                                       [  4%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success PASSED                                                   [  7%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_file_type PASSED                                         [  9%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_missing_columns PASSED                                           [ 11%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data PASSED                                              [ 14%]
-tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty FAILED                                                  [ 16%]
-tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found FAILED                                           [ 19%]
-tests/test_drug_service.py::TestDrugService::test_upload_drug_data_success PASSED                                                   [ 21%] 
-tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_success PASSED                                                   [ 23%] 
-tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_multiple_versions PASSED                                         [ 26%] 
-tests/test_drug_service.py::TestDrugService::test_get_all_drugs_success PASSED                                                      [ 28%] 
-tests/test_drug_service.py::TestDrugService::test_get_all_drugs_empty PASSED                                                        [ 30%] 
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success PASSED                                               [ 33%] 
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records PASSED                                      [ 35%] 
-tests/test_dynamo_repository.py::TestDynamoRepository::test_save_drug_success FAILED                                                [ 38%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_not_found FAILED                                      [ 40%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_success FAILED                                                 [ 42%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_success FAILED                                               [ 45%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_save_generic_exception PASSED                                           [ 47%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_generic_exception PASSED                              [ 50%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_generic_exception PASSED                                       [ 52%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_generic_exception PASSED                                     [ 54%]
-tests/test_file_service.py::TestFileService::test_validate_csv_structure_success PASSED                                             [ 57%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_missing_columns PASSED                                               [ 59%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_invalid_encoding PASSED                                              [ 61%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_generic_exception PASSED                                             [ 64%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_success PASSED                                                          [ 66%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_file PASSED                                                       [ 69%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_drug_name PASSED                                                  [ 71%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_target PASSED                                                     [ 73%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_invalid_efficacy_format PASSED                                          [ 76%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_low PASSED                                        [ 78%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_high PASSED                                       [ 80%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values PASSED                                                  [ 83%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace PASSED                                                [ 85%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_generic_exception PASSED                                                [ 88%] 
-tests/test_file_service.py::TestFileService::test_row_to_drug_generic_exception PASSED                                              [ 90%] 
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success PASSED                                                      [ 92%]
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys PASSED                                        [ 95%]
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success PASSED                                                         [ 97%]
-tests/test_s3_repository.py::TestS3Repository::test_get_file_not_found PASSED                                                       [100%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_create_success PASSED                                      [ 12%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_success PASSED                                   [ 25%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_not_found PASSED                                 [ 37%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_success FAILED                                      [ 50%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_multiple_fields FAILED                              [ 62%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_create_exception_handling FAILED                           [ 75%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_exception_handling FAILED                        [ 87%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_exception_handling FAILED                           [100%]
 
 ================================================================ FAILURES ================================================================ 
-______________________________________________ TestAPIIntegration.test_get_all_drugs_empty _______________________________________________ 
+_____________________________________________ TestUploadStatusRepository.test_update_success _____________________________________________ 
 
-self = <tests.test_api_integration.TestAPIIntegration object at 0x0000018D6C6E0200>
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA26F4110>, upload_id = 'test-uuid-789'        
+updates = {'status': 'processing'}
 
-    @mock_aws
-    def test_get_all_drugs_empty(self):
-        """Test getting all drugs when database is empty."""
-        from src.core import config
-        config.settings = config.Settings()
-
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
-
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        dynamodb.create_table(
-            TableName='DrugData-test',
-            KeySchema=[
-                {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'PK', 'AttributeType': 'S'},
-                {'AttributeName': 'SK', 'AttributeType': 'S'}
-            ],
-            BillingMode='PAY_PER_REQUEST'
-        )
-
-        from src.main import app
-        client = TestClient(app)
-
-        response = client.get("/v1/api/drugs/")
-        if response.status_code != 200:
-            print(f"\nError response: {response.status_code}")
-            print(f"Response body: {response.text}")
->       assert response.status_code == 200
-E       assert 500 == 200
-E        +  where 500 = <Response [500 Internal Server Error]>.status_code
-
-tests\test_api_integration.py:269: AssertionError
----------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
-
-Error response: 500
-Response body: {"error":"Database Error","message":"Failed to scan drug data: An error occurred (ResourceNotFoundException) when calling the Scan operation: Requested resource not found"}
-___________________________________________ TestAPIIntegration.test_get_drug_by_name_not_found ___________________________________________ 
-
-self = <tests.test_api_integration.TestAPIIntegration object at 0x0000018D6C6E0380>
-
-    @mock_aws
-    def test_get_drug_by_name_not_found(self):
-        """Test getting non-existent drug."""
-        from src.core import config
-        config.settings = config.Settings()
-
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
-
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        dynamodb.create_table(
-            TableName='DrugData-test',
-            KeySchema=[
-                {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'PK', 'AttributeType': 'S'},
-                {'AttributeName': 'SK', 'AttributeType': 'S'}
-            ],
-            BillingMode='PAY_PER_REQUEST'
-        )
-
-        from src.main import app
-        client = TestClient(app)
-
-        response = client.get("/v1/api/drugs/NonExistent")
-        if response.status_code not in [404, 200]:
-            print(f"\nError response: {response.status_code}")
-            print(f"Response body: {response.text}")
->       assert response.status_code == 404
-E       assert 500 == 404
-E        +  where 500 = <Response [500 Internal Server Error]>.status_code
-
-tests\test_api_integration.py:304: AssertionError
----------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
-
-Error response: 500
-Response body: {"error":"Database Error","message":"Failed to query drug data: An error occurred (ResourceNotFoundException) when calling the Query operation: Requested resource not found"}
-______________________________________________ TestDynamoRepository.test_save_drug_success _______________________________________________ 
-
-self = <src.repositories.dynamo_repository.DynamoRepository object at 0x0000018D6D09D2E0>
-drug = Drug(drug_name=Aspirin, target=COX-2, efficacy=85.5)
-
-    def save(self, drug: Drug) -> None:
+    def update(self, upload_id: str, updates: dict) -> None:
         """
-        Save drug data to DynamoDB.
+        Update upload status fields.
 
         Args:
-            drug: Drug domain model
+            upload_id: Upload identifier
+            updates: Dictionary of fields to update
 
         Raises:
-            DynamoDBException: If save operation fails
+            DynamoDBException: If update operation fails
         """
         try:
-            item = {
-                'PK': self._create_pk(drug.drug_name),
-                'SK': self._create_sk(drug.upload_timestamp),
-                'drug_name': drug.drug_name,
-                'target': drug.target,
-                'efficacy': Decimal(str(drug.efficacy)),
-                'upload_timestamp': drug.upload_timestamp.isoformat(),
-                's3_key': drug.s3_key
-            }
+            update_expression = "SET "
+            expression_values = {}
 
->           self.table.put_item(Item=item)
+            for key, value in updates.items():
+                update_expression += f"{key} = :{key}, "
+                expression_values[f":{key}"] = value
 
-src\repositories\dynamo_repository.py:43:
+            update_expression = update_expression.rstrip(", ")
+
+>           self.table.update_item(
+                Key={'upload_id': upload_id},
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_values
+            )
+
+src\repositories\upload_status_repository.py:100:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
     response = action(self, *args, **kwargs)
@@ -181,8 +65,399 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
            ^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.client.DynamoDB object at 0x0000018D6D83AC90>, operation_name = 'PutItem'
-api_params = {'Item': {'PK': {'S': 'DRUG#Aspirin'}, 'SK': {'S': 'METADATA#2024-01-01T00:00:00'}, 'drug_name': {'S': 'Aspirin'}, 'efficacy': {'N': '85.5'}, ...}, 'TableName': 'DrugData-dev'}
+self = <botocore.client.DynamoDB object at 0x000001FBA27300B0>, operation_name = 'UpdateItem'
+api_params = {'ExpressionAttributeValues': {':status': {'S': 'processing'}}, 'Key': {'upload_id': {'S': 'test-uuid-789'}}, 'TableName': 'UploadStatus-test', 'UpdateExpression': 'SET status = :status'}
+
+    @with_current_context()
+    def _make_api_call(self, operation_name, api_params):
+        operation_model = self._service_model.operation_model(operation_name)
+        service_name = self._service_model.service_name
+        history_recorder.record(
+            'API_CALL',
+            {
+                'service': service_name,
+                'operation': operation_name,
+                'params': api_params,
+            },
+        )
+        if operation_model.deprecated:
+            logger.debug(
+                'Warning: %s.%s() is deprecated', service_name, operation_name
+            )
+        request_context = {
+            'client_region': self.meta.region_name,
+            'client_config': self.meta.config,
+            'has_streaming_input': operation_model.has_streaming_input,
+            'auth_type': operation_model.resolved_auth_type,
+            'unsigned_payload': operation_model.unsigned_payload,
+            'auth_options': self._service_model.metadata.get('auth'),
+        }
+
+        api_params = self._emit_api_params(
+            api_params=api_params,
+            operation_model=operation_model,
+            context=request_context,
+        )
+        (
+            endpoint_url,
+            additional_headers,
+            properties,
+        ) = self._resolve_endpoint_ruleset(
+            operation_model, api_params, request_context
+        )
+        if properties:
+            # Pass arbitrary endpoint info with the Request
+            # for use during construction.
+            request_context['endpoint_properties'] = properties
+        request_dict = self._convert_to_request_dict(
+            api_params=api_params,
+            operation_model=operation_model,
+            endpoint_url=endpoint_url,
+            context=request_context,
+            headers=additional_headers,
+        )
+        resolve_checksum_context(request_dict, operation_model, api_params)
+
+        service_id = self._service_model.service_id.hyphenize()
+        handler, event_response = self.meta.events.emit_until_response(
+            f'before-call.{service_id}.{operation_name}',
+            model=operation_model,
+            params=request_dict,
+            request_signer=self._request_signer,
+            context=request_context,
+        )
+
+        if event_response is not None:
+            http, parsed_response = event_response
+        else:
+            maybe_compress_request(
+                self.meta.config, request_dict, operation_model
+            )
+            apply_request_checksum(request_dict)
+            http, parsed_response = self._make_request(
+                operation_model, request_dict, request_context
+            )
+
+        self.meta.events.emit(
+            f'after-call.{service_id}.{operation_name}',
+            http_response=http,
+            parsed=parsed_response,
+            model=operation_model,
+            context=request_context,
+        )
+
+        if http.status_code >= 300:
+            error_info = parsed_response.get("Error", {})
+            error_code = request_context.get(
+                'error_code_override'
+            ) or error_info.get("Code")
+            error_class = self.exceptions.from_code(error_code)
+>           raise error_class(parsed_response, operation_name)
+E           botocore.exceptions.ClientError: An error occurred (ValidationException) when calling the UpdateItem operation: Invalid UpdateExpression: Attribute name is a reserved keyword; reserved keyword: status
+
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1078: ClientError
+
+The above exception was the direct cause of the following exception:
+
+self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAD7E30>
+dynamodb_table = dynamodb.Table(name='UploadStatus-test')
+
+    @mock_aws
+    def test_update_success(self, dynamodb_table):
+        dynamodb_table.put_item(Item={
+            "upload_id": "test-uuid-789",
+            "status": "pending",
+            "filename": "test.csv",
+            "s3_key": "uploads/test-uuid-789/test.csv",
+            "created_at": "2024-01-01T12:00:00"
+        })
+
+        repo = UploadStatusRepository()
+>       repo.update("test-uuid-789", {"status": "processing"})
+
+tests\test_upload_status_repository.py:90:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA26F4110>, upload_id = 'test-uuid-789'        
+updates = {'status': 'processing'}
+
+    def update(self, upload_id: str, updates: dict) -> None:
+        """
+        Update upload status fields.
+
+        Args:
+            upload_id: Upload identifier
+            updates: Dictionary of fields to update
+
+        Raises:
+            DynamoDBException: If update operation fails
+        """
+        try:
+            update_expression = "SET "
+            expression_values = {}
+
+            for key, value in updates.items():
+                update_expression += f"{key} = :{key}, "
+                expression_values[f":{key}"] = value
+
+            update_expression = update_expression.rstrip(", ")
+
+            self.table.update_item(
+                Key={'upload_id': upload_id},
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_values
+            )
+
+        except ClientError as e:
+>           raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
+E           src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ValidationException) when calling the UpdateItem operation: Invalid UpdateExpression: Attribute name is a reserved keyword; reserved keyword: status
+
+src\repositories\upload_status_repository.py:107: DynamoDBException
+_________________________________________ TestUploadStatusRepository.test_update_multiple_fields _________________________________________ 
+
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA27303B0>, upload_id = 'test-uuid-999'        
+updates = {'processed_rows': 50, 'status': 'completed', 'total_rows': 50}
+
+    def update(self, upload_id: str, updates: dict) -> None:
+        """
+        Update upload status fields.
+
+        Args:
+            upload_id: Upload identifier
+            updates: Dictionary of fields to update
+
+        Raises:
+            DynamoDBException: If update operation fails
+        """
+        try:
+            update_expression = "SET "
+            expression_values = {}
+
+            for key, value in updates.items():
+                update_expression += f"{key} = :{key}, "
+                expression_values[f":{key}"] = value
+
+            update_expression = update_expression.rstrip(", ")
+
+>           self.table.update_item(
+                Key={'upload_id': upload_id},
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_values
+            )
+
+src\repositories\upload_status_repository.py:100:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
+    response = action(self, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
+    response = getattr(parent.meta.client, operation_name)(*args, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+self = <botocore.client.DynamoDB object at 0x000001FBA1F6E060>, operation_name = 'UpdateItem'
+api_params = {'ExpressionAttributeValues': {':processed_rows': {'N': '50'}, ':status': {'S': 'completed'}, ':total_rows': {'N': '50...adStatus-test', 'UpdateExpression': 'SET status = :status, total_rows = :total_rows, processed_rows = :processed_rows'}
+
+    @with_current_context()
+    def _make_api_call(self, operation_name, api_params):
+        operation_model = self._service_model.operation_model(operation_name)
+        service_name = self._service_model.service_name
+        history_recorder.record(
+            'API_CALL',
+            {
+                'service': service_name,
+                'operation': operation_name,
+                'params': api_params,
+            },
+        )
+        if operation_model.deprecated:
+            logger.debug(
+                'Warning: %s.%s() is deprecated', service_name, operation_name
+            )
+        request_context = {
+            'client_region': self.meta.region_name,
+            'client_config': self.meta.config,
+            'has_streaming_input': operation_model.has_streaming_input,
+            'auth_type': operation_model.resolved_auth_type,
+            'unsigned_payload': operation_model.unsigned_payload,
+            'auth_options': self._service_model.metadata.get('auth'),
+        }
+
+        api_params = self._emit_api_params(
+            api_params=api_params,
+            operation_model=operation_model,
+            context=request_context,
+        )
+        (
+            endpoint_url,
+            additional_headers,
+            properties,
+        ) = self._resolve_endpoint_ruleset(
+            operation_model, api_params, request_context
+        )
+        if properties:
+            # Pass arbitrary endpoint info with the Request
+            # for use during construction.
+            request_context['endpoint_properties'] = properties
+        request_dict = self._convert_to_request_dict(
+            api_params=api_params,
+            operation_model=operation_model,
+            endpoint_url=endpoint_url,
+            context=request_context,
+            headers=additional_headers,
+        )
+        resolve_checksum_context(request_dict, operation_model, api_params)
+
+        service_id = self._service_model.service_id.hyphenize()
+        handler, event_response = self.meta.events.emit_until_response(
+            f'before-call.{service_id}.{operation_name}',
+            model=operation_model,
+            params=request_dict,
+            request_signer=self._request_signer,
+            context=request_context,
+        )
+
+        if event_response is not None:
+            http, parsed_response = event_response
+        else:
+            maybe_compress_request(
+                self.meta.config, request_dict, operation_model
+            )
+            apply_request_checksum(request_dict)
+            http, parsed_response = self._make_request(
+                operation_model, request_dict, request_context
+            )
+
+        self.meta.events.emit(
+            f'after-call.{service_id}.{operation_name}',
+            http_response=http,
+            parsed=parsed_response,
+            model=operation_model,
+            context=request_context,
+        )
+
+        if http.status_code >= 300:
+            error_info = parsed_response.get("Error", {})
+            error_code = request_context.get(
+                'error_code_override'
+            ) or error_info.get("Code")
+            error_class = self.exceptions.from_code(error_code)
+>           raise error_class(parsed_response, operation_name)
+E           botocore.exceptions.ClientError: An error occurred (ValidationException) when calling the UpdateItem operation: Invalid UpdateExpression: Attribute name is a reserved keyword; reserved keyword: status
+
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1078: ClientError
+
+The above exception was the direct cause of the following exception:
+
+self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAF8050>
+dynamodb_table = dynamodb.Table(name='UploadStatus-test')
+
+    @mock_aws
+    def test_update_multiple_fields(self, dynamodb_table):
+        dynamodb_table.put_item(Item={
+            "upload_id": "test-uuid-999",
+            "status": "processing",
+            "filename": "test.csv",
+            "s3_key": "uploads/test-uuid-999/test.csv",
+            "created_at": "2024-01-01T12:00:00"
+        })
+
+        repo = UploadStatusRepository()
+>       repo.update("test-uuid-999", {"status": "completed", "total_rows": 50, "processed_rows": 50})
+
+tests\test_upload_status_repository.py:106:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA27303B0>, upload_id = 'test-uuid-999'        
+updates = {'processed_rows': 50, 'status': 'completed', 'total_rows': 50}
+
+    def update(self, upload_id: str, updates: dict) -> None:
+        """
+        Update upload status fields.
+
+        Args:
+            upload_id: Upload identifier
+            updates: Dictionary of fields to update
+
+        Raises:
+            DynamoDBException: If update operation fails
+        """
+        try:
+            update_expression = "SET "
+            expression_values = {}
+
+            for key, value in updates.items():
+                update_expression += f"{key} = :{key}, "
+                expression_values[f":{key}"] = value
+
+            update_expression = update_expression.rstrip(", ")
+
+            self.table.update_item(
+                Key={'upload_id': upload_id},
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_values
+            )
+
+        except ClientError as e:
+>           raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
+E           src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ValidationException) when calling the UpdateItem operation: Invalid UpdateExpression: Attribute name is a reserved keyword; reserved keyword: status
+
+src\repositories\upload_status_repository.py:107: DynamoDBException
+_______________________________________ TestUploadStatusRepository.test_create_exception_handling ________________________________________ 
+
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1F53D10>
+upload_status = UploadStatus(upload_id=test-uuid-error, status=pending, filename=test.csv)
+
+    def create(self, upload_status: UploadStatus) -> None:
+        """
+        Create new upload status record.
+
+        Args:
+            upload_status: UploadStatus domain model
+
+        Raises:
+            DynamoDBException: If create operation fails
+        """
+        try:
+            item = {
+                'upload_id': upload_status.upload_id,
+                'status': upload_status.status,
+                'filename': upload_status.filename,
+                's3_key': upload_status.s3_key,
+                'created_at': upload_status.created_at.isoformat(),
+                'total_rows': upload_status.total_rows,
+                'processed_rows': upload_status.processed_rows
+            }
+
+            if upload_status.error_message:
+                item['error_message'] = upload_status.error_message
+
+>           self.table.put_item(Item=item)
+
+src\repositories\upload_status_repository.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
+    response = action(self, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
+    response = getattr(parent.meta.client, operation_name)(*args, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+self = <botocore.client.DynamoDB object at 0x000001FBA28CA6F0>, operation_name = 'PutItem'
+api_params = {'Item': {'created_at': {'S': '2025-11-09T01:49:41.202315'}, 'filename': {'S': 'test.csv'}, 'processed_rows': {'N': '0'}, 's3_key': {'S': 'uploads/test.csv'}, ...}, 'TableName': 'UploadStatus-test'}
 
     @with_current_context()
     def _make_api_call(self, operation_name, api_params):
@@ -275,80 +550,84 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_dynamo_repository.TestDynamoRepository object at 0x0000018D6C790740>
+self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAF8230>
+dynamodb_table = dynamodb.Table(name='UploadStatus-test')
 
     @mock_aws
-    def test_save_drug_success(self):
-        """Test successful drug save to DynamoDB."""
-        from src.core import config
-        config.settings = config.Settings()
+    def test_create_exception_handling(self, dynamodb_table):
+        repo = UploadStatusRepository()
+        upload_status = UploadStatus(
+            upload_id="test-uuid-error",
+            status="pending",
+            filename="test.csv",
+            s3_key="uploads/test.csv",
+            created_at=datetime.now()
+        )
 
-        self._create_table()
-        repo = DynamoRepository()
+        dynamodb_table.delete()
 
-        drug = Drug("Aspirin", "COX-2", 85.5, datetime(2024, 1, 1), "key1")
->       repo.save(drug)
+        with pytest.raises(ClientError):
+>           repo.create(upload_status)
 
-tests\test_dynamo_repository.py:59:
+tests\test_upload_status_repository.py:127:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.dynamo_repository.DynamoRepository object at 0x0000018D6D09D2E0>
-drug = Drug(drug_name=Aspirin, target=COX-2, efficacy=85.5)
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1F53D10>
+upload_status = UploadStatus(upload_id=test-uuid-error, status=pending, filename=test.csv)
 
-    def save(self, drug: Drug) -> None:
+    def create(self, upload_status: UploadStatus) -> None:
         """
-        Save drug data to DynamoDB.
+        Create new upload status record.
 
         Args:
-            drug: Drug domain model
+            upload_status: UploadStatus domain model
 
         Raises:
-            DynamoDBException: If save operation fails
+            DynamoDBException: If create operation fails
         """
         try:
             item = {
-                'PK': self._create_pk(drug.drug_name),
-                'SK': self._create_sk(drug.upload_timestamp),
-                'drug_name': drug.drug_name,
-                'target': drug.target,
-                'efficacy': Decimal(str(drug.efficacy)),
-                'upload_timestamp': drug.upload_timestamp.isoformat(),
-                's3_key': drug.s3_key
+                'upload_id': upload_status.upload_id,
+                'status': upload_status.status,
+                'filename': upload_status.filename,
+                's3_key': upload_status.s3_key,
+                'created_at': upload_status.created_at.isoformat(),
+                'total_rows': upload_status.total_rows,
+                'processed_rows': upload_status.processed_rows
             }
+
+            if upload_status.error_message:
+                item['error_message'] = upload_status.error_message
 
             self.table.put_item(Item=item)
 
         except ClientError as e:
->           raise DynamoDBException(f"Failed to save drug data: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Failed to save drug data: An error occurred (ResourceNotFoundException) when calling the PutItem operation: Requested resource not found
+>           raise DynamoDBException(f"Failed to create upload status: {str(e)}") from e
+E           src.core.exceptions.DynamoDBException: Failed to create upload status: An error occurred (ResourceNotFoundException) when calling the PutItem operation: Requested resource not found
 
-src\repositories\dynamo_repository.py:46: DynamoDBException
-_________________________________________ TestDynamoRepository.test_find_by_drug_name_not_found __________________________________________ 
+src\repositories\upload_status_repository.py:48: DynamoDBException
+______________________________________ TestUploadStatusRepository.test_get_by_id_exception_handling ______________________________________ 
 
-self = <src.repositories.dynamo_repository.DynamoRepository object at 0x0000018D72AF6B10>, drug_name = 'NonExistent'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1E35490>, upload_id = 'test-uuid'
 
-    def find_by_drug_name(self, drug_name: str) -> List[Drug]:
+    def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
-        Find all records for a specific drug.
+        Retrieve upload status by ID.
 
         Args:
-            drug_name: Name of the drug
+            upload_id: Upload identifier
 
         Returns:
-            List of Drug objects
+            UploadStatus object or None if not found
 
         Raises:
             DynamoDBException: If query fails
         """
         try:
->           response = self.table.query(
-                KeyConditionExpression='PK = :pk',
-                ExpressionAttributeValues={
-                    ':pk': self._create_pk(drug_name)
-                }
-            )
+>           response = self.table.get_item(Key={'upload_id': upload_id})
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-src\repositories\dynamo_repository.py:64:
+src\repositories\upload_status_repository.py:66:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
     response = action(self, *args, **kwargs)
@@ -364,8 +643,8 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
            ^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.client.DynamoDB object at 0x0000018D6EC3D850>, operation_name = 'Query'
-api_params = {'ExpressionAttributeValues': {':pk': {'S': 'DRUG#NonExistent'}}, 'KeyConditionExpression': 'PK = :pk', 'TableName': 'DrugData-dev'}
+self = <botocore.client.DynamoDB object at 0x000001FBA326BB30>, operation_name = 'GetItem'
+api_params = {'Key': {'upload_id': {'S': 'test-uuid'}}, 'TableName': 'UploadStatus-test'}
 
     @with_current_context()
     def _make_api_call(self, operation_name, api_params):
@@ -452,94 +731,88 @@ api_params = {'ExpressionAttributeValues': {':pk': {'S': 'DRUG#NonExistent'}}, '
             ) or error_info.get("Code")
             error_class = self.exceptions.from_code(error_code)
 >           raise error_class(parsed_response, operation_name)
-E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the Query operation: Requested resource not found
+E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the GetItem operation: Requested resource not found
 
 C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1078: ResourceNotFoundException
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_dynamo_repository.TestDynamoRepository object at 0x0000018D6C792510>
+self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAF8410>
+dynamodb_table = dynamodb.Table(name='UploadStatus-test')
 
     @mock_aws
-    def test_find_by_drug_name_not_found(self):
-        """Test finding non-existent drug raises exception."""
-        from src.core import config
-        config.settings = config.Settings()
+    def test_get_by_id_exception_handling(self, dynamodb_table):
+        repo = UploadStatusRepository()
+        dynamodb_table.delete()
 
-        self._create_table()
-        repo = DynamoRepository()
+        with pytest.raises(ClientError):
+>           repo.get_by_id("test-uuid")
 
-        with pytest.raises(DrugNotFoundException):
->           repo.find_by_drug_name("NonExistent")
-
-tests\test_dynamo_repository.py:75:
+tests\test_upload_status_repository.py:135:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.dynamo_repository.DynamoRepository object at 0x0000018D72AF6B10>, drug_name = 'NonExistent'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1E35490>, upload_id = 'test-uuid'
 
-    def find_by_drug_name(self, drug_name: str) -> List[Drug]:
+    def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
-        Find all records for a specific drug.
+        Retrieve upload status by ID.
 
         Args:
-            drug_name: Name of the drug
+            upload_id: Upload identifier
 
         Returns:
-            List of Drug objects
+            UploadStatus object or None if not found
 
         Raises:
             DynamoDBException: If query fails
         """
         try:
-            response = self.table.query(
-                KeyConditionExpression='PK = :pk',
-                ExpressionAttributeValues={
-                    ':pk': self._create_pk(drug_name)
-                }
-            )
+            response = self.table.get_item(Key={'upload_id': upload_id})
 
-            items = response.get('Items', [])
-            if not items:
-                raise DrugNotFoundException(f"Drug '{drug_name}' not found")
+            if 'Item' not in response:
+                return None
 
-            return [self._item_to_drug(item) for item in items]
+            item = response['Item']
+            return self._item_to_upload_status(item)
 
-        except DrugNotFoundException:
-            raise
         except ClientError as e:
->           raise DynamoDBException(f"Failed to query drug data: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Failed to query drug data: An error occurred (ResourceNotFoundException) when calling the Query operation: Requested resource not found
+>           raise DynamoDBException(f"Failed to get upload status: {str(e)}") from e
+E           src.core.exceptions.DynamoDBException: Failed to get upload status: An error occurred (ResourceNotFoundException) when calling the GetItem operation: Requested resource not found
 
-src\repositories\dynamo_repository.py:80: DynamoDBException
-_______________________________________________ TestDynamoRepository.test_find_all_success _______________________________________________ 
+src\repositories\upload_status_repository.py:75: DynamoDBException
+_______________________________________ TestUploadStatusRepository.test_update_exception_handling ________________________________________ 
 
-self = <src.repositories.dynamo_repository.DynamoRepository object at 0x0000018D700B3920>
-drug = Drug(drug_name=Aspirin, target=COX-2, efficacy=85.5)
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1E5ECC0>, upload_id = 'test-uuid'
+updates = {'status': 'completed'}
 
-    def save(self, drug: Drug) -> None:
+    def update(self, upload_id: str, updates: dict) -> None:
         """
-        Save drug data to DynamoDB.
+        Update upload status fields.
 
         Args:
-            drug: Drug domain model
+            upload_id: Upload identifier
+            updates: Dictionary of fields to update
 
         Raises:
-            DynamoDBException: If save operation fails
+            DynamoDBException: If update operation fails
         """
         try:
-            item = {
-                'PK': self._create_pk(drug.drug_name),
-                'SK': self._create_sk(drug.upload_timestamp),
-                'drug_name': drug.drug_name,
-                'target': drug.target,
-                'efficacy': Decimal(str(drug.efficacy)),
-                'upload_timestamp': drug.upload_timestamp.isoformat(),
-                's3_key': drug.s3_key
-            }
+            update_expression = "SET "
+            expression_values = {}
 
->           self.table.put_item(Item=item)
+            for key, value in updates.items():
+                update_expression += f"{key} = :{key}, "
+                expression_values[f":{key}"] = value
 
-src\repositories\dynamo_repository.py:43:
+            update_expression = update_expression.rstrip(", ")
+
+>           self.table.update_item(
+                Key={'upload_id': upload_id},
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_values
+            )
+
+src\repositories\upload_status_repository.py:100:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
     response = action(self, *args, **kwargs)
@@ -555,8 +828,8 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
            ^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.client.DynamoDB object at 0x0000018D6EE52F30>, operation_name = 'PutItem'
-api_params = {'Item': {'PK': {'S': 'DRUG#Aspirin'}, 'SK': {'S': 'METADATA#2024-01-01T00:00:00'}, 'drug_name': {'S': 'Aspirin'}, 'efficacy': {'N': '85.5'}, ...}, 'TableName': 'DrugData-dev'}
+self = <botocore.client.DynamoDB object at 0x000001FBA3C14E00>, operation_name = 'UpdateItem'
+api_params = {'ExpressionAttributeValues': {':status': {'S': 'completed'}}, 'Key': {'upload_id': {'S': 'test-uuid'}}, 'TableName': 'UploadStatus-test', 'UpdateExpression': 'SET status = :status'}
 
     @with_current_context()
     def _make_api_call(self, operation_name, api_params):
@@ -643,289 +916,72 @@ api_params = {'Item': {'PK': {'S': 'DRUG#Aspirin'}, 'SK': {'S': 'METADATA#2024-0
             ) or error_info.get("Code")
             error_class = self.exceptions.from_code(error_code)
 >           raise error_class(parsed_response, operation_name)
-E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the PutItem operation: Requested resource not found
+E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the UpdateItem operation: Requested resource not found
 
 C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1078: ResourceNotFoundException
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_dynamo_repository.TestDynamoRepository object at 0x0000018D6C7926F0>
+self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAF85F0>
+dynamodb_table = dynamodb.Table(name='UploadStatus-test')
 
     @mock_aws
-    def test_find_all_success(self):
-        """Test retrieving all drugs."""
-        from src.core import config
-        config.settings = config.Settings()
+    def test_update_exception_handling(self, dynamodb_table):
+        repo = UploadStatusRepository()
+        dynamodb_table.delete()
 
-        self._create_table()
-        repo = DynamoRepository()
+        with pytest.raises(ClientError):
+>           repo.update("test-uuid", {"status": "completed"})
 
-        drug1 = Drug("Aspirin", "COX-2", 85.5, datetime(2024, 1, 1), "key1")
-        drug2 = Drug("Ibuprofen", "COX-1", 90.0, datetime(2024, 1, 2), "key2")
->       repo.save(drug1)
-
-tests\test_dynamo_repository.py:88:
+tests\test_upload_status_repository.py:143:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.dynamo_repository.DynamoRepository object at 0x0000018D700B3920>
-drug = Drug(drug_name=Aspirin, target=COX-2, efficacy=85.5)
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1E5ECC0>, upload_id = 'test-uuid'
+updates = {'status': 'completed'}
 
-    def save(self, drug: Drug) -> None:
+    def update(self, upload_id: str, updates: dict) -> None:
         """
-        Save drug data to DynamoDB.
+        Update upload status fields.
 
         Args:
-            drug: Drug domain model
+            upload_id: Upload identifier
+            updates: Dictionary of fields to update
 
         Raises:
-            DynamoDBException: If save operation fails
+            DynamoDBException: If update operation fails
         """
         try:
-            item = {
-                'PK': self._create_pk(drug.drug_name),
-                'SK': self._create_sk(drug.upload_timestamp),
-                'drug_name': drug.drug_name,
-                'target': drug.target,
-                'efficacy': Decimal(str(drug.efficacy)),
-                'upload_timestamp': drug.upload_timestamp.isoformat(),
-                's3_key': drug.s3_key
-            }
+            update_expression = "SET "
+            expression_values = {}
 
-            self.table.put_item(Item=item)
+            for key, value in updates.items():
+                update_expression += f"{key} = :{key}, "
+                expression_values[f":{key}"] = value
+
+            update_expression = update_expression.rstrip(", ")
+
+            self.table.update_item(
+                Key={'upload_id': upload_id},
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_values
+            )
 
         except ClientError as e:
->           raise DynamoDBException(f"Failed to save drug data: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Failed to save drug data: An error occurred (ResourceNotFoundException) when calling the PutItem operation: Requested resource not found
+>           raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
+E           src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ResourceNotFoundException) when calling the UpdateItem operation: Requested resource not found
 
-src\repositories\dynamo_repository.py:46: DynamoDBException
-______________________________________________ TestDynamoRepository.test_batch_save_success ______________________________________________ 
-
-self = <src.repositories.dynamo_repository.DynamoRepository object at 0x0000018D6FCC4CE0>
-drugs = [Drug(drug_name=Aspirin, target=COX-2, efficacy=85.5), Drug(drug_name=Ibuprofen, target=COX-1, efficacy=90.0), Drug(drug_name=Paracetamol, target=COX-3, efficacy=75.0)]
-
-    def batch_save(self, drugs: List[Drug]) -> None:
-        """
-        Save multiple drugs in batches.
-        DynamoDB batch_writer automatically handles batching (25 items per batch).
-
-        Args:
-            drugs: List of Drug objects to save
-
-        Raises:
-            DynamoDBException: If batch save fails
-        """
-        try:
->           with self.table.batch_writer() as batch:
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^
-
-src\repositories\dynamo_repository.py:117:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\dynamodb\table.py:167: in __exit__
-    self._flush()
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\dynamodb\table.py:144: in _flush
-    response = self._client.batch_write_item(
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
-    return self._make_api_call(operation_name, kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <botocore.client.DynamoDB object at 0x0000018D70BF2F30>, operation_name = 'BatchWriteItem'
-api_params = {'RequestItems': {'DrugData-dev': [{'PutRequest': {'Item': {'PK': {...}, 'SK': {...}, 'drug_name': {...}, 'efficacy': ...cy': {...}, ...}}}, {'PutRequest': {'Item': {'PK': {...}, 'SK': {...}, 'drug_name': {...}, 'efficacy': {...}, ...}}}]}}
-
-    @with_current_context()
-    def _make_api_call(self, operation_name, api_params):
-        operation_model = self._service_model.operation_model(operation_name)
-        service_name = self._service_model.service_name
-        history_recorder.record(
-            'API_CALL',
-            {
-                'service': service_name,
-                'operation': operation_name,
-                'params': api_params,
-            },
-        )
-        if operation_model.deprecated:
-            logger.debug(
-                'Warning: %s.%s() is deprecated', service_name, operation_name
-            )
-        request_context = {
-            'client_region': self.meta.region_name,
-            'client_config': self.meta.config,
-            'has_streaming_input': operation_model.has_streaming_input,
-            'auth_type': operation_model.resolved_auth_type,
-            'unsigned_payload': operation_model.unsigned_payload,
-            'auth_options': self._service_model.metadata.get('auth'),
-        }
-
-        api_params = self._emit_api_params(
-            api_params=api_params,
-            operation_model=operation_model,
-            context=request_context,
-        )
-        (
-            endpoint_url,
-            additional_headers,
-            properties,
-        ) = self._resolve_endpoint_ruleset(
-            operation_model, api_params, request_context
-        )
-        if properties:
-            # Pass arbitrary endpoint info with the Request
-            # for use during construction.
-            request_context['endpoint_properties'] = properties
-        request_dict = self._convert_to_request_dict(
-            api_params=api_params,
-            operation_model=operation_model,
-            endpoint_url=endpoint_url,
-            context=request_context,
-            headers=additional_headers,
-        )
-        resolve_checksum_context(request_dict, operation_model, api_params)
-
-        service_id = self._service_model.service_id.hyphenize()
-        handler, event_response = self.meta.events.emit_until_response(
-            f'before-call.{service_id}.{operation_name}',
-            model=operation_model,
-            params=request_dict,
-            request_signer=self._request_signer,
-            context=request_context,
-        )
-
-        if event_response is not None:
-            http, parsed_response = event_response
-        else:
-            maybe_compress_request(
-                self.meta.config, request_dict, operation_model
-            )
-            apply_request_checksum(request_dict)
-            http, parsed_response = self._make_request(
-                operation_model, request_dict, request_context
-            )
-
-        self.meta.events.emit(
-            f'after-call.{service_id}.{operation_name}',
-            http_response=http,
-            parsed=parsed_response,
-            model=operation_model,
-            context=request_context,
-        )
-
-        if http.status_code >= 300:
-            error_info = parsed_response.get("Error", {})
-            error_code = request_context.get(
-                'error_code_override'
-            ) or error_info.get("Code")
-            error_class = self.exceptions.from_code(error_code)
->           raise error_class(parsed_response, operation_name)
-E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the BatchWriteItem operation: Requested resource not found
-
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1078: ResourceNotFoundException
-
-The above exception was the direct cause of the following exception:
-
-self = <tests.test_dynamo_repository.TestDynamoRepository object at 0x0000018D6C7928D0>
-
-    @mock_aws
-    def test_batch_save_success(self):
-        """Test batch saving multiple drugs."""
-        from src.core import config
-        config.settings = config.Settings()
-
-        self._create_table()
-        repo = DynamoRepository()
-
-        drugs = [
-            Drug("Aspirin", "COX-2", 85.5, datetime(2024, 1, 1), "key1"),
-            Drug("Ibuprofen", "COX-1", 90.0, datetime(2024, 1, 2), "key2"),
-            Drug("Paracetamol", "COX-3", 75.0, datetime(2024, 1, 3), "key3")
-        ]
-
->       repo.batch_save(drugs)
-
-tests\test_dynamo_repository.py:109:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <src.repositories.dynamo_repository.DynamoRepository object at 0x0000018D6FCC4CE0>
-drugs = [Drug(drug_name=Aspirin, target=COX-2, efficacy=85.5), Drug(drug_name=Ibuprofen, target=COX-1, efficacy=90.0), Drug(drug_name=Paracetamol, target=COX-3, efficacy=75.0)]
-
-    def batch_save(self, drugs: List[Drug]) -> None:
-        """
-        Save multiple drugs in batches.
-        DynamoDB batch_writer automatically handles batching (25 items per batch).
-
-        Args:
-            drugs: List of Drug objects to save
-
-        Raises:
-            DynamoDBException: If batch save fails
-        """
-        try:
-            with self.table.batch_writer() as batch:
-                for drug in drugs:
-                    item = {
-                        'PK': self._create_pk(drug.drug_name),
-                        'SK': self._create_sk(drug.upload_timestamp),
-                        'drug_name': drug.drug_name,
-                        'target': drug.target,
-                        'efficacy': Decimal(str(drug.efficacy)),
-                        'upload_timestamp': drug.upload_timestamp.isoformat(),
-                        's3_key': drug.s3_key
-                    }
-                    batch.put_item(Item=item)
-        except ClientError as e:
->           raise DynamoDBException(f"Failed to batch save drug data: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Failed to batch save drug data: An error occurred (ResourceNotFoundException) when calling the BatchWriteItem operation: Requested resource not found
-
-src\repositories\dynamo_repository.py:130: DynamoDBException
+src\repositories\upload_status_repository.py:107: DynamoDBException
 ============================================================ warnings summary ============================================================ 
-src\models\dto\drug_dto.py:31
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
-    class DrugResponse(BaseModel):
-
 src\core\config.py:9
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\core\config.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
     class Settings(BaseSettings):
 
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:68: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    now = datetime.utcnow()
-
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:54: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    'upload_timestamp': datetime.utcnow().isoformat()
-
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
-tests/test_file_service.py::TestFileService::test_parse_csv_success
-tests/test_file_service.py::TestFileService::test_parse_csv_success
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values
-tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\drug_model.py:23: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    self.upload_timestamp = upload_timestamp or datetime.utcnow()
-
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 ======================================================== short test summary info ========================================================= 
-FAILED tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty - assert 500 == 200
-FAILED tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found - assert 500 == 404
-FAILED tests/test_dynamo_repository.py::TestDynamoRepository::test_save_drug_success - src.core.exceptions.DynamoDBException: Failed to save drug data: An error occurred (ResourceNotFoundException) when calling the PutIte...
-FAILED tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_not_found - src.core.exceptions.DynamoDBException: Failed to query drug data: An error occurred (ResourceNotFoundException) when calling the Query...
-FAILED tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_success - src.core.exceptions.DynamoDBException: Failed to save drug data: An error occurred (ResourceNotFoundException) when calling the PutIte...
-FAILED tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_success - src.core.exceptions.DynamoDBException: Failed to batch save drug data: An error occurred (ResourceNotFoundException) when calling the ...
-=============================================== 6 failed, 36 passed, 23 warnings in 5.60s ================================================ 
+FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_success - src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ValidationException) when calling the Update...
+FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_multiple_fields - src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ValidationException) when calling the Update...
+FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_create_exception_handling - src.core.exceptions.DynamoDBException: Failed to create upload status: An error occurred (ResourceNotFoundException) when calling the ...
+FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_exception_handling - src.core.exceptions.DynamoDBException: Failed to get upload status: An error occurred (ResourceNotFoundException) when calling the Get...
+FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_exception_handling - src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ResourceNotFoundException) when calling the ...
+================================================= 5 failed, 3 passed, 1 warning in 2.65s ================================================= 
 PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
