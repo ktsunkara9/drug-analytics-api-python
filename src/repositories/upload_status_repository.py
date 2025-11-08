@@ -90,16 +90,19 @@ class UploadStatusRepository:
         try:
             update_expression = "SET "
             expression_values = {}
+            expression_names = {}
             
             for key, value in updates.items():
-                update_expression += f"{key} = :{key}, "
+                update_expression += f"#{key} = :{key}, "
                 expression_values[f":{key}"] = value
+                expression_names[f"#{key}"] = key
             
             update_expression = update_expression.rstrip(", ")
             
             self.table.update_item(
                 Key={'upload_id': upload_id},
                 UpdateExpression=update_expression,
+                ExpressionAttributeNames=expression_names,
                 ExpressionAttributeValues=expression_values
             )
             
