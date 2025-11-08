@@ -10,7 +10,7 @@ from moto import mock_aws
 import boto3
 from src.repositories.dynamo_repository import DynamoRepository
 from src.models.drug_model import Drug
-from src.core.exceptions import DrugNotFoundException
+from src.core.exceptions import DrugNotFoundException, DynamoDBException
 
 
 class TestDynamoRepository:
@@ -91,3 +91,58 @@ class TestDynamoRepository:
         repo.batch_save(drugs)
         all_drugs = repo.find_all()
         assert len(all_drugs) == 3
+    
+    @mock_aws
+    def test_save_generic_exception(self, aws_credentials):
+        """Test save handles generic exceptions."""
+        self._create_table()
+        repo = DynamoRepository()
+        
+        # Create invalid drug that will cause exception during conversion
+        from unittest.mock import patch
+        with patch.object(repo.table, 'put_item', side_effect=Exception("Unexpected error")):
+            drug = Drug("Aspirin", "COX-2", 85.5, datetime(2024, 1, 1), "key1")
+            with pytest.raises(DynamoDBException) as exc_info:
+                repo.save(drug)
+            assert "Unexpected error saving drug data" in str(exc_info.value)
+    
+    @mock_aws
+    def test_find_by_drug_name_generic_exception(self, aws_credentials):
+        """Test find_by_drug_name handles generic exceptions."""
+        self._create_table()
+        repo = DynamoRepository()
+        
+        from unittest.mock import patch
+        with patch.object(repo.table, 'query', side_effect=Exception("Unexpected error")):
+            with pytest.raises(DynamoDBException) as exc_info:
+                repo.find_by_drug_name("Aspirin")
+            assert "Unexpected error querying drug data" in str(exc_info.value)
+    
+    @mock_aws
+    def test_find_all_generic_exception(self, aws_credentials):
+        """Test find_all handles generic exceptions."""
+        self._create_table()
+        repo = DynamoRepository()
+        
+        from unittest.mock import patch
+        with patch.object(repo.table, 'scan', side_effect=Exception("Unexpected error")):
+            with pytest.raises(DynamoDBException) as exc_info:
+                repo.find_all()
+            assert "Unexpected error scanning drug data" in str(exc_info.value)
+    
+    @mock_aws
+    def test_batch_save_generic_exception(self, aws_credentials):
+        """Test batch_save handles generic exceptions."""
+        self._create_table()
+        repo = DynamoRepository()
+        
+        drugs = [Drug("Aspirin", "COX-2", 85.5, datetime(2024, 1, 1), "key1")]
+        
+        from unittest.mock import patch, MagicMock
+        mock_batch = MagicMock()
+        mock_batch.__enter__.return_value.put_item.side_effect = Exception("Unexpected error")
+        
+        with patch.object(repo.table, 'batch_writer', return_value=mock_batch):
+            with pytest.raises(DynamoDBException) as exc_info:
+                repo.batch_save(drugs)
+            assert "Unexpected error during batch save" in str(exc_info.value)
