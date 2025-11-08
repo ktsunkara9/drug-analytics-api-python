@@ -21,13 +21,14 @@ class TestS3Repository:
         os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
         os.environ['AWS_SECURITY_TOKEN'] = 'testing'
         os.environ['AWS_SESSION_TOKEN'] = 'testing'
+        os.environ['S3_BUCKET_NAME'] = 'test-bucket'
     
     @mock_aws
     def test_upload_file_success(self, aws_credentials):
         """Test successful file upload to S3."""
-        # Create bucket
+        # Create bucket with same name as settings
         s3_client = boto3.client('s3', region_name='us-east-1')
-        s3_client.create_bucket(Bucket='drug-analytics-dev-local')
+        s3_client.create_bucket(Bucket='test-bucket')
         
         repo = S3Repository()
         file_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5"
@@ -44,7 +45,7 @@ class TestS3Repository:
     def test_upload_file_generates_unique_keys(self, aws_credentials):
         """Test that multiple uploads generate unique S3 keys."""
         s3_client = boto3.client('s3', region_name='us-east-1')
-        s3_client.create_bucket(Bucket='drug-analytics-dev-local')
+        s3_client.create_bucket(Bucket='test-bucket')
         
         repo = S3Repository()
         file1 = io.BytesIO(b"content1")
@@ -59,7 +60,7 @@ class TestS3Repository:
     def test_get_file_success(self, aws_credentials):
         """Test successful file retrieval from S3."""
         s3_client = boto3.client('s3', region_name='us-east-1')
-        s3_client.create_bucket(Bucket='drug-analytics-dev-local')
+        s3_client.create_bucket(Bucket='test-bucket')
         
         repo = S3Repository()
         file_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5"
@@ -74,7 +75,7 @@ class TestS3Repository:
     def test_get_file_not_found(self, aws_credentials):
         """Test get_file raises exception for non-existent file."""
         s3_client = boto3.client('s3', region_name='us-east-1')
-        s3_client.create_bucket(Bucket='drug-analytics-dev-local')
+        s3_client.create_bucket(Bucket='test-bucket')
         
         repo = S3Repository()
         
