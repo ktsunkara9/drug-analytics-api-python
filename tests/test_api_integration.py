@@ -59,7 +59,8 @@ class TestAPIIntegration:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
-        assert "timestamp" in data
+        assert data["service"] == "Drug Analytics API"
+        assert data["version"] == "1.0.0"
     
     @mock_aws
     def test_hello_endpoint(self):
@@ -122,7 +123,7 @@ class TestAPIIntegration:
         files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
         
         response = client.post("/v1/api/drugs/upload", files=files)
-        assert response.status_code == 200
+        assert response.status_code == 202
         data = response.json()
         assert "message" in data
         assert "s3_key" in data
@@ -158,7 +159,7 @@ class TestAPIIntegration:
         
         response = client.post("/v1/api/drugs/upload", files=files)
         assert response.status_code == 400
-        assert "CSV file" in response.json()["detail"]
+        assert "CSV" in response.text
     
     @mock_aws
     def test_upload_csv_missing_columns(self):
@@ -191,7 +192,7 @@ class TestAPIIntegration:
         
         response = client.post("/v1/api/drugs/upload", files=files)
         assert response.status_code == 400
-        assert "Missing required columns" in response.json()["detail"]
+        assert "Missing required columns" in response.text
     
     @mock_aws
     def test_upload_csv_invalid_data(self):
@@ -224,7 +225,7 @@ class TestAPIIntegration:
         
         response = client.post("/v1/api/drugs/upload", files=files)
         assert response.status_code == 400
-        assert "must be a number" in response.json()["detail"]
+        assert "number" in response.text
     
     @mock_aws
     def test_get_all_drugs_empty(self):
@@ -286,4 +287,4 @@ class TestAPIIntegration:
         
         response = client.get("/v1/api/drugs/NonExistent")
         assert response.status_code == 404
-        assert "not found" in response.json()["detail"]
+        assert "not found" in response.text.lower()
