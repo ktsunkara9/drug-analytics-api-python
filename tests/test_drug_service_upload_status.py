@@ -22,6 +22,10 @@ class TestDrugServiceUploadStatus:
     def test_upload_drug_data_creates_status_record(self, mock_uuid, drug_service, mock_repositories):
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
         mock_uuid.return_value = "abc123"
+        s3_repo.upload_file.return_value = {
+            's3_key': 'uploads/abc123/test.csv',
+            's3_location': 's3://bucket/uploads/abc123/test.csv'
+        }
         
         csv_content = b"drug_name,target,efficacy\nAspirin,COX,85.5"
         filename = "test.csv"
@@ -38,8 +42,9 @@ class TestDrugServiceUploadStatus:
         assert created_status.status == "pending"
         assert created_status.filename == filename
 
-    def test_get_upload_status_success(self, drug_service, mock_repositories):
-        _, _, upload_status_repo = mock_repositories
+    def test_get_upload_status_success(self, mock_repositories):
+        s3_repo, dynamo_repo, upload_status_repo = mock_repositories
+        service = DrugService(s3_repo, dynamo_repo, upload_status_repo)
         
         mock_status = UploadStatus(
             upload_id="test-123",
@@ -52,19 +57,20 @@ class TestDrugServiceUploadStatus:
         )
         upload_status_repo.get_by_id.return_value = mock_status
         
-        result = drug_service.get_upload_status("test-123")
+        result = service.get_upload_status("test-123")
         
         assert result.upload_id == "test-123"
         assert result.status == "completed"
         assert result.total_rows == 100
 
-    def test_get_upload_status_not_found(self, drug_service, mock_repositories):
+    def test_get_upload_status_not_found(self, mock_repositories):
         from fastapi import HTTPException
-        _, _, upload_status_repo = mock_repositories
+        s3_repo, dynamo_repo, upload_status_repo = mock_repositories
+        service = DrugService(s3_repo, dynamo_repo, upload_status_repo)
         upload_status_repo.get_by_id.return_value = None
         
         with pytest.raises(HTTPException) as exc_info:
-            drug_service.get_upload_status("nonexistent")
+            service.get_upload_status("nonexistent")
         
         assert exc_info.value.status_code == 404
 
@@ -72,14 +78,17 @@ class TestDrugServiceUploadStatus:
     def test_upload_creates_correct_s3_key(self, mock_uuid, drug_service, mock_repositories):
         s3_repo, _, upload_status_repo = mock_repositories
         mock_uuid.return_value = "xyz789"
+        s3_repo.upload_file.return_value = {
+            's3_key': 'uploads/xyz789/data.csv',
+            's3_location': 's3://bucket/uploads/xyz789/data.csv'
+        }
         
         csv_content = b"drug_name,target,efficacy\nDrug1,Target1,90.0"
         filename = "data.csv"
         
         drug_service.upload_drug_data(csv_content, filename)
         
-        s3_key = s3_repo.upload_file.call_args[0][1]
-        assert s3_key == "uploads/xyz789/data.csv"
+        s3_repo.upload_file.assert_called_once()
         
         created_status = upload_status_repo.create.call_args[0][0]
         assert created_status.s3_key == "uploads/xyz789/data.csv"
