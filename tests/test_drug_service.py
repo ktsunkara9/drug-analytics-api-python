@@ -70,9 +70,11 @@ class TestDrugService:
         result = drug_service.upload_drug_data(file, filename)
         
         # Assert
-        assert "upload_id" in result
-        assert result["status"] == "pending"
-        assert "successfully" in result["message"].lower()
+        assert isinstance(result, DrugUploadResponse)
+        assert result.upload_id is not None
+        assert result.status == "pending"
+        assert "successfully" in result.message.lower()
+        assert result.s3_location == 's3://bucket/uploads/2024/01/01/abc123_test.csv'
         mock_file_service.validate_csv_structure.assert_called_once_with(file)
         mock_s3_repo.upload_file.assert_called_once()
         mock_upload_status_repo.create.assert_called_once()
