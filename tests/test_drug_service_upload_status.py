@@ -16,7 +16,12 @@ class TestDrugServiceUploadStatus:
     @pytest.fixture
     def drug_service(self, mock_repositories):
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
-        return DrugService(s3_repo, dynamo_repo, upload_status_repo)
+        return DrugService(
+            s3_repository=s3_repo,
+            dynamo_repository=dynamo_repo,
+            upload_status_repository=upload_status_repo,
+            file_service=Mock()
+        )
 
     @patch('uuid.uuid4')
     def test_upload_drug_data_creates_status_record(self, mock_uuid, drug_service, mock_repositories):
@@ -44,7 +49,12 @@ class TestDrugServiceUploadStatus:
 
     def test_get_upload_status_success(self, mock_repositories):
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
-        service = DrugService(s3_repo, dynamo_repo, upload_status_repo)
+        service = DrugService(
+            s3_repository=s3_repo,
+            dynamo_repository=dynamo_repo,
+            upload_status_repository=upload_status_repo,
+            file_service=Mock()
+        )
         
         mock_status = UploadStatus(
             upload_id="test-123",
@@ -66,7 +76,12 @@ class TestDrugServiceUploadStatus:
     def test_get_upload_status_not_found(self, mock_repositories):
         from fastapi import HTTPException
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
-        service = DrugService(s3_repo, dynamo_repo, upload_status_repo)
+        service = DrugService(
+            s3_repository=s3_repo,
+            dynamo_repository=dynamo_repo,
+            upload_status_repository=upload_status_repo,
+            file_service=Mock()
+        )
         upload_status_repo.get_by_id.return_value = None
         
         with pytest.raises(HTTPException) as exc_info:
