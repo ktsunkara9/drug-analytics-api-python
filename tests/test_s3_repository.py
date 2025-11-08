@@ -14,7 +14,7 @@ from src.core.exceptions import S3Exception
 class TestS3Repository:
     """Test suite for S3Repository."""
     
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def aws_credentials(self):
         """Mock AWS credentials for moto."""
         os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
@@ -22,9 +22,18 @@ class TestS3Repository:
         os.environ['AWS_SECURITY_TOKEN'] = 'testing'
         os.environ['AWS_SESSION_TOKEN'] = 'testing'
         os.environ['S3_BUCKET_NAME'] = 'test-bucket'
+        
+        # Reload settings to pick up test environment variables
+        from src.core import config
+        config.settings = config.Settings()
+        
+        yield
+        
+        # Cleanup
+        del os.environ['S3_BUCKET_NAME']
     
     @mock_aws
-    def test_upload_file_success(self, aws_credentials):
+    def test_upload_file_success(self):
         """Test successful file upload to S3."""
         # Create bucket with same name as settings
         s3_client = boto3.client('s3', region_name='us-east-1')
@@ -42,7 +51,7 @@ class TestS3Repository:
         assert filename in result['s3_key']
     
     @mock_aws
-    def test_upload_file_generates_unique_keys(self, aws_credentials):
+    def test_upload_file_generates_unique_keys(self):
         """Test that multiple uploads generate unique S3 keys."""
         s3_client = boto3.client('s3', region_name='us-east-1')
         s3_client.create_bucket(Bucket='test-bucket')
@@ -57,7 +66,7 @@ class TestS3Repository:
         assert result1['s3_key'] != result2['s3_key']
     
     @mock_aws
-    def test_get_file_success(self, aws_credentials):
+    def test_get_file_success(self):
         """Test successful file retrieval from S3."""
         s3_client = boto3.client('s3', region_name='us-east-1')
         s3_client.create_bucket(Bucket='test-bucket')
@@ -72,7 +81,7 @@ class TestS3Repository:
         assert retrieved_content == file_content
     
     @mock_aws
-    def test_get_file_not_found(self, aws_credentials):
+    def test_get_file_not_found(self):
         """Test get_file raises exception for non-existent file."""
         s3_client = boto3.client('s3', region_name='us-east-1')
         s3_client.create_bucket(Bucket='test-bucket')
