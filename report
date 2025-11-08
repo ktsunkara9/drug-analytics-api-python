@@ -15,15 +15,87 @@ tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_uplo
 ================================================================ FAILURES ================================================================ 
 ________________________________ TestDrugServiceUploadStatus.test_upload_drug_data_creates_status_record _________________________________ 
 
-self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x0000020422643560>
-mock_uuid = <MagicMock name='uuid4' id='2216779480336'>
-drug_service = <src.services.drug_service.DrugService object at 0x0000020422643CE0>
-mock_repositories = (<Mock id='2216780119456'>, <Mock id='2216780119360'>, <Mock id='2216780119552'>)
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000163F6323B60>
+upload_status = UploadStatus(upload_id=abc123, status=pending, filename=test.csv)
+
+    def create(self, upload_status: UploadStatus) -> None:
+        """
+        Create new upload status record.
+
+        Args:
+            upload_status: UploadStatus domain model
+
+        Raises:
+            DynamoDBException: If create operation fails
+        """
+        try:
+            item = {
+                'upload_id': upload_status.upload_id,
+                'status': upload_status.status,
+                'filename': upload_status.filename,
+                's3_key': upload_status.s3_key,
+                'created_at': upload_status.created_at.isoformat(),
+                'total_rows': upload_status.total_rows,
+                'processed_rows': upload_status.processed_rows
+            }
+
+            if upload_status.error_message:
+                item['error_message'] = upload_status.error_message
+
+>           self.table.put_item(Item=item)
+
+src\repositories\upload_status_repository.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
+    response = action(self, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
+    response = getattr(parent.meta.client, operation_name)(*args, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1035: in _make_api_call
+    request_dict = self._convert_to_request_dict(
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1102: in _convert_to_request_dict
+    request_dict = self._serializer.serialize_to_request(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+self = <botocore.validate.ParamValidationDecorator object at 0x00000163F7C98E00>
+parameters = {'Item': {'created_at': {'S': '2025-11-08T20:38:08.033888'}, 'filename': {'S': 'test.csv'}, 'processed_rows': {'N': '0'}, 's3_key': {'S': 'uploads/abc123/test.csv'}, ...}, 'TableName': ''}
+operation_model = OperationModel(name=PutItem)
+
+    def serialize_to_request(self, parameters, operation_model):
+        input_shape = operation_model.input_shape
+        if input_shape is not None:
+            report = self._param_validator.validate(
+                parameters, operation_model.input_shape
+            )
+            if report.has_errors():
+>               raise ParamValidationError(report=report.generate_report())
+E               botocore.exceptions.ParamValidationError: Parameter validation failed:
+E               Invalid length for parameter TableName, value: 0, valid min length: 1
+
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\validate.py:381: ParamValidationError
+
+The above exception was the direct cause of the following exception:
+
+self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x00000163F62CAF00>
+mock_uuid = <MagicMock name='uuid4' id='1528843031024'>
+drug_service = <src.services.drug_service.DrugService object at 0x00000163F6322CC0>
+mock_repositories = (<Mock id='1528843876736'>, <Mock id='1528843876832'>, <Mock id='1528843877168'>)
 
     @patch('uuid.uuid4')
     def test_upload_drug_data_creates_status_record(self, mock_uuid, drug_service, mock_repositories):
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
         mock_uuid.return_value = "abc123"
+        s3_repo.upload_file.return_value = {
+            's3_key': 'uploads/abc123/test.csv',
+            's3_location': 's3://bucket/uploads/abc123/test.csv'
+        }
 
         csv_content = b"drug_name,target,efficacy\nAspirin,COX,85.5"
         filename = "test.csv"
@@ -31,51 +103,52 @@ mock_repositories = (<Mock id='2216780119456'>, <Mock id='2216780119360'>, <Mock
 >       result = drug_service.upload_drug_data(csv_content, filename)
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests\test_drug_service_upload_status.py:29:
+tests\test_drug_service_upload_status.py:33:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+src\services\drug_service.py:65: in upload_drug_data
+    self.upload_status_repository.create(upload_status)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.services.drug_service.DrugService object at 0x0000020422643CE0>, file = b'drug_name,target,efficacy\nAspirin,COX,85.5'
-filename = 'test.csv'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000163F6323B60>
+upload_status = UploadStatus(upload_id=abc123, status=pending, filename=test.csv)
 
-    def upload_drug_data(self, file: BinaryIO, filename: str) -> DrugUploadResponse:
+    def create(self, upload_status: UploadStatus) -> None:
         """
-        Handle drug data upload workflow.
+        Create new upload status record.
 
         Args:
-            file: CSV file containing drug data
-            filename: Original filename
-
-        Returns:
-            DrugUploadResponse with upload details
+            upload_status: UploadStatus domain model
 
         Raises:
-            ValidationException: If CSV validation fails
-            S3Exception: If S3 upload fails
+            DynamoDBException: If create operation fails
         """
-        # Validate CSV structure
-        self.file_service.validate_csv_structure(file)
+        try:
+            item = {
+                'upload_id': upload_status.upload_id,
+                'status': upload_status.status,
+                'filename': upload_status.filename,
+                's3_key': upload_status.s3_key,
+                'created_at': upload_status.created_at.isoformat(),
+                'total_rows': upload_status.total_rows,
+                'processed_rows': upload_status.processed_rows
+            }
 
-        # Generate upload ID
-        upload_id = str(uuid.uuid4())
+            if upload_status.error_message:
+                item['error_message'] = upload_status.error_message
 
-        # Upload file to S3
-        upload_result = self.s3_repository.upload_file(file, filename)
+            self.table.put_item(Item=item)
 
-        # Create upload status record
-        upload_status = UploadStatus(
-            upload_id=upload_id,
-            status="pending",
-            filename=filename,
->           s3_key=upload_result['s3_key'],
-                   ^^^^^^^^^^^^^^^^^^^^^^^
-            created_at=datetime.utcnow()
-        )
-E       TypeError: 'Mock' object is not subscriptable
+        except ClientError as e:
+            raise DynamoDBException(f"Failed to create upload status: {str(e)}") from e
+        except Exception as e:
+>           raise DynamoDBException(f"Unexpected error creating upload status: {str(e)}") from e
+E           src.core.exceptions.DynamoDBException: Unexpected error creating upload status: Parameter validation failed:
+E           Invalid length for parameter TableName, value: 0, valid min length: 1
 
-src\services\drug_service.py:62: TypeError
+src\repositories\upload_status_repository.py:50: DynamoDBException
 _______________________________________ TestDrugServiceUploadStatus.test_get_upload_status_success _______________________________________ 
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x0000020424059C10>, upload_id = 'test-123'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000163F63238F0>, upload_id = 'test-123'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
@@ -114,7 +187,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
     request_dict = self._serializer.serialize_to_request(
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.validate.ParamValidationDecorator object at 0x00000204240C4770>
+self = <botocore.validate.ParamValidationDecorator object at 0x00000163F7D757C0>
 parameters = {'Key': {'upload_id': {'S': 'test-123'}}, 'TableName': ''}, operation_model = OperationModel(name=GetItem)
 
     def serialize_to_request(self, parameters, operation_model):
@@ -132,12 +205,12 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x0000020422643680>
-drug_service = <src.services.drug_service.DrugService object at 0x0000020424059250>
-mock_repositories = (<Mock id='2216807469744'>, <Mock id='2216807471376'>, <Mock id='2216807470224'>)
+self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x00000163F63234D0>
+mock_repositories = (<Mock id='1528871037760'>, <Mock id='1528871038000'>, <Mock id='1528871042752'>)
 
-    def test_get_upload_status_success(self, drug_service, mock_repositories):
-        _, _, upload_status_repo = mock_repositories
+    def test_get_upload_status_success(self, mock_repositories):
+        s3_repo, dynamo_repo, upload_status_repo = mock_repositories
+        service = DrugService(s3_repo, dynamo_repo, upload_status_repo)
 
         mock_status = UploadStatus(
             upload_id="test-123",
@@ -150,17 +223,17 @@ mock_repositories = (<Mock id='2216807469744'>, <Mock id='2216807471376'>, <Mock
         )
         upload_status_repo.get_by_id.return_value = mock_status
 
->       result = drug_service.get_upload_status("test-123")
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>       result = service.get_upload_status("test-123")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests\test_drug_service_upload_status.py:55:
+tests\test_drug_service_upload_status.py:60:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 src\services\drug_service.py:173: in get_upload_status
     upload_status = self.upload_status_repository.get_by_id(upload_id)
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x0000020424059C10>, upload_id = 'test-123'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000163F63238F0>, upload_id = 'test-123'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
@@ -194,7 +267,7 @@ E           Invalid length for parameter TableName, value: 0, valid min length: 
 src\repositories\upload_status_repository.py:77: DynamoDBException
 ______________________________________ TestDrugServiceUploadStatus.test_get_upload_status_not_found ______________________________________ 
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002042402DDF0>, upload_id = 'nonexistent'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000163F7CDE000>, upload_id = 'nonexistent'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
@@ -231,9 +304,9 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
     request_dict = self._convert_to_request_dict(
 C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1102: in _convert_to_request_dict
     request_dict = self._serializer.serialize_to_request(
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <botocore.validate.ParamValidationDecorator object at 0x00000204240F3B60>
+self = <botocore.validate.ParamValidationDecorator object at 0x00000163F8188A40>
 parameters = {'Key': {'upload_id': {'S': 'nonexistent'}}, 'TableName': ''}, operation_model = OperationModel(name=GetItem)
 
     def serialize_to_request(self, parameters, operation_model):
@@ -251,26 +324,26 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x0000020422643800>
-drug_service = <src.services.drug_service.DrugService object at 0x000002042402DE80>
-mock_repositories = (<Mock id='2216807292688'>, <Mock id='2216807292880'>, <Mock id='2216807292448'>)
+self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x00000163F6323620>
+mock_repositories = (<Mock id='1528870853744'>, <Mock id='1528840899376'>, <Mock id='1528870853840'>)
 
-    def test_get_upload_status_not_found(self, drug_service, mock_repositories):
+    def test_get_upload_status_not_found(self, mock_repositories):
         from fastapi import HTTPException
-        _, _, upload_status_repo = mock_repositories
+        s3_repo, dynamo_repo, upload_status_repo = mock_repositories
+        service = DrugService(s3_repo, dynamo_repo, upload_status_repo)
         upload_status_repo.get_by_id.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
->           drug_service.get_upload_status("nonexistent")
+>           service.get_upload_status("nonexistent")
 
-tests\test_drug_service_upload_status.py:67:
+tests\test_drug_service_upload_status.py:73:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 src\services\drug_service.py:173: in get_upload_status
     upload_status = self.upload_status_repository.get_by_id(upload_id)
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002042402DDF0>, upload_id = 'nonexistent'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000163F7CDE000>, upload_id = 'nonexistent'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
@@ -304,63 +377,136 @@ E           Invalid length for parameter TableName, value: 0, valid min length: 
 src\repositories\upload_status_repository.py:77: DynamoDBException
 _____________________________________ TestDrugServiceUploadStatus.test_upload_creates_correct_s3_key _____________________________________ 
 
-self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x0000020422643980>
-mock_uuid = <MagicMock name='uuid4' id='2216812372640'>
-drug_service = <src.services.drug_service.DrugService object at 0x00000204245063C0>
-mock_repositories = (<Mock id='2216812372064'>, <Mock id='2216812372352'>, <Mock id='2216812374416'>)
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000163F81BF350>
+upload_status = UploadStatus(upload_id=xyz789, status=pending, filename=data.csv)
+
+    def create(self, upload_status: UploadStatus) -> None:
+        """
+        Create new upload status record.
+
+        Args:
+            upload_status: UploadStatus domain model
+
+        Raises:
+            DynamoDBException: If create operation fails
+        """
+        try:
+            item = {
+                'upload_id': upload_status.upload_id,
+                'status': upload_status.status,
+                'filename': upload_status.filename,
+                's3_key': upload_status.s3_key,
+                'created_at': upload_status.created_at.isoformat(),
+                'total_rows': upload_status.total_rows,
+                'processed_rows': upload_status.processed_rows
+            }
+
+            if upload_status.error_message:
+                item['error_message'] = upload_status.error_message
+
+>           self.table.put_item(Item=item)
+
+src\repositories\upload_status_repository.py:45:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
+    response = action(self, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
+    response = getattr(parent.meta.client, operation_name)(*args, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1035: in _make_api_call
+    request_dict = self._convert_to_request_dict(
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1102: in _convert_to_request_dict
+    request_dict = self._serializer.serialize_to_request(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+
+self = <botocore.validate.ParamValidationDecorator object at 0x00000163F8209700>
+parameters = {'Item': {'created_at': {'S': '2025-11-08T20:38:08.499728'}, 'filename': {'S': 'data.csv'}, 'processed_rows': {'N': '0'}, 's3_key': {'S': 'uploads/xyz789/data.csv'}, ...}, 'TableName': ''}
+operation_model = OperationModel(name=PutItem)
+
+    def serialize_to_request(self, parameters, operation_model):
+        input_shape = operation_model.input_shape
+        if input_shape is not None:
+            report = self._param_validator.validate(
+                parameters, operation_model.input_shape
+            )
+            if report.has_errors():
+>               raise ParamValidationError(report=report.generate_report())
+E               botocore.exceptions.ParamValidationError: Parameter validation failed:
+E               Invalid length for parameter TableName, value: 0, valid min length: 1
+
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\validate.py:381: ParamValidationError
+
+The above exception was the direct cause of the following exception:
+
+self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x00000163F6323770>
+mock_uuid = <MagicMock name='uuid4' id='1528875969824'>
+drug_service = <src.services.drug_service.DrugService object at 0x00000163F81BE1B0>
+mock_repositories = (<Mock id='1528875972800'>, <Mock id='1528875974624'>, <Mock id='1528875966080'>)
 
     @patch('uuid.uuid4')
     def test_upload_creates_correct_s3_key(self, mock_uuid, drug_service, mock_repositories):
         s3_repo, _, upload_status_repo = mock_repositories
         mock_uuid.return_value = "xyz789"
+        s3_repo.upload_file.return_value = {
+            's3_key': 'uploads/xyz789/data.csv',
+            's3_location': 's3://bucket/uploads/xyz789/data.csv'
+        }
 
         csv_content = b"drug_name,target,efficacy\nDrug1,Target1,90.0"
         filename = "data.csv"
 
 >       drug_service.upload_drug_data(csv_content, filename)
 
-tests\test_drug_service_upload_status.py:79:
+tests\test_drug_service_upload_status.py:89:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+src\services\drug_service.py:65: in upload_drug_data
+    self.upload_status_repository.create(upload_status)
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.services.drug_service.DrugService object at 0x00000204245063C0>, file = b'drug_name,target,efficacy\nDrug1,Target1,90.0'       
-filename = 'data.csv'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x00000163F81BF350>
+upload_status = UploadStatus(upload_id=xyz789, status=pending, filename=data.csv)
 
-    def upload_drug_data(self, file: BinaryIO, filename: str) -> DrugUploadResponse:
+    def create(self, upload_status: UploadStatus) -> None:
         """
-        Handle drug data upload workflow.
+        Create new upload status record.
 
         Args:
-            file: CSV file containing drug data
-            filename: Original filename
-
-        Returns:
-            DrugUploadResponse with upload details
+            upload_status: UploadStatus domain model
 
         Raises:
-            ValidationException: If CSV validation fails
-            S3Exception: If S3 upload fails
+            DynamoDBException: If create operation fails
         """
-        # Validate CSV structure
-        self.file_service.validate_csv_structure(file)
+        try:
+            item = {
+                'upload_id': upload_status.upload_id,
+                'status': upload_status.status,
+                'filename': upload_status.filename,
+                's3_key': upload_status.s3_key,
+                'created_at': upload_status.created_at.isoformat(),
+                'total_rows': upload_status.total_rows,
+                'processed_rows': upload_status.processed_rows
+            }
 
-        # Generate upload ID
-        upload_id = str(uuid.uuid4())
+            if upload_status.error_message:
+                item['error_message'] = upload_status.error_message
 
-        # Upload file to S3
-        upload_result = self.s3_repository.upload_file(file, filename)
+            self.table.put_item(Item=item)
 
-        # Create upload status record
-        upload_status = UploadStatus(
-            upload_id=upload_id,
-            status="pending",
-            filename=filename,
->           s3_key=upload_result['s3_key'],
-                   ^^^^^^^^^^^^^^^^^^^^^^^
-            created_at=datetime.utcnow()
-        )
-E       TypeError: 'Mock' object is not subscriptable
+        except ClientError as e:
+            raise DynamoDBException(f"Failed to create upload status: {str(e)}") from e
+        except Exception as e:
+>           raise DynamoDBException(f"Unexpected error creating upload status: {str(e)}") from e
+E           src.core.exceptions.DynamoDBException: Unexpected error creating upload status: Parameter validation failed:
+E           Invalid length for parameter TableName, value: 0, valid min length: 1
 
-src\services\drug_service.py:62: TypeError
+src\repositories\upload_status_repository.py:50: DynamoDBException
 ============================================================ warnings summary ============================================================ 
 src\models\dto\drug_dto.py:31
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
@@ -370,11 +516,16 @@ src\core\config.py:9
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\core\config.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
     class Settings(BaseSettings):
 
+tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_drug_data_creates_status_record
+tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_creates_correct_s3_key
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\services\drug_service.py:63: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at=datetime.utcnow()
+
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 ======================================================== short test summary info ========================================================= 
-FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_drug_data_creates_status_record - TypeError: 'Mock' object is not subscriptable
+FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_drug_data_creates_status_record - src.core.exceptions.DynamoDBException: Unexpected error creating upload status: Parameter validation failed:
 FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_get_upload_status_success - src.core.exceptions.DynamoDBException: Unexpected error getting upload status: Parameter validation failed:
 FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_get_upload_status_not_found - src.core.exceptions.DynamoDBException: Unexpected error getting upload status: Parameter validation failed:
-FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_creates_correct_s3_key - TypeError: 'Mock' object is not subscriptable
-===================================================== 4 failed, 2 warnings in 1.10s ====================================================== 
+FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_creates_correct_s3_key - src.core.exceptions.DynamoDBException: Unexpected error creating upload status: Parameter validation failed:
+===================================================== 4 failed, 4 warnings in 1.30s ====================================================== 
 PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
