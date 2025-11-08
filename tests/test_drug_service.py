@@ -30,11 +30,17 @@ class TestDrugService:
         return Mock()
     
     @pytest.fixture
-    def drug_service(self, mock_s3_repo, mock_dynamo_repo, mock_file_service):
+    def mock_upload_status_repo(self):
+        """Mock UploadStatusRepository."""
+        return Mock()
+    
+    @pytest.fixture
+    def drug_service(self, mock_s3_repo, mock_dynamo_repo, mock_upload_status_repo, mock_file_service):
         """Create DrugService with mocked dependencies."""
         return DrugService(
             s3_repository=mock_s3_repo,
             dynamo_repository=mock_dynamo_repo,
+            upload_status_repository=mock_upload_status_repo,
             file_service=mock_file_service
         )
     
@@ -49,7 +55,7 @@ class TestDrugService:
             s3_key="uploads/2024/01/01/abc123_test.csv"
         )
     
-    def test_upload_drug_data_success(self, drug_service, mock_s3_repo, mock_file_service):
+    def test_upload_drug_data_success(self, drug_service, mock_s3_repo, mock_file_service, mock_upload_status_repo):
         """Test successful drug data upload."""
         # Setup
         file = io.BytesIO(b"drug_name,target,efficacy\nAspirin,COX-2,85.5")
@@ -64,12 +70,12 @@ class TestDrugService:
         result = drug_service.upload_drug_data(file, filename)
         
         # Assert
-        assert isinstance(result, DrugUploadResponse)
-        assert result.status == "uploaded"
-        assert "successfully" in result.message.lower()
-        assert result.s3_location == 's3://bucket/uploads/2024/01/01/abc123_test.csv'
+        assert "upload_id" in result
+        assert result["status"] == "pending"
+        assert "successfully" in result["message"].lower()
         mock_file_service.validate_csv_structure.assert_called_once_with(file)
-        mock_s3_repo.upload_file.assert_called_once_with(file, filename)
+        mock_s3_repo.upload_file.assert_called_once()
+        mock_upload_status_repo.create.assert_called_once()
     
     def test_get_drug_by_name_success(self, drug_service, mock_dynamo_repo, sample_drug):
         """Test retrieving drug by name."""
