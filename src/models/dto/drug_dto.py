@@ -54,4 +54,4 @@ class UploadStatusResponse(BaseModel):
     created_at: datetime
     total_rows: int = 0
     processed_rows: int = 0
-    error_message: str = None
+    error_message: str | None = None
