@@ -16,30 +16,33 @@ class TestS3Repository:
     
     @pytest.fixture(autouse=True)
     def setup_aws(self):
-        """Setup mock AWS credentials and settings."""
+        """Setup mock AWS credentials."""
         os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
         os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
         os.environ['AWS_SECURITY_TOKEN'] = 'testing'
         os.environ['AWS_SESSION_TOKEN'] = 'testing'
         os.environ['S3_BUCKET_NAME'] = 'test-bucket'
         
-        # Reload settings to pick up test environment variables
-        from src.core import config
-        config.settings = config.Settings()
-        
         yield
         
         # Cleanup
-        del os.environ['S3_BUCKET_NAME']
+        if 'S3_BUCKET_NAME' in os.environ:
+            del os.environ['S3_BUCKET_NAME']
     
     @mock_aws
     def test_upload_file_success(self):
         """Test successful file upload to S3."""
-        # Create test bucket
-        s3_client = boto3.client('s3', region_name='us-east-1')
-        s3_client.create_bucket(Bucket='test-bucket')
+        # Reload settings inside mock context
+        from src.core import config
+        config.settings = config.Settings()
         
+        # Create test bucket
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+        
+        # Create repository
         repo = S3Repository()
+        
         file_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5"
         file = io.BytesIO(file_content)
         filename = "test.csv"
@@ -53,11 +56,17 @@ class TestS3Repository:
     @mock_aws
     def test_upload_file_generates_unique_keys(self):
         """Test that multiple uploads generate unique S3 keys."""
-        # Create test bucket
-        s3_client = boto3.client('s3', region_name='us-east-1')
-        s3_client.create_bucket(Bucket='test-bucket')
+        # Reload settings inside mock context
+        from src.core import config
+        config.settings = config.Settings()
         
+        # Create test bucket
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+        
+        # Create repository
         repo = S3Repository()
+        
         file1 = io.BytesIO(b"content1")
         file2 = io.BytesIO(b"content2")
         
@@ -69,11 +78,17 @@ class TestS3Repository:
     @mock_aws
     def test_get_file_success(self):
         """Test successful file retrieval from S3."""
-        # Create test bucket
-        s3_client = boto3.client('s3', region_name='us-east-1')
-        s3_client.create_bucket(Bucket='test-bucket')
+        # Reload settings inside mock context
+        from src.core import config
+        config.settings = config.Settings()
         
+        # Create test bucket
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+        
+        # Create repository
         repo = S3Repository()
+        
         file_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5"
         file = io.BytesIO(file_content)
         
@@ -85,10 +100,15 @@ class TestS3Repository:
     @mock_aws
     def test_get_file_not_found(self):
         """Test get_file raises exception for non-existent file."""
-        # Create test bucket
-        s3_client = boto3.client('s3', region_name='us-east-1')
-        s3_client.create_bucket(Bucket='test-bucket')
+        # Reload settings inside mock context
+        from src.core import config
+        config.settings = config.Settings()
         
+        # Create test bucket
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+        
+        # Create repository
         repo = S3Repository()
         
         with pytest.raises(S3Exception) as exc_info:
