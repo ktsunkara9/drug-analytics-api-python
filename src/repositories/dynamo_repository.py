@@ -3,6 +3,7 @@ DynamoDB Repository for drug data storage.
 Handles CRUD operations for drug data in DynamoDB.
 """
 from datetime import datetime
+from decimal import Decimal
 from typing import List, Optional
 import boto3
 from botocore.exceptions import ClientError
@@ -34,7 +35,7 @@ class DynamoRepository:
                 'SK': self._create_sk(drug.upload_timestamp),
                 'drug_name': drug.drug_name,
                 'target': drug.target,
-                'efficacy': drug.efficacy,
+                'efficacy': Decimal(str(drug.efficacy)),
                 'upload_timestamp': drug.upload_timestamp.isoformat(),
                 's3_key': drug.s3_key
             }
@@ -120,7 +121,7 @@ class DynamoRepository:
                         'SK': self._create_sk(drug.upload_timestamp),
                         'drug_name': drug.drug_name,
                         'target': drug.target,
-                        'efficacy': drug.efficacy,
+                        'efficacy': Decimal(str(drug.efficacy)),
                         'upload_timestamp': drug.upload_timestamp.isoformat(),
                         's3_key': drug.s3_key
                     }
