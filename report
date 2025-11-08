@@ -1,89 +1,485 @@
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\test_drug_service_upload_status.py -v
+PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests -v                                   
 ========================================================== test session starts ===========================================================
 platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\ktsun\AppData\Local\Programs\Python\Python312\python.exe
 cachedir: .pytest_cache
 rootdir: D:\coding\GIT_Work_Space\drug-analytics-api-python
 plugins: anyio-4.11.0, asyncio-1.2.0, cov-7.0.0
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 4 items                                                                                                                         
+collected 66 items                                                                                                                        
 
-tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_drug_data_creates_status_record PASSED           [ 25%]
-tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_get_upload_status_success FAILED                        [ 50%]
-tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_get_upload_status_not_found PASSED                      [ 75%]
-tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_creates_correct_s3_key PASSED                    [100%]
+tests/test_api_integration.py::TestAPIIntegration::test_health_check PASSED                                                         [  1%]
+tests/test_api_integration.py::TestAPIIntegration::test_hello_endpoint PASSED                                                       [  3%]
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success FAILED                                                   [  4%]
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_file_type PASSED                                         [  6%]
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_missing_columns PASSED                                           [  7%]
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data FAILED                                              [  9%]
+tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty PASSED                                                  [ 10%]
+tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found PASSED                                           [ 12%]
+tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_extract_upload_id_success FAILED                                   [ 13%] 
+tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_extract_upload_id_no_match PASSED                                  [ 15%]
+tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_updates_status_to_processing FAILED                        [ 16%]
+tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_updates_status_to_completed FAILED                         [ 18%]
+tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_updates_status_to_failed_on_error FAILED                   [ 19%]
+tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_without_upload_id_in_key PASSED                            [ 21%]
+tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_processes_multiple_rows FAILED                             [ 22%]
+tests/test_drug_service.py::TestDrugService::test_upload_drug_data_success PASSED                                                   [ 24%] 
+tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_success PASSED                                                   [ 25%] 
+tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_multiple_versions PASSED                                         [ 27%] 
+tests/test_drug_service.py::TestDrugService::test_get_all_drugs_success PASSED                                                      [ 28%] 
+tests/test_drug_service.py::TestDrugService::test_get_all_drugs_empty PASSED                                                        [ 30%] 
+tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success PASSED                                               [ 31%] 
+tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records PASSED                                      [ 33%] 
+tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_drug_data_creates_status_record PASSED           [ 34%] 
+tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_get_upload_status_success PASSED                        [ 36%] 
+tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_get_upload_status_not_found PASSED                      [ 37%] 
+tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_creates_correct_s3_key PASSED                    [ 39%] 
+tests/test_dynamo_repository.py::TestDynamoRepository::test_save_drug_success PASSED                                                [ 40%]
+tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_not_found PASSED                                      [ 42%]
+tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_success PASSED                                                 [ 43%]
+tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_success PASSED                                               [ 45%]
+tests/test_dynamo_repository.py::TestDynamoRepository::test_save_generic_exception PASSED                                           [ 46%]
+tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_generic_exception PASSED                              [ 48%]
+tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_generic_exception PASSED                                       [ 50%]
+tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_generic_exception PASSED                                     [ 51%]
+tests/test_file_service.py::TestFileService::test_validate_csv_structure_success PASSED                                             [ 53%] 
+tests/test_file_service.py::TestFileService::test_validate_csv_missing_columns PASSED                                               [ 54%] 
+tests/test_file_service.py::TestFileService::test_validate_csv_invalid_encoding PASSED                                              [ 56%] 
+tests/test_file_service.py::TestFileService::test_validate_csv_generic_exception PASSED                                             [ 57%] 
+tests/test_file_service.py::TestFileService::test_parse_csv_success PASSED                                                          [ 59%] 
+tests/test_file_service.py::TestFileService::test_parse_csv_empty_file PASSED                                                       [ 60%]
+tests/test_file_service.py::TestFileService::test_parse_csv_empty_drug_name PASSED                                                  [ 62%] 
+tests/test_file_service.py::TestFileService::test_parse_csv_empty_target PASSED                                                     [ 63%] 
+tests/test_file_service.py::TestFileService::test_parse_csv_invalid_efficacy_format PASSED                                          [ 65%] 
+tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_low PASSED                                        [ 66%] 
+tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_high PASSED                                       [ 68%]
+tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values PASSED                                                  [ 69%] 
+tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace PASSED                                                [ 71%] 
+tests/test_file_service.py::TestFileService::test_parse_csv_generic_exception PASSED                                                [ 72%] 
+tests/test_file_service.py::TestFileService::test_row_to_drug_generic_exception PASSED                                              [ 74%] 
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_success PASSED                                                      [ 75%]
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys PASSED                                        [ 77%]
+tests/test_s3_repository.py::TestS3Repository::test_get_file_success PASSED                                                         [ 78%]
+tests/test_s3_repository.py::TestS3Repository::test_get_file_not_found PASSED                                                       [ 80%]
+tests/test_upload_status_api.py::TestUploadStatusAPI::test_upload_returns_upload_id_and_pending_status FAILED                       [ 81%]
+tests/test_upload_status_api.py::TestUploadStatusAPI::test_get_upload_status_success PASSED                                         [ 83%]
+tests/test_upload_status_api.py::TestUploadStatusAPI::test_get_upload_status_not_found FAILED                                       [ 84%]
+tests/test_upload_status_api.py::TestUploadStatusAPI::test_get_upload_status_processing FAILED                                      [ 86%]
+tests/test_upload_status_api.py::TestUploadStatusAPI::test_get_upload_status_failed PASSED                                          [ 87%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_create_success PASSED                                      [ 89%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_success PASSED                                   [ 90%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_not_found PASSED                                 [ 92%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_success PASSED                                      [ 93%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_multiple_fields PASSED                              [ 95%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_create_exception_handling PASSED                           [ 96%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_exception_handling PASSED                        [ 98%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_exception_handling PASSED                           [100%]
 
 ================================================================ FAILURES ================================================================ 
-_______________________________________ TestDrugServiceUploadStatus.test_get_upload_status_success _______________________________________ 
+_______________________________________________ TestAPIIntegration.test_upload_csv_success _______________________________________________ 
 
-self = <tests.test_drug_service_upload_status.TestDrugServiceUploadStatus object at 0x0000018C70D032F0>
-mock_repositories = (<Mock id='1702700059824'>, <Mock id='1702700059920'>, <Mock id='1702700060016'>)
+self = <tests.test_api_integration.TestAPIIntegration object at 0x0000028FECE18290>
 
-    def test_get_upload_status_success(self, mock_repositories):
-        s3_repo, dynamo_repo, upload_status_repo = mock_repositories
-        service = DrugService(
-            s3_repository=s3_repo,
-            dynamo_repository=dynamo_repo,
-            upload_status_repository=upload_status_repo,
-            file_service=Mock()
+    @mock_aws
+    def test_upload_csv_success(self):
+        """Test successful CSV file upload."""
+        from src.core import config
+        config.settings = config.Settings()
+
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb.create_table(
+            TableName='DrugData-test',
+            KeySchema=[
+                {'AttributeName': 'PK', 'KeyType': 'HASH'},
+                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'PK', 'AttributeType': 'S'},
+                {'AttributeName': 'SK', 'AttributeType': 'S'}
+            ],
+            BillingMode='PAY_PER_REQUEST'
         )
 
-        mock_status = UploadStatus(
-            upload_id="test-123",
-            status="completed",
-            filename="test.csv",
-            s3_key="uploads/test-123/test.csv",
-            created_at=datetime.now(),
-            total_rows=100,
-            processed_rows=100
+        from src.main import app
+        client = TestClient(app)
+
+        csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5\nIbuprofen,COX-1,90.0"
+        files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
+
+        response = client.post("/v1/api/drugs/upload", files=files)
+>       assert response.status_code == 202
+E       assert 500 == 202
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+
+tests\test_api_integration.py:133: AssertionError
+____________________________________________ TestAPIIntegration.test_upload_csv_invalid_data _____________________________________________ 
+
+self = <tests.test_api_integration.TestAPIIntegration object at 0x0000028FECE18710>
+
+    @mock_aws
+    def test_upload_csv_invalid_data(self):
+        """Test upload with invalid efficacy value."""
+        from src.core import config
+        config.settings = config.Settings()
+
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb.create_table(
+            TableName='DrugData-test',
+            KeySchema=[
+                {'AttributeName': 'PK', 'KeyType': 'HASH'},
+                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'PK', 'AttributeType': 'S'},
+                {'AttributeName': 'SK', 'AttributeType': 'S'}
+            ],
+            BillingMode='PAY_PER_REQUEST'
         )
-        upload_status_repo.get_by_id.return_value = mock_status
 
->       result = service.get_upload_status("test-123")
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        from src.main import app
+        client = TestClient(app)
 
-tests\test_drug_service_upload_status.py:70:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
+        csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,invalid"
+        files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
 
-self = <src.services.drug_service.DrugService object at 0x0000018C70D50BC0>, upload_id = 'test-123'
+        response = client.post("/v1/api/drugs/upload", files=files)
+        # File is uploaded successfully (202), validation happens async
+>       assert response.status_code == 202
+E       assert 500 == 202
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
 
-    def get_upload_status(self, upload_id: str) -> UploadStatusResponse:
-        """
-        Get upload processing status.
+tests\test_api_integration.py:235: AssertionError
+_________________________________________ TestCsvProcessorLambda.test_extract_upload_id_success __________________________________________ 
 
-        Args:
-            upload_id: Upload identifier
+self = <tests.test_csv_processor_lambda.TestCsvProcessorLambda object at 0x0000028FECEC9550>
 
-        Returns:
-            UploadStatusResponse with current status
+    @mock_aws
+    def test_extract_upload_id_success(self):
+        s3_key = "uploads/abc123def456/test.csv"
+        upload_id = _extract_upload_id(s3_key)
+>       assert upload_id == "abc123def456"
+E       AssertionError: assert None == 'abc123def456'
 
-        Raises:
-            HTTPException: If upload_id not found
-        """
-        upload_status = self.upload_status_repository.get_by_id(upload_id)
+tests\test_csv_processor_lambda.py:51: AssertionError
+____________________________________ TestCsvProcessorLambda.test_handler_updates_status_to_processing ____________________________________ 
 
-        if not upload_status:
-            from fastapi import HTTPException, status
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Upload ID '{upload_id}' not found"
-            )
+self = <tests.test_csv_processor_lambda.TestCsvProcessorLambda object at 0x0000028FECEC9820>
+aws_resources = (<botocore.client.S3 object at 0x0000028FF2D2EE70>, dynamodb.ServiceResource())
 
->       return UploadStatusResponse(
-            upload_id=upload_status.upload_id,
-            status=upload_status.status,
-            filename=upload_status.filename,
-            s3_key=upload_status.s3_key,
-            created_at=upload_status.created_at,
-            total_rows=upload_status.total_rows,
-            processed_rows=upload_status.processed_rows,
-            error_message=upload_status.error_message
+    @mock_aws
+    def test_handler_updates_status_to_processing(self, aws_resources):
+        s3, dynamodb = aws_resources
+
+        csv_content = "drug_name,target,efficacy\nAspirin,COX,85.5\nIbuprofen,COX,90.0"
+        s3.put_object(Bucket="test-bucket", Key="uploads/test123/data.csv", Body=csv_content)
+
+        status_table = dynamodb.Table("UploadStatus-test")
+        status_table.put_item(Item={
+            "upload_id": "test123",
+            "status": "pending",
+            "filename": "data.csv",
+            "s3_key": "uploads/test123/data.csv",
+            "created_at": "2024-01-01T12:00:00"
+        })
+
+        event = {
+            "Records": [{
+                "s3": {
+                    "bucket": {"name": "test-bucket"},
+                    "object": {"key": "uploads/test123/data.csv"}
+                }
+            }]
+        }
+
+        handler(event, None)
+
+        response = status_table.get_item(Key={"upload_id": "test123"})
+>       assert response["Item"]["status"] == "completed"
+E       AssertionError: assert 'pending' == 'completed'
+E
+E         - completed
+E         + pending
+
+tests\test_csv_processor_lambda.py:87: AssertionError
+---------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
+Processing file: s3://test-bucket/uploads/test123/data.csv, upload_id: None
+Successfully processed 2 drug records
+____________________________________ TestCsvProcessorLambda.test_handler_updates_status_to_completed _____________________________________ 
+
+self = <tests.test_csv_processor_lambda.TestCsvProcessorLambda object at 0x0000028FECEC99D0>
+aws_resources = (<botocore.client.S3 object at 0x0000028FEDA489B0>, dynamodb.ServiceResource())
+
+    @mock_aws
+    def test_handler_updates_status_to_completed(self, aws_resources):
+        s3, dynamodb = aws_resources
+
+        csv_content = "drug_name,target,efficacy\nDrug1,Target1,75.0"
+        s3.put_object(Bucket="test-bucket", Key="uploads/uuid456/test.csv", Body=csv_content)
+
+        status_table = dynamodb.Table("UploadStatus-test")
+        status_table.put_item(Item={
+            "upload_id": "uuid456",
+            "status": "pending",
+            "filename": "test.csv",
+            "s3_key": "uploads/uuid456/test.csv",
+            "created_at": "2024-01-01T12:00:00"
+        })
+
+        event = {
+            "Records": [{
+                "s3": {
+                    "bucket": {"name": "test-bucket"},
+                    "object": {"key": "uploads/uuid456/test.csv"}
+                }
+            }]
+        }
+
+        handler(event, None)
+
+        response = status_table.get_item(Key={"upload_id": "uuid456"})
+>       assert response["Item"]["status"] == "completed"
+E       AssertionError: assert 'pending' == 'completed'
+E
+E         - completed
+E         + pending
+
+tests\test_csv_processor_lambda.py:119: AssertionError
+---------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
+Processing file: s3://test-bucket/uploads/uuid456/test.csv, upload_id: None
+Successfully processed 1 drug records
+_________________________________ TestCsvProcessorLambda.test_handler_updates_status_to_failed_on_error __________________________________ 
+
+self = <tests.test_csv_processor_lambda.TestCsvProcessorLambda object at 0x0000028FECEC94F0>
+aws_resources = (<botocore.client.S3 object at 0x0000028FF09C7200>, dynamodb.ServiceResource())
+
+    @mock_aws
+    def test_handler_updates_status_to_failed_on_error(self, aws_resources):
+        s3, dynamodb = aws_resources
+
+        csv_content = "invalid,csv,format\nno,efficacy,column"
+        s3.put_object(Bucket="test-bucket", Key="uploads/uuid789/bad.csv", Body=csv_content)
+
+        status_table = dynamodb.Table("UploadStatus-test")
+        status_table.put_item(Item={
+            "upload_id": "uuid789",
+            "status": "pending",
+            "filename": "bad.csv",
+            "s3_key": "uploads/uuid789/bad.csv",
+            "created_at": "2024-01-01T12:00:00"
+        })
+
+        event = {
+            "Records": [{
+                "s3": {
+                    "bucket": {"name": "test-bucket"},
+                    "object": {"key": "uploads/uuid789/bad.csv"}
+                }
+            }]
+        }
+
+        handler(event, None)
+
+        response = status_table.get_item(Key={"upload_id": "uuid789"})
+>       assert response["Item"]["status"] == "failed"
+E       AssertionError: assert 'pending' == 'failed'
+E
+E         - failed
+E         + pending
+
+tests\test_csv_processor_lambda.py:151: AssertionError
+---------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
+Processing file: s3://test-bucket/uploads/uuid789/bad.csv, upload_id: None
+Validation error: Row 2: drug_name cannot be empty
+______________________________________ TestCsvProcessorLambda.test_handler_processes_multiple_rows _______________________________________ 
+
+self = <tests.test_csv_processor_lambda.TestCsvProcessorLambda object at 0x0000028FECEC9EE0>
+aws_resources = (<botocore.client.S3 object at 0x0000028FF43A8680>, dynamodb.ServiceResource())
+
+        @mock_aws
+        def test_handler_processes_multiple_rows(self, aws_resources):
+            s3, dynamodb = aws_resources
+
+            csv_content = """drug_name,target,efficacy
+    Aspirin,COX,85.5
+    Ibuprofen,COX,90.0
+    Paracetamol,COX,75.0
+    Naproxen,COX,88.0"""
+            s3.put_object(Bucket="test-bucket", Key="uploads/multi123/drugs.csv", Body=csv_content)
+
+            status_table = dynamodb.Table("UploadStatus-test")
+            status_table.put_item(Item={
+                "upload_id": "multi123",
+                "status": "pending",
+                "filename": "drugs.csv",
+                "s3_key": "uploads/multi123/drugs.csv",
+                "created_at": "2024-01-01T12:00:00"
+            })
+
+            event = {
+                "Records": [{
+                    "s3": {
+                        "bucket": {"name": "test-bucket"},
+                        "object": {"key": "uploads/multi123/drugs.csv"}
+                    }
+                }]
+            }
+
+            handler(event, None)
+
+            response = status_table.get_item(Key={"upload_id": "multi123"})
+>           assert response["Item"]["status"] == "completed"
+E           AssertionError: assert 'pending' == 'completed'
+E
+E             - completed
+E             + pending
+
+tests\test_csv_processor_lambda.py:205: AssertionError
+---------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
+Processing file: s3://test-bucket/uploads/multi123/drugs.csv, upload_id: None
+Successfully processed 4 drug records
+__________________________________ TestUploadStatusAPI.test_upload_returns_upload_id_and_pending_status __________________________________ 
+
+self = <tests.test_upload_status_api.TestUploadStatusAPI object at 0x0000028FECF16C90>, setup_test_env = None
+
+    @mock_aws
+    def test_upload_returns_upload_id_and_pending_status(self, setup_test_env):
+        config.settings = config.Settings()
+
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-bucket")
+
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        dynamodb.create_table(
+            TableName="DrugData-test",
+            KeySchema=[
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"}
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST"
         )
-E       pydantic_core._pydantic_core.ValidationError: 1 validation error for UploadStatusResponse
-E       error_message
-E         Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
-E           For further information visit https://errors.pydantic.dev/2.12/v/string_type
+        dynamodb.create_table(
+            TableName="UploadStatus-test",
+            KeySchema=[{"AttributeName": "upload_id", "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": "upload_id", "AttributeType": "S"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
 
-src\services\drug_service.py:182: ValidationError
+        from src.main import app
+        client = TestClient(app)
+        csv_content = "drug_name,target,efficacy\nAspirin,COX,85.5"
+
+        response = client.post(
+            "/v1/api/drugs/upload",
+            files={"file": ("test.csv", csv_content, "text/csv")}
+        )
+
+>       assert response.status_code == 200
+E       assert 202 == 200
+E        +  where 202 = <Response [202 Accepted]>.status_code
+
+tests\test_upload_status_api.py:73: AssertionError
+__________________________________________ TestUploadStatusAPI.test_get_upload_status_not_found __________________________________________ 
+
+self = <tests.test_upload_status_api.TestUploadStatusAPI object at 0x0000028FECF17020>, setup_test_env = None
+
+    @mock_aws
+    def test_get_upload_status_not_found(self, setup_test_env):
+        config.settings = config.Settings()
+
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-bucket")
+
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        dynamodb.create_table(
+            TableName="DrugData-test",
+            KeySchema=[
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"}
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        dynamodb.create_table(
+            TableName="UploadStatus-test",
+            KeySchema=[{"AttributeName": "upload_id", "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": "upload_id", "AttributeType": "S"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
+
+        from src.main import app
+        client = TestClient(app)
+        response = client.get("/v1/api/drugs/status/nonexistent-id")
+
+        assert response.status_code == 404
+>       assert response.json()["detail"] == "Upload status not found"
+E       assert "Upload ID 'n...id' not found" == 'Upload status not found'
+E
+E         - Upload status not found
+E         + Upload ID 'nonexistent-id' not found
+
+tests\test_upload_status_api.py:159: AssertionError
+_________________________________________ TestUploadStatusAPI.test_get_upload_status_processing __________________________________________ 
+
+self = <tests.test_upload_status_api.TestUploadStatusAPI object at 0x0000028FECF17200>, setup_test_env = None
+
+    @mock_aws
+    def test_get_upload_status_processing(self, setup_test_env):
+        config.settings = config.Settings()
+
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-bucket")
+
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        dynamodb.create_table(
+            TableName="DrugData-test",
+            KeySchema=[
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"}
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        dynamodb.create_table(
+            TableName="UploadStatus-test",
+            KeySchema=[{"AttributeName": "upload_id", "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": "upload_id", "AttributeType": "S"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        table = dynamodb.Table("UploadStatus-test")
+        table.put_item(Item={
+            "upload_id": "test-uuid-456",
+            "status": "processing",
+            "filename": "data.csv",
+            "s3_key": "uploads/test-uuid-456/data.csv",
+            "created_at": "2024-01-01T12:00:00"
+        })
+
+        from src.main import app
+        client = TestClient(app)
+        response = client.get("/v1/api/drugs/status/test-uuid-456")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "processing"
+>       assert data["total_rows"] is None
+E       assert 0 is None
+
+tests\test_upload_status_api.py:203: AssertionError
 ============================================================ warnings summary ============================================================ 
 src\models\dto\drug_dto.py:31
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
@@ -93,12 +489,52 @@ src\core\config.py:9
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\core\config.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
     class Settings(BaseSettings):
 
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
+tests/test_s3_repository.py::TestS3Repository::test_get_file_success
+tests/test_upload_status_api.py::TestUploadStatusAPI::test_upload_returns_upload_id_and_pending_status
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:68: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
+tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
+tests/test_s3_repository.py::TestS3Repository::test_get_file_success
+tests/test_upload_status_api.py::TestUploadStatusAPI::test_upload_returns_upload_id_and_pending_status
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:54: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    'upload_timestamp': datetime.utcnow().isoformat()
+
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
+tests/test_drug_service.py::TestDrugService::test_upload_drug_data_success
 tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_drug_data_creates_status_record
 tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_creates_correct_s3_key
+tests/test_upload_status_api.py::TestUploadStatusAPI::test_upload_returns_upload_id_and_pending_status
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\services\drug_service.py:63: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
     created_at=datetime.utcnow()
 
+tests/test_csv_processor_lambda.py: 8 warnings
+tests/test_drug_service.py: 4 warnings
+tests/test_file_service.py: 5 warnings
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\drug_model.py:23: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.upload_timestamp = upload_timestamp or datetime.utcnow()
+
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 ======================================================== short test summary info ========================================================= 
-FAILED tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_get_upload_status_success - pydantic_core._pydantic_core.ValidationError: 1 validation error for UploadStatusResponse
-================================================ 1 failed, 3
+FAILED tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success - assert 500 == 202
+FAILED tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data - assert 500 == 202
+FAILED tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_extract_upload_id_success - AssertionError: assert None == 'abc123def456'
+FAILED tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_updates_status_to_processing - AssertionError: assert 'pending' == 'completed'
+FAILED tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_updates_status_to_completed - AssertionError: assert 'pending' == 'completed'
+FAILED tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_updates_status_to_failed_on_error - AssertionError: assert 'pending' == 'failed'
+FAILED tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_processes_multiple_rows - AssertionError: assert 'pending' == 'completed'
+FAILED tests/test_upload_status_api.py::TestUploadStatusAPI::test_upload_returns_upload_id_and_pending_status - assert 202 == 200
+FAILED tests/test_upload_status_api.py::TestUploadStatusAPI::test_get_upload_status_not_found - assert "Upload ID 'n...id' not found" == 'Upload status not found'
+FAILED tests/test_upload_status_api.py::TestUploadStatusAPI::test_get_upload_status_processing - assert 0 is None
+=============================================== 10 failed, 56 passed, 39 warnings in 9.90s =============================================== 
+PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
