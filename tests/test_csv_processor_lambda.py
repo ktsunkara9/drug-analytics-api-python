@@ -11,10 +11,14 @@ def setup_env(monkeypatch):
     monkeypatch.setenv("DYNAMODB_TABLE_NAME", "DrugData-test")
     monkeypatch.setenv("UPLOAD_STATUS_TABLE_NAME", "UploadStatus-test")
     monkeypatch.setenv("AWS_REGION", "us-east-1")
+    from src.core import config
+    config.settings = config.Settings()
 
 
 @pytest.fixture
 def aws_resources(setup_env):
+    from src.core import config
+    config.settings = config.Settings()
     with mock_aws():
         s3 = boto3.client("s3", region_name="us-east-1")
         s3.create_bucket(Bucket="test-bucket")
