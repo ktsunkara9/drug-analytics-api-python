@@ -1,28 +1,43 @@
 import pytest
+import os
 from fastapi.testclient import TestClient
 from moto import mock_aws
 import boto3
-from src.main import app
 from src.core import config
-from src.api.dependencies import get_drug_service
 
 
 @pytest.fixture
-def setup_test_env(monkeypatch):
-    monkeypatch.setenv("S3_BUCKET_NAME", "test-bucket")
-    monkeypatch.setenv("DYNAMODB_TABLE_NAME", "DrugData-test")
-    monkeypatch.setenv("UPLOAD_STATUS_TABLE_NAME", "UploadStatus-test")
-    monkeypatch.setenv("AWS_REGION", "us-east-1")
-    config.settings = config.Settings()
+def setup_test_env():
+    os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
+    os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
+    os.environ['AWS_REGION'] = 'us-east-1'
+    os.environ['S3_BUCKET_NAME'] = 'test-bucket'
+    os.environ['DYNAMODB_TABLE_NAME'] = 'DrugData-test'
+    os.environ['UPLOAD_STATUS_TABLE_NAME'] = 'UploadStatus-test'
+    os.environ['ENVIRONMENT'] = 'test'
+    
+    from src.core import dependencies
+    dependencies.get_s3_repository.cache_clear()
+    dependencies.get_dynamo_repository.cache_clear()
+    dependencies.get_upload_status_repository.cache_clear()
+    dependencies.get_file_service.cache_clear()
+    dependencies.get_drug_service.cache_clear()
+    
     yield
-    app.dependency_overrides.clear()
-    get_drug_service.cache_clear()
-    config.settings = config.Settings()
+    
+    for key in ['S3_BUCKET_NAME', 'DYNAMODB_TABLE_NAME', 'UPLOAD_STATUS_TABLE_NAME', 'ENVIRONMENT']:
+        if key in os.environ:
+            del os.environ[key]
 
 
-@pytest.fixture
-def aws_resources(setup_test_env):
-    with mock_aws():
+
+
+
+class TestUploadStatusAPI:
+    @mock_aws
+    def test_upload_returns_upload_id_and_pending_status(self, setup_test_env):
+        config.settings = config.Settings()
+        
         s3 = boto3.client("s3", region_name="us-east-1")
         s3.create_bucket(Bucket="test-bucket")
         
@@ -39,7 +54,6 @@ def aws_resources(setup_test_env):
             ],
             BillingMode="PAY_PER_REQUEST"
         )
-        
         dynamodb.create_table(
             TableName="UploadStatus-test",
             KeySchema=[{"AttributeName": "upload_id", "KeyType": "HASH"}],
@@ -47,12 +61,7 @@ def aws_resources(setup_test_env):
             BillingMode="PAY_PER_REQUEST"
         )
         
-        yield s3, dynamodb
-
-
-class TestUploadStatusAPI:
-    @mock_aws
-    def test_upload_returns_upload_id_and_pending_status(self, aws_resources):
+        from src.main import app
         client = TestClient(app)
         csv_content = "drug_name,target,efficacy\nAspirin,COX,85.5"
         
@@ -68,8 +77,31 @@ class TestUploadStatusAPI:
         assert data["message"] == "File uploaded successfully"
 
     @mock_aws
-    def test_get_upload_status_success(self, aws_resources):
-        _, dynamodb = aws_resources
+    def test_get_upload_status_success(self, setup_test_env):
+        config.settings = config.Settings()
+        
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-bucket")
+        
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        dynamodb.create_table(
+            TableName="DrugData-test",
+            KeySchema=[
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"}
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        dynamodb.create_table(
+            TableName="UploadStatus-test",
+            KeySchema=[{"AttributeName": "upload_id", "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": "upload_id", "AttributeType": "S"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
         table = dynamodb.Table("UploadStatus-test")
         table.put_item(Item={
             "upload_id": "test-uuid-123",
@@ -81,6 +113,7 @@ class TestUploadStatusAPI:
             "processed_rows": 50
         })
         
+        from src.main import app
         client = TestClient(app)
         response = client.get("/v1/api/drugs/status/test-uuid-123")
         
@@ -92,7 +125,33 @@ class TestUploadStatusAPI:
         assert data["processed_rows"] == 50
 
     @mock_aws
-    def test_get_upload_status_not_found(self, aws_resources):
+    def test_get_upload_status_not_found(self, setup_test_env):
+        config.settings = config.Settings()
+        
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-bucket")
+        
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        dynamodb.create_table(
+            TableName="DrugData-test",
+            KeySchema=[
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"}
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        dynamodb.create_table(
+            TableName="UploadStatus-test",
+            KeySchema=[{"AttributeName": "upload_id", "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": "upload_id", "AttributeType": "S"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        
+        from src.main import app
         client = TestClient(app)
         response = client.get("/v1/api/drugs/status/nonexistent-id")
         
@@ -100,8 +159,31 @@ class TestUploadStatusAPI:
         assert response.json()["detail"] == "Upload status not found"
 
     @mock_aws
-    def test_get_upload_status_processing(self, aws_resources):
-        _, dynamodb = aws_resources
+    def test_get_upload_status_processing(self, setup_test_env):
+        config.settings = config.Settings()
+        
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-bucket")
+        
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        dynamodb.create_table(
+            TableName="DrugData-test",
+            KeySchema=[
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"}
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        dynamodb.create_table(
+            TableName="UploadStatus-test",
+            KeySchema=[{"AttributeName": "upload_id", "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": "upload_id", "AttributeType": "S"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
         table = dynamodb.Table("UploadStatus-test")
         table.put_item(Item={
             "upload_id": "test-uuid-456",
@@ -111,6 +193,7 @@ class TestUploadStatusAPI:
             "created_at": "2024-01-01T12:00:00"
         })
         
+        from src.main import app
         client = TestClient(app)
         response = client.get("/v1/api/drugs/status/test-uuid-456")
         
@@ -121,8 +204,31 @@ class TestUploadStatusAPI:
         assert data["processed_rows"] is None
 
     @mock_aws
-    def test_get_upload_status_failed(self, aws_resources):
-        _, dynamodb = aws_resources
+    def test_get_upload_status_failed(self, setup_test_env):
+        config.settings = config.Settings()
+        
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-bucket")
+        
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        dynamodb.create_table(
+            TableName="DrugData-test",
+            KeySchema=[
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"}
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        dynamodb.create_table(
+            TableName="UploadStatus-test",
+            KeySchema=[{"AttributeName": "upload_id", "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": "upload_id", "AttributeType": "S"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
         table = dynamodb.Table("UploadStatus-test")
         table.put_item(Item={
             "upload_id": "test-uuid-789",
@@ -133,6 +239,7 @@ class TestUploadStatusAPI:
             "error_message": "Invalid CSV format"
         })
         
+        from src.main import app
         client = TestClient(app)
         response = client.get("/v1/api/drugs/status/test-uuid-789")
         
