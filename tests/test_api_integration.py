@@ -23,6 +23,13 @@ class TestAPIIntegration:
         os.environ['DYNAMODB_TABLE_NAME'] = 'DrugData-test'
         os.environ['ENVIRONMENT'] = 'test'
         
+        # Clear dependency injection cache
+        from src.core import dependencies
+        dependencies.get_s3_repository.cache_clear()
+        dependencies.get_dynamo_repository.cache_clear()
+        dependencies.get_file_service.cache_clear()
+        dependencies.get_drug_service.cache_clear()
+        
         yield
         
         for key in ['S3_BUCKET_NAME', 'DYNAMODB_TABLE_NAME', 'ENVIRONMENT']:
