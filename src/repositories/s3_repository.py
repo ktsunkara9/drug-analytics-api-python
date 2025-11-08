@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import BinaryIO
 import boto3
 from botocore.exceptions import ClientError
-from src.core.config import settings
+from src.core import config
 from src.core.exceptions import S3Exception
 
 
@@ -15,8 +15,8 @@ class S3Repository:
     """Repository for S3 file operations."""
     
     def __init__(self):
-        self.s3_client = boto3.client('s3', region_name=settings.aws_region)
-        self.bucket_name = settings.s3_bucket_name
+        self.s3_client = boto3.client('s3', region_name=config.settings.aws_region)
+        self.bucket_name = config.settings.s3_bucket_name
     
     def upload_file(self, file: BinaryIO, filename: str) -> dict:
         """

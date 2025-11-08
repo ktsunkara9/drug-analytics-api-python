@@ -40,17 +40,8 @@ class TestS3Repository:
         s3 = boto3.client('s3', region_name='us-east-1')
         s3.create_bucket(Bucket='test-bucket')
         
-        # Verify bucket exists
-        buckets = s3.list_buckets()
-        print(f"Buckets after creation: {[b['Name'] for b in buckets['Buckets']]}")
-        
         # Create repository
         repo = S3Repository()
-        print(f"Repo bucket name: {repo.bucket_name}")
-        
-        # Verify repo can see the bucket
-        repo_buckets = repo.s3_client.list_buckets()
-        print(f"Buckets visible to repo: {[b['Name'] for b in repo_buckets['Buckets']]}")
         
         file_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5"
         file = io.BytesIO(file_content)
