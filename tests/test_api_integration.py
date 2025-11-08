@@ -263,6 +263,9 @@ class TestAPIIntegration:
         client = TestClient(app)
         
         response = client.get("/v1/api/drugs/")
+        if response.status_code != 200:
+            print(f"\nError response: {response.status_code}")
+            print(f"Response body: {response.text}")
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == 0
@@ -295,5 +298,8 @@ class TestAPIIntegration:
         client = TestClient(app)
         
         response = client.get("/v1/api/drugs/NonExistent")
+        if response.status_code not in [404, 200]:
+            print(f"\nError response: {response.status_code}")
+            print(f"Response body: {response.text}")
         assert response.status_code == 404
         assert "not found" in response.text.lower()
