@@ -45,17 +45,17 @@ class TestS3Repository:
         
         file_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5"
         file = io.BytesIO(file_content)
-        filename = "test.csv"
+        s3_key = "uploads/test-uuid/test.csv"
         
-        result = repo.upload_file(file, filename)
+        result = repo.upload_file(file, s3_key)
         
         assert 's3_key' in result
         assert 's3_location' in result
-        assert filename in result['s3_key']
+        assert result['s3_key'] == s3_key
     
     @mock_aws
-    def test_upload_file_generates_unique_keys(self):
-        """Test that multiple uploads generate unique S3 keys."""
+    def test_upload_file_with_different_keys(self):
+        """Test that uploads with different keys work correctly."""
         # Reload settings inside mock context
         from src.core import config
         config.settings = config.Settings()
@@ -70,10 +70,12 @@ class TestS3Repository:
         file1 = io.BytesIO(b"content1")
         file2 = io.BytesIO(b"content2")
         
-        result1 = repo.upload_file(file1, "test.csv")
-        result2 = repo.upload_file(file2, "test.csv")
+        result1 = repo.upload_file(file1, "uploads/uuid1/test.csv")
+        result2 = repo.upload_file(file2, "uploads/uuid2/test.csv")
         
         assert result1['s3_key'] != result2['s3_key']
+        assert result1['s3_key'] == "uploads/uuid1/test.csv"
+        assert result2['s3_key'] == "uploads/uuid2/test.csv"
     
     @mock_aws
     def test_get_file_success(self):
@@ -91,8 +93,9 @@ class TestS3Repository:
         
         file_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5"
         file = io.BytesIO(file_content)
+        s3_key = "uploads/test-uuid/test.csv"
         
-        upload_result = repo.upload_file(file, "test.csv")
+        upload_result = repo.upload_file(file, s3_key)
         retrieved_content = repo.get_file(upload_result['s3_key'])
         
         assert retrieved_content == file_content
