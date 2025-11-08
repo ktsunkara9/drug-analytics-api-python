@@ -46,9 +46,9 @@ def aws_resources(setup_env):
 class TestCsvProcessorLambda:
     @mock_aws
     def test_extract_upload_id_success(self):
-        s3_key = "uploads/abc123def456/test.csv"
+        s3_key = "uploads/abc123de-f456-4789-abcd-123456789012/test.csv"
         upload_id = _extract_upload_id(s3_key)
-        assert upload_id == "abc123def456"
+        assert upload_id == "abc123de-f456-4789-abcd-123456789012"
 
     @mock_aws
     def test_extract_upload_id_no_match(self):
@@ -61,14 +61,14 @@ class TestCsvProcessorLambda:
         s3, dynamodb = aws_resources
         
         csv_content = "drug_name,target,efficacy\nAspirin,COX,85.5\nIbuprofen,COX,90.0"
-        s3.put_object(Bucket="test-bucket", Key="uploads/test123/data.csv", Body=csv_content)
+        s3.put_object(Bucket="test-bucket", Key="uploads/test1234-5678-9abc-def0-123456789012/data.csv", Body=csv_content)
         
         status_table = dynamodb.Table("UploadStatus-test")
         status_table.put_item(Item={
-            "upload_id": "test123",
+            "upload_id": "test1234-5678-9abc-def0-123456789012",
             "status": "pending",
             "filename": "data.csv",
-            "s3_key": "uploads/test123/data.csv",
+            "s3_key": "uploads/test1234-5678-9abc-def0-123456789012/data.csv",
             "created_at": "2024-01-01T12:00:00"
         })
         
@@ -76,14 +76,14 @@ class TestCsvProcessorLambda:
             "Records": [{
                 "s3": {
                     "bucket": {"name": "test-bucket"},
-                    "object": {"key": "uploads/test123/data.csv"}
+                    "object": {"key": "uploads/test1234-5678-9abc-def0-123456789012/data.csv"}
                 }
             }]
         }
         
         handler(event, None)
         
-        response = status_table.get_item(Key={"upload_id": "test123"})
+        response = status_table.get_item(Key={"upload_id": "test1234-5678-9abc-def0-123456789012"})
         assert response["Item"]["status"] == "completed"
         assert response["Item"]["total_rows"] == 2
         assert response["Item"]["processed_rows"] == 2
@@ -93,14 +93,14 @@ class TestCsvProcessorLambda:
         s3, dynamodb = aws_resources
         
         csv_content = "drug_name,target,efficacy\nDrug1,Target1,75.0"
-        s3.put_object(Bucket="test-bucket", Key="uploads/uuid456/test.csv", Body=csv_content)
+        s3.put_object(Bucket="test-bucket", Key="uploads/uuid0456-7890-abcd-ef12-345678901234/test.csv", Body=csv_content)
         
         status_table = dynamodb.Table("UploadStatus-test")
         status_table.put_item(Item={
-            "upload_id": "uuid456",
+            "upload_id": "uuid0456-7890-abcd-ef12-345678901234",
             "status": "pending",
             "filename": "test.csv",
-            "s3_key": "uploads/uuid456/test.csv",
+            "s3_key": "uploads/uuid0456-7890-abcd-ef12-345678901234/test.csv",
             "created_at": "2024-01-01T12:00:00"
         })
         
@@ -108,14 +108,14 @@ class TestCsvProcessorLambda:
             "Records": [{
                 "s3": {
                     "bucket": {"name": "test-bucket"},
-                    "object": {"key": "uploads/uuid456/test.csv"}
+                    "object": {"key": "uploads/uuid0456-7890-abcd-ef12-345678901234/test.csv"}
                 }
             }]
         }
         
         handler(event, None)
         
-        response = status_table.get_item(Key={"upload_id": "uuid456"})
+        response = status_table.get_item(Key={"upload_id": "uuid0456-7890-abcd-ef12-345678901234"})
         assert response["Item"]["status"] == "completed"
         assert response["Item"]["total_rows"] == 1
         assert response["Item"]["processed_rows"] == 1
@@ -125,14 +125,14 @@ class TestCsvProcessorLambda:
         s3, dynamodb = aws_resources
         
         csv_content = "invalid,csv,format\nno,efficacy,column"
-        s3.put_object(Bucket="test-bucket", Key="uploads/uuid789/bad.csv", Body=csv_content)
+        s3.put_object(Bucket="test-bucket", Key="uploads/uuid0789-abcd-ef12-3456-789012345678/bad.csv", Body=csv_content)
         
         status_table = dynamodb.Table("UploadStatus-test")
         status_table.put_item(Item={
-            "upload_id": "uuid789",
+            "upload_id": "uuid0789-abcd-ef12-3456-789012345678",
             "status": "pending",
             "filename": "bad.csv",
-            "s3_key": "uploads/uuid789/bad.csv",
+            "s3_key": "uploads/uuid0789-abcd-ef12-3456-789012345678/bad.csv",
             "created_at": "2024-01-01T12:00:00"
         })
         
@@ -140,14 +140,14 @@ class TestCsvProcessorLambda:
             "Records": [{
                 "s3": {
                     "bucket": {"name": "test-bucket"},
-                    "object": {"key": "uploads/uuid789/bad.csv"}
+                    "object": {"key": "uploads/uuid0789-abcd-ef12-3456-789012345678/bad.csv"}
                 }
             }]
         }
         
         handler(event, None)
         
-        response = status_table.get_item(Key={"upload_id": "uuid789"})
+        response = status_table.get_item(Key={"upload_id": "uuid0789-abcd-ef12-3456-789012345678"})
         assert response["Item"]["status"] == "failed"
         assert "error_message" in response["Item"]
 
@@ -179,14 +179,14 @@ Aspirin,COX,85.5
 Ibuprofen,COX,90.0
 Paracetamol,COX,75.0
 Naproxen,COX,88.0"""
-        s3.put_object(Bucket="test-bucket", Key="uploads/multi123/drugs.csv", Body=csv_content)
+        s3.put_object(Bucket="test-bucket", Key="uploads/multi123-4567-89ab-cdef-012345678901/drugs.csv", Body=csv_content)
         
         status_table = dynamodb.Table("UploadStatus-test")
         status_table.put_item(Item={
-            "upload_id": "multi123",
+            "upload_id": "multi123-4567-89ab-cdef-012345678901",
             "status": "pending",
             "filename": "drugs.csv",
-            "s3_key": "uploads/multi123/drugs.csv",
+            "s3_key": "uploads/multi123-4567-89ab-cdef-012345678901/drugs.csv",
             "created_at": "2024-01-01T12:00:00"
         })
         
@@ -194,14 +194,14 @@ Naproxen,COX,88.0"""
             "Records": [{
                 "s3": {
                     "bucket": {"name": "test-bucket"},
-                    "object": {"key": "uploads/multi123/drugs.csv"}
+                    "object": {"key": "uploads/multi123-4567-89ab-cdef-012345678901/drugs.csv"}
                 }
             }]
         }
         
         handler(event, None)
         
-        response = status_table.get_item(Key={"upload_id": "multi123"})
+        response = status_table.get_item(Key={"upload_id": "multi123-4567-89ab-cdef-012345678901"})
         assert response["Item"]["status"] == "completed"
         assert response["Item"]["total_rows"] == 4
         assert response["Item"]["processed_rows"] == 4

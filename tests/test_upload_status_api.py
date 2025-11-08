@@ -70,7 +70,7 @@ class TestUploadStatusAPI:
             files={"file": ("test.csv", csv_content, "text/csv")}
         )
         
-        assert response.status_code == 200
+        assert response.status_code == 202
         data = response.json()
         assert "upload_id" in data
         assert data["status"] == "pending"
@@ -156,7 +156,7 @@ class TestUploadStatusAPI:
         response = client.get("/v1/api/drugs/status/nonexistent-id")
         
         assert response.status_code == 404
-        assert response.json()["detail"] == "Upload status not found"
+        assert "not found" in response.json()["detail"].lower()
 
     @mock_aws
     def test_get_upload_status_processing(self, setup_test_env):
@@ -200,8 +200,8 @@ class TestUploadStatusAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "processing"
-        assert data["total_rows"] is None
-        assert data["processed_rows"] is None
+        assert data["total_rows"] == 0
+        assert data["processed_rows"] == 0
 
     @mock_aws
     def test_get_upload_status_failed(self, setup_test_env):

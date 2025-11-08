@@ -134,7 +134,8 @@ class TestAPIIntegration:
         data = response.json()
         assert "message" in data
         assert "s3_location" in data
-        assert data["status"] == "uploaded"
+        assert "upload_id" in data
+        assert data["status"] == "pending"
     
     @mock_aws
     def test_upload_csv_invalid_file_type(self):
@@ -234,7 +235,8 @@ class TestAPIIntegration:
         # File is uploaded successfully (202), validation happens async
         assert response.status_code == 202
         data = response.json()
-        assert "s3_location" in data
+        assert "upload_id" in data
+        assert data["status"] == "pending"
     
     @mock_aws
     def test_get_all_drugs_empty(self):
