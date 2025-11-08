@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 import os
 import pytest
-from moto import mock_dynamodb
+from moto import mock_aws
 import boto3
 from src.repositories.dynamo_repository import DynamoRepository
 from src.models.drug_model import Drug
@@ -40,7 +40,7 @@ class TestDynamoRepository:
             BillingMode='PAY_PER_REQUEST'
         )
     
-    @mock_dynamodb
+    @mock_aws
     def test_save_drug_success(self, aws_credentials):
         """Test successful drug save to DynamoDB."""
         self._create_table()
@@ -53,7 +53,7 @@ class TestDynamoRepository:
         assert len(drugs) == 1
         assert drugs[0].drug_name == "Aspirin"
     
-    @mock_dynamodb
+    @mock_aws
     def test_find_by_drug_name_not_found(self, aws_credentials):
         """Test finding non-existent drug raises exception."""
         self._create_table()
@@ -62,7 +62,7 @@ class TestDynamoRepository:
         with pytest.raises(DrugNotFoundException):
             repo.find_by_drug_name("NonExistent")
     
-    @mock_dynamodb
+    @mock_aws
     def test_find_all_success(self, aws_credentials):
         """Test retrieving all drugs."""
         self._create_table()
@@ -76,7 +76,7 @@ class TestDynamoRepository:
         drugs = repo.find_all()
         assert len(drugs) == 2
     
-    @mock_dynamodb
+    @mock_aws
     def test_batch_save_success(self, aws_credentials):
         """Test batch saving multiple drugs."""
         self._create_table()

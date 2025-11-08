@@ -5,7 +5,7 @@ Uses moto to mock AWS S3 service.
 import io
 import os
 import pytest
-from moto import mock_s3
+from moto import mock_aws
 import boto3
 from src.repositories.s3_repository import S3Repository
 from src.core.exceptions import S3Exception
@@ -22,7 +22,7 @@ class TestS3Repository:
         os.environ['AWS_SECURITY_TOKEN'] = 'testing'
         os.environ['AWS_SESSION_TOKEN'] = 'testing'
     
-    @mock_s3
+    @mock_aws
     def test_upload_file_success(self, aws_credentials):
         """Test successful file upload to S3."""
         # Create bucket
@@ -40,7 +40,7 @@ class TestS3Repository:
         assert 's3_location' in result
         assert filename in result['s3_key']
     
-    @mock_s3
+    @mock_aws
     def test_upload_file_generates_unique_keys(self, aws_credentials):
         """Test that multiple uploads generate unique S3 keys."""
         s3_client = boto3.client('s3', region_name='us-east-1')
@@ -55,7 +55,7 @@ class TestS3Repository:
         
         assert result1['s3_key'] != result2['s3_key']
     
-    @mock_s3
+    @mock_aws
     def test_get_file_success(self, aws_credentials):
         """Test successful file retrieval from S3."""
         s3_client = boto3.client('s3', region_name='us-east-1')
@@ -70,7 +70,7 @@ class TestS3Repository:
         
         assert retrieved_content == file_content
     
-    @mock_s3
+    @mock_aws
     def test_get_file_not_found(self, aws_credentials):
         """Test get_file raises exception for non-existent file."""
         s3_client = boto3.client('s3', region_name='us-east-1')
