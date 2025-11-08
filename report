@@ -53,7 +53,7 @@ tests/test_s3_repository.py::TestS3Repository::test_get_file_not_found PASSED   
 ================================================================ FAILURES ================================================================ 
 ______________________________________________ TestAPIIntegration.test_get_all_drugs_empty _______________________________________________ 
 
-self = <tests.test_api_integration.TestAPIIntegration object at 0x0000021777940560>
+self = <tests.test_api_integration.TestAPIIntegration object at 0x0000013BED610620>
 
     @mock_aws
     def test_get_all_drugs_empty(self):
@@ -89,7 +89,7 @@ E        +  where 500 = <Response [500 Internal Server Error]>.status_code
 tests\test_api_integration.py:259: AssertionError
 ___________________________________________ TestAPIIntegration.test_get_drug_by_name_not_found ___________________________________________ 
 
-self = <tests.test_api_integration.TestAPIIntegration object at 0x00000217779406E0>
+self = <tests.test_api_integration.TestAPIIntegration object at 0x0000013BED6107A0>
 
     @mock_aws
     def test_get_drug_by_name_not_found(self):
@@ -166,5 +166,5 @@ tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace
 ======================================================== short test summary info ========================================================= 
 FAILED tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty - assert 500 == 200
 FAILED tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found - assert 500 == 404
-=============================================== 2 failed, 40 passed, 23 warnings in 5.13s ================================================ 
+=============================================== 2 failed, 40 passed, 23 warnings in 5.24s ================================================ 
 PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
