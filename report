@@ -1,982 +1,128 @@
-____________________________________ TestCsvProcessorLambda.test_handler_updates_status_to_completed _____________________________________ 
+PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest tests\test_api_integration.py -v
+========================================================== test session starts ===========================================================
+platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\ktsun\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: D:\coding\GIT_Work_Space\drug-analytics-api-python
+plugins: anyio-4.11.0, asyncio-1.2.0, cov-7.0.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 8 items                                                                                                                         
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0B47D460>
-upload_id = 'b2c3d4e5-7890-abcd-ef12-345678901234', updates = {'status': 'processing'}
+tests/test_api_integration.py::TestAPIIntegration::test_health_check PASSED                                                         [ 12%]
+tests/test_api_integration.py::TestAPIIntegration::test_hello_endpoint PASSED                                                       [ 25%]
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success FAILED                                                   [ 37%]
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_file_type PASSED                                         [ 50%]
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_missing_columns PASSED                                           [ 62%]
+tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data FAILED                                              [ 75%]
+tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty PASSED                                                  [ 87%]
+tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found PASSED                                           [100%]
 
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
+================================================================ FAILURES ================================================================ 
+_______________________________________________ TestAPIIntegration.test_upload_csv_success _______________________________________________ 
 
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
->           self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-src\repositories\upload_status_repository.py:102:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
-    response = action(self, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
-    response = getattr(parent.meta.client, operation_name)(*args, **params)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
-    return self._make_api_call(operation_name, kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1035: in _make_api_call
-    request_dict = self._convert_to_request_dict(
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1102: in _convert_to_request_dict
-    request_dict = self._serializer.serialize_to_request(
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <botocore.validate.ParamValidationDecorator object at 0x000002AD0AB93200>
-parameters = {'ExpressionAttributeNames': {'#status': 'status'}, 'ExpressionAttributeValues': {':status': {'S': 'processing'}}, 'Key': {'upload_id': {'S': 'b2c3d4e5-7890-abcd-ef12-345678901234'}}, 'TableName': '', ...}
-operation_model = OperationModel(name=UpdateItem)
-
-    def serialize_to_request(self, parameters, operation_model):
-        input_shape = operation_model.input_shape
-        if input_shape is not None:
-            report = self._param_validator.validate(
-                parameters, operation_model.input_shape
-            )
-            if report.has_errors():
->               raise ParamValidationError(report=report.generate_report())
-E               botocore.exceptions.ParamValidationError: Parameter validation failed:
-E               Invalid length for parameter TableName, value: 0, valid min length: 1
-
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\validate.py:381: ParamValidationError
-
-The above exception was the direct cause of the following exception:
-
-event = {'Records': [{'s3': {'bucket': {'name': 'test-bucket'}, 'object': {'key': 'uploads/b2c3d4e5-7890-abcd-ef12-345678901234/test.csv'}}}]}
-context = None
-
-    def handler(event, context):
-        """
-        Lambda handler for S3 event processing.
-
-        Args:
-            event: S3 event containing bucket and object information
-            context: Lambda context object
-
-        Returns:
-            dict: Processing result with status and count
-        """
-        drug_service = DrugService()
-        upload_status_repo = UploadStatusRepository()
-
-        try:
-            # Extract S3 information from event
-            for record in event['Records']:
-                bucket = record['s3']['bucket']['name']
-                s3_key = record['s3']['object']['key']
-
-                # Extract upload_id from S3 key (format: uploads/YYYY/MM/DD/upload_id.csv)
-                upload_id = _extract_upload_id(s3_key)
-
-                print(f"Processing file: s3://{bucket}/{s3_key}, upload_id: {upload_id}")
-
-                # Update status to processing
-                if upload_id:
->                   upload_status_repo.update(upload_id, {'status': 'processing'})
-
-lambda_functions\csv_processor.py:39:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0B47D460>
-upload_id = 'b2c3d4e5-7890-abcd-ef12-345678901234', updates = {'status': 'processing'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
-            self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-        except ClientError as e:
-            raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
-        except Exception as e:
->           raise DynamoDBException(f"Unexpected error updating upload status: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-E           Invalid length for parameter TableName, value: 0, valid min length: 1
-
-src\repositories\upload_status_repository.py:112: DynamoDBException
-
-During handling of the above exception, another exception occurred:
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0B47D460>
-upload_id = 'b2c3d4e5-7890-abcd-ef12-345678901234'
-updates = {'error_message': 'Unexpected error updating upload status: Parameter validation failed:\nInvalid length for parameter TableName, value: 0, valid min length: 1', 'status': 'failed'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
->           self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-src\repositories\upload_status_repository.py:102:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
-    response = action(self, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
-    response = getattr(parent.meta.client, operation_name)(*args, **params)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
-    return self._make_api_call(operation_name, kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1035: in _make_api_call
-    request_dict = self._convert_to_request_dict(
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1102: in _convert_to_request_dict
-    request_dict = self._serializer.serialize_to_request(
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <botocore.validate.ParamValidationDecorator object at 0x000002AD0AB93200>
-parameters = {'ExpressionAttributeNames': {'#error_message': 'error_message', '#status': 'status'}, 'ExpressionAttributeValues': {'...':status': {'S': 'failed'}}, 'Key': {'upload_id': {'S': 'b2c3d4e5-7890-abcd-ef12-345678901234'}}, 'TableName': '', ...}
-operation_model = OperationModel(name=UpdateItem)
-
-    def serialize_to_request(self, parameters, operation_model):
-        input_shape = operation_model.input_shape
-        if input_shape is not None:
-            report = self._param_validator.validate(
-                parameters, operation_model.input_shape
-            )
-            if report.has_errors():
->               raise ParamValidationError(report=report.generate_report())
-E               botocore.exceptions.ParamValidationError: Parameter validation failed:
-E               Invalid length for parameter TableName, value: 0, valid min length: 1
-
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\validate.py:381: ParamValidationError
-
-The above exception was the direct cause of the following exception:
-
-self = <tests.test_csv_processor_lambda.TestCsvProcessorLambda object at 0x000002AD053198E0>
-aws_resources = (<botocore.client.S3 object at 0x000002AD06595E50>, dynamodb.ServiceResource())
+self = <tests.test_api_integration.TestAPIIntegration object at 0x00000272A1F44350>
 
     @mock_aws
-    def test_handler_updates_status_to_completed(self, aws_resources):
-        s3, dynamodb = aws_resources
+    def test_upload_csv_success(self):
+        """Test successful CSV file upload."""
+        from src.core import config
+        config.settings = config.Settings()
 
-        csv_content = "drug_name,target,efficacy\nDrug1,Target1,75.0"
-        s3.put_object(Bucket="test-bucket", Key="uploads/b2c3d4e5-7890-abcd-ef12-345678901234/test.csv", Body=csv_content)
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
 
-        status_table = dynamodb.Table("UploadStatus-test")
-        status_table.put_item(Item={
-            "upload_id": "b2c3d4e5-7890-abcd-ef12-345678901234",
-            "status": "pending",
-            "filename": "test.csv",
-            "s3_key": "uploads/b2c3d4e5-7890-abcd-ef12-345678901234/test.csv",
-            "created_at": "2024-01-01T12:00:00"
-        })
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb.create_table(
+            TableName='DrugData-test',
+            KeySchema=[
+                {'AttributeName': 'PK', 'KeyType': 'HASH'},
+                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'PK', 'AttributeType': 'S'},
+                {'AttributeName': 'SK', 'AttributeType': 'S'}
+            ],
+            BillingMode='PAY_PER_REQUEST'
+        )
 
-        event = {
-            "Records": [{
-                "s3": {
-                    "bucket": {"name": "test-bucket"},
-                    "object": {"key": "uploads/b2c3d4e5-7890-abcd-ef12-345678901234/test.csv"}
-                }
-            }]
-        }
+        from src.main import app
+        client = TestClient(app)
 
->       handler(event, None)
+        csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5\nIbuprofen,COX-1,90.0"
+        files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
 
-tests\test_csv_processor_lambda.py:116:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-lambda_functions\csv_processor.py:96: in handler
-    upload_status_repo.update(upload_id, {
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+        response = client.post("/v1/api/drugs/upload", files=files)
+>       assert response.status_code == 202
+E       assert 500 == 202
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0B47D460>
-upload_id = 'b2c3d4e5-7890-abcd-ef12-345678901234'
-updates = {'error_message': 'Unexpected error updating upload status: Parameter validation failed:\nInvalid length for parameter TableName, value: 0, valid min length: 1', 'status': 'failed'}
+tests\test_api_integration.py:133: AssertionError
+____________________________________________ TestAPIIntegration.test_upload_csv_invalid_data _____________________________________________ 
 
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
-            self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-        except ClientError as e:
-            raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
-        except Exception as e:
->           raise DynamoDBException(f"Unexpected error updating upload status: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-E           Invalid length for parameter TableName, value: 0, valid min length: 1
-
-src\repositories\upload_status_repository.py:112: DynamoDBException
----------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
-Processing file: s3://test-bucket/uploads/b2c3d4e5-7890-abcd-ef12-345678901234/test.csv, upload_id: b2c3d4e5-7890-abcd-ef12-345678901234   
-DynamoDB error: Unexpected error updating upload status: Parameter validation failed:
-Invalid length for parameter TableName, value: 0, valid min length: 1
-_________________________________ TestCsvProcessorLambda.test_handler_updates_status_to_failed_on_error __________________________________ 
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0B452CF0>
-upload_id = 'c3d4e5f6-abcd-ef12-3456-789012345678', updates = {'status': 'processing'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
->           self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-src\repositories\upload_status_repository.py:102:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
-    response = action(self, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
-    response = getattr(parent.meta.client, operation_name)(*args, **params)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
-    return self._make_api_call(operation_name, kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1035: in _make_api_call
-    request_dict = self._convert_to_request_dict(
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1102: in _convert_to_request_dict
-    request_dict = self._serializer.serialize_to_request(
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <botocore.validate.ParamValidationDecorator object at 0x000002AD0B463770>
-parameters = {'ExpressionAttributeNames': {'#status': 'status'}, 'ExpressionAttributeValues': {':status': {'S': 'processing'}}, 'Key': {'upload_id': {'S': 'c3d4e5f6-abcd-ef12-3456-789012345678'}}, 'TableName': '', ...}
-operation_model = OperationModel(name=UpdateItem)
-
-    def serialize_to_request(self, parameters, operation_model):
-        input_shape = operation_model.input_shape
-        if input_shape is not None:
-            report = self._param_validator.validate(
-                parameters, operation_model.input_shape
-            )
-            if report.has_errors():
->               raise ParamValidationError(report=report.generate_report())
-E               botocore.exceptions.ParamValidationError: Parameter validation failed:
-E               Invalid length for parameter TableName, value: 0, valid min length: 1
-
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\validate.py:381: ParamValidationError
-
-The above exception was the direct cause of the following exception:
-
-event = {'Records': [{'s3': {'bucket': {'name': 'test-bucket'}, 'object': {'key': 'uploads/c3d4e5f6-abcd-ef12-3456-789012345678/bad.csv'}}}]}
-context = None
-
-    def handler(event, context):
-        """
-        Lambda handler for S3 event processing.
-
-        Args:
-            event: S3 event containing bucket and object information
-            context: Lambda context object
-
-        Returns:
-            dict: Processing result with status and count
-        """
-        drug_service = DrugService()
-        upload_status_repo = UploadStatusRepository()
-
-        try:
-            # Extract S3 information from event
-            for record in event['Records']:
-                bucket = record['s3']['bucket']['name']
-                s3_key = record['s3']['object']['key']
-
-                # Extract upload_id from S3 key (format: uploads/YYYY/MM/DD/upload_id.csv)
-                upload_id = _extract_upload_id(s3_key)
-
-                print(f"Processing file: s3://{bucket}/{s3_key}, upload_id: {upload_id}")
-
-                # Update status to processing
-                if upload_id:
->                   upload_status_repo.update(upload_id, {'status': 'processing'})
-
-lambda_functions\csv_processor.py:39:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0B452CF0>
-upload_id = 'c3d4e5f6-abcd-ef12-3456-789012345678', updates = {'status': 'processing'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
-            self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-        except ClientError as e:
-            raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
-        except Exception as e:
->           raise DynamoDBException(f"Unexpected error updating upload status: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-E           Invalid length for parameter TableName, value: 0, valid min length: 1
-
-src\repositories\upload_status_repository.py:112: DynamoDBException
-
-During handling of the above exception, another exception occurred:
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0B452CF0>
-upload_id = 'c3d4e5f6-abcd-ef12-3456-789012345678'
-updates = {'error_message': 'Unexpected error updating upload status: Parameter validation failed:\nInvalid length for parameter TableName, value: 0, valid min length: 1', 'status': 'failed'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
->           self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-src\repositories\upload_status_repository.py:102:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
-    response = action(self, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
-    response = getattr(parent.meta.client, operation_name)(*args, **params)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
-    return self._make_api_call(operation_name, kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1035: in _make_api_call
-    request_dict = self._convert_to_request_dict(
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1102: in _convert_to_request_dict
-    request_dict = self._serializer.serialize_to_request(
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <botocore.validate.ParamValidationDecorator object at 0x000002AD0B463770>
-parameters = {'ExpressionAttributeNames': {'#error_message': 'error_message', '#status': 'status'}, 'ExpressionAttributeValues': {'...':status': {'S': 'failed'}}, 'Key': {'upload_id': {'S': 'c3d4e5f6-abcd-ef12-3456-789012345678'}}, 'TableName': '', ...}
-operation_model = OperationModel(name=UpdateItem)
-
-    def serialize_to_request(self, parameters, operation_model):
-        input_shape = operation_model.input_shape
-        if input_shape is not None:
-            report = self._param_validator.validate(
-                parameters, operation_model.input_shape
-            )
-            if report.has_errors():
->               raise ParamValidationError(report=report.generate_report())
-E               botocore.exceptions.ParamValidationError: Parameter validation failed:
-E               Invalid length for parameter TableName, value: 0, valid min length: 1
-
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\validate.py:381: ParamValidationError
-
-The above exception was the direct cause of the following exception:
-
-self = <tests.test_csv_processor_lambda.TestCsvProcessorLambda object at 0x000002AD05319640>
-aws_resources = (<botocore.client.S3 object at 0x000002AD05CF2B10>, dynamodb.ServiceResource())
+self = <tests.test_api_integration.TestAPIIntegration object at 0x00000272A1F447D0>
 
     @mock_aws
-    def test_handler_updates_status_to_failed_on_error(self, aws_resources):
-        s3, dynamodb = aws_resources
-
-        csv_content = "invalid,csv,format\nno,efficacy,column"
-        s3.put_object(Bucket="test-bucket", Key="uploads/c3d4e5f6-abcd-ef12-3456-789012345678/bad.csv", Body=csv_content)
-
-        status_table = dynamodb.Table("UploadStatus-test")
-        status_table.put_item(Item={
-            "upload_id": "c3d4e5f6-abcd-ef12-3456-789012345678",
-            "status": "pending",
-            "filename": "bad.csv",
-            "s3_key": "uploads/c3d4e5f6-abcd-ef12-3456-789012345678/bad.csv",
-            "created_at": "2024-01-01T12:00:00"
-        })
-
-        event = {
-            "Records": [{
-                "s3": {
-                    "bucket": {"name": "test-bucket"},
-                    "object": {"key": "uploads/c3d4e5f6-abcd-ef12-3456-789012345678/bad.csv"}
-                }
-            }]
-        }
-
->       handler(event, None)
-
-tests\test_csv_processor_lambda.py:148:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-lambda_functions\csv_processor.py:96: in handler
-    upload_status_repo.update(upload_id, {
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0B452CF0>
-upload_id = 'c3d4e5f6-abcd-ef12-3456-789012345678'
-updates = {'error_message': 'Unexpected error updating upload status: Parameter validation failed:\nInvalid length for parameter TableName, value: 0, valid min length: 1', 'status': 'failed'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
-            self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-        except ClientError as e:
-            raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
-        except Exception as e:
->           raise DynamoDBException(f"Unexpected error updating upload status: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-E           Invalid length for parameter TableName, value: 0, valid min length: 1
-
-src\repositories\upload_status_repository.py:112: DynamoDBException
----------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
-Processing file: s3://test-bucket/uploads/c3d4e5f6-abcd-ef12-3456-789012345678/bad.csv, upload_id: c3d4e5f6-abcd-ef12-3456-789012345678    
-DynamoDB error: Unexpected error updating upload status: Parameter validation failed:
-Invalid length for parameter TableName, value: 0, valid min length: 1
-______________________________________ TestCsvProcessorLambda.test_handler_processes_multiple_rows _______________________________________ 
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0C4B2F00>
-upload_id = 'd4e5f6a7-4567-89ab-cdef-012345678901', updates = {'status': 'processing'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
->           self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-src\repositories\upload_status_repository.py:102:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
-    response = action(self, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
-    response = getattr(parent.meta.client, operation_name)(*args, **params)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
-    return self._make_api_call(operation_name, kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1035: in _make_api_call
-    request_dict = self._convert_to_request_dict(
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1102: in _convert_to_request_dict
-    request_dict = self._serializer.serialize_to_request(
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <botocore.validate.ParamValidationDecorator object at 0x000002AD0B3D7770>
-parameters = {'ExpressionAttributeNames': {'#status': 'status'}, 'ExpressionAttributeValues': {':status': {'S': 'processing'}}, 'Key': {'upload_id': {'S': 'd4e5f6a7-4567-89ab-cdef-012345678901'}}, 'TableName': '', ...}
-operation_model = OperationModel(name=UpdateItem)
-
-    def serialize_to_request(self, parameters, operation_model):
-        input_shape = operation_model.input_shape
-        if input_shape is not None:
-            report = self._param_validator.validate(
-                parameters, operation_model.input_shape
-            )
-            if report.has_errors():
->               raise ParamValidationError(report=report.generate_report())
-E               botocore.exceptions.ParamValidationError: Parameter validation failed:
-E               Invalid length for parameter TableName, value: 0, valid min length: 1
-
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\validate.py:381: ParamValidationError
-
-The above exception was the direct cause of the following exception:
-
-event = {'Records': [{'s3': {'bucket': {'name': 'test-bucket'}, 'object': {'key': 'uploads/d4e5f6a7-4567-89ab-cdef-012345678901/drugs.csv'}}}]}
-context = None
-
-    def handler(event, context):
-        """
-        Lambda handler for S3 event processing.
-
-        Args:
-            event: S3 event containing bucket and object information
-            context: Lambda context object
-
-        Returns:
-            dict: Processing result with status and count
-        """
-        drug_service = DrugService()
-        upload_status_repo = UploadStatusRepository()
-
-        try:
-            # Extract S3 information from event
-            for record in event['Records']:
-                bucket = record['s3']['bucket']['name']
-                s3_key = record['s3']['object']['key']
-
-                # Extract upload_id from S3 key (format: uploads/YYYY/MM/DD/upload_id.csv)
-                upload_id = _extract_upload_id(s3_key)
-
-                print(f"Processing file: s3://{bucket}/{s3_key}, upload_id: {upload_id}")
-
-                # Update status to processing
-                if upload_id:
->                   upload_status_repo.update(upload_id, {'status': 'processing'})
-
-lambda_functions\csv_processor.py:39:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0C4B2F00>
-upload_id = 'd4e5f6a7-4567-89ab-cdef-012345678901', updates = {'status': 'processing'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
-            self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-        except ClientError as e:
-            raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
-        except Exception as e:
->           raise DynamoDBException(f"Unexpected error updating upload status: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-E           Invalid length for parameter TableName, value: 0, valid min length: 1
-
-src\repositories\upload_status_repository.py:112: DynamoDBException
-
-During handling of the above exception, another exception occurred:
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0C4B2F00>
-upload_id = 'd4e5f6a7-4567-89ab-cdef-012345678901'
-updates = {'error_message': 'Unexpected error updating upload status: Parameter validation failed:\nInvalid length for parameter TableName, value: 0, valid min length: 1', 'status': 'failed'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
->           self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-src\repositories\upload_status_repository.py:102:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
-    response = action(self, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
-    response = getattr(parent.meta.client, operation_name)(*args, **params)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
-    return self._make_api_call(operation_name, kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1035: in _make_api_call
-    request_dict = self._convert_to_request_dict(
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1102: in _convert_to_request_dict
-    request_dict = self._serializer.serialize_to_request(
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <botocore.validate.ParamValidationDecorator object at 0x000002AD0B3D7770>
-parameters = {'ExpressionAttributeNames': {'#error_message': 'error_message', '#status': 'status'}, 'ExpressionAttributeValues': {'...':status': {'S': 'failed'}}, 'Key': {'upload_id': {'S': 'd4e5f6a7-4567-89ab-cdef-012345678901'}}, 'TableName': '', ...}
-operation_model = OperationModel(name=UpdateItem)
-
-    def serialize_to_request(self, parameters, operation_model):
-        input_shape = operation_model.input_shape
-        if input_shape is not None:
-            report = self._param_validator.validate(
-                parameters, operation_model.input_shape
-            )
-            if report.has_errors():
->               raise ParamValidationError(report=report.generate_report())
-E               botocore.exceptions.ParamValidationError: Parameter validation failed:
-E               Invalid length for parameter TableName, value: 0, valid min length: 1
-
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\validate.py:381: ParamValidationError
-
-The above exception was the direct cause of the following exception:
-
-self = <tests.test_csv_processor_lambda.TestCsvProcessorLambda object at 0x000002AD05319DF0>
-aws_resources = (<botocore.client.S3 object at 0x000002AD0D419B20>, dynamodb.ServiceResource())
-
-        @mock_aws
-        def test_handler_processes_multiple_rows(self, aws_resources):
-            s3, dynamodb = aws_resources
-
-            csv_content = """drug_name,target,efficacy
-    Aspirin,COX,85.5
-    Ibuprofen,COX,90.0
-    Paracetamol,COX,75.0
-    Naproxen,COX,88.0"""
-            s3.put_object(Bucket="test-bucket", Key="uploads/d4e5f6a7-4567-89ab-cdef-012345678901/drugs.csv", Body=csv_content)
-
-            status_table = dynamodb.Table("UploadStatus-test")
-            status_table.put_item(Item={
-                "upload_id": "d4e5f6a7-4567-89ab-cdef-012345678901",
-                "status": "pending",
-                "filename": "drugs.csv",
-                "s3_key": "uploads/d4e5f6a7-4567-89ab-cdef-012345678901/drugs.csv",
-                "created_at": "2024-01-01T12:00:00"
-            })
-
-            event = {
-                "Records": [{
-                    "s3": {
-                        "bucket": {"name": "test-bucket"},
-                        "object": {"key": "uploads/d4e5f6a7-4567-89ab-cdef-012345678901/drugs.csv"}
-                    }
-                }]
-            }
-
->           handler(event, None)
-
-tests\test_csv_processor_lambda.py:202:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-lambda_functions\csv_processor.py:96: in handler
-    upload_status_repo.update(upload_id, {
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002AD0C4B2F00>
-upload_id = 'd4e5f6a7-4567-89ab-cdef-012345678901'
-updates = {'error_message': 'Unexpected error updating upload status: Parameter validation failed:\nInvalid length for parameter TableName, value: 0, valid min length: 1', 'status': 'failed'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-            expression_names = {}
-
-            for key, value in updates.items():
-                update_expression += f"#{key} = :{key}, "
-                expression_values[f":{key}"] = value
-                expression_names[f"#{key}"] = key
-
-            update_expression = update_expression.rstrip(", ")
-
-            self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeNames=expression_names,
-                ExpressionAttributeValues=expression_values
-            )
-
-        except ClientError as e:
-            raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
-        except Exception as e:
->           raise DynamoDBException(f"Unexpected error updating upload status: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-E           Invalid length for parameter TableName, value: 0, valid min length: 1
-
-src\repositories\upload_status_repository.py:112: DynamoDBException
----------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
-Processing file: s3://test-bucket/uploads/d4e5f6a7-4567-89ab-cdef-012345678901/drugs.csv, upload_id: d4e5f6a7-4567-89ab-cdef-012345678901  
-DynamoDB error: Unexpected error updating upload status: Parameter validation failed:
-Invalid length for parameter TableName, value: 0, valid min length: 1
+    def test_upload_csv_invalid_data(self):
+        """Test upload with invalid efficacy value."""
+        from src.core import config
+        config.settings = config.Settings()
+
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb.create_table(
+            TableName='DrugData-test',
+            KeySchema=[
+                {'AttributeName': 'PK', 'KeyType': 'HASH'},
+                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'PK', 'AttributeType': 'S'},
+                {'AttributeName': 'SK', 'AttributeType': 'S'}
+            ],
+            BillingMode='PAY_PER_REQUEST'
+        )
+
+        from src.main import app
+        client = TestClient(app)
+
+        csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,invalid"
+        files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
+
+        response = client.post("/v1/api/drugs/upload", files=files)
+        # File is uploaded successfully (202), validation happens async
+>       assert response.status_code == 202
+E       assert 500 == 202
+E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+
+tests\test_api_integration.py:236: AssertionError
 ============================================================ warnings summary ============================================================ 
-src\models\dto\drug_dto.py:31
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
-    class DrugResponse(BaseModel):
-
-src\core\config.py:9
+tests/test_api_integration.py::TestAPIIntegration::test_health_check
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\core\config.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
     class Settings(BaseSettings):
 
+tests/test_api_integration.py::TestAPIIntegration::test_health_check
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class DrugResponse(BaseModel):
+
 tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
 tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success
-tests/test_upload_status_api.py::TestUploadStatusAPI::test_upload_returns_upload_id_and_pending_status
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:68: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
     now = datetime.utcnow()
 
 tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
 tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success
-tests/test_upload_status_api.py::TestUploadStatusAPI::test_upload_returns_upload_id_and_pending_status
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:54: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
     'upload_timestamp': datetime.utcnow().isoformat()
 
 tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
 tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-tests/test_drug_service.py::TestDrugService::test_upload_drug_data_success
-tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_drug_data_creates_status_record
-tests/test_drug_service_upload_status.py::TestDrugServiceUploadStatus::test_upload_creates_correct_s3_key
-tests/test_upload_status_api.py::TestUploadStatusAPI::test_upload_returns_upload_id_and_pending_status
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\services\drug_service.py:63: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
     created_at=datetime.utcnow()
 
-tests/test_csv_processor_lambda.py: 1 warning
-tests/test_drug_service.py: 4 warnings
-tests/test_file_service.py: 5 warnings
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\drug_model.py:23: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    self.upload_timestamp = upload_timestamp or datetime.utcnow()
-
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-======================================================== short test summary info =========================================================
+======================================================== short test summary info ========================================================= 
 FAILED tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success - assert 500 == 202
 FAILED tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data - assert 500 == 202
-FAILED tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_updates_status_to_processing - src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-FAILED tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_updates_status_to_completed - src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-FAILED tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_updates_status_to_failed_on_error - src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-FAILED tests/test_csv_processor_lambda.py::TestCsvProcessorLambda::test_handler_processes_multiple_rows - src.core.exceptions.DynamoDBException: Unexpected error updating upload status: Parameter validation failed:
-=============================================== 6 failed, 60 passed, 32 warnings in 10.86s =============================================== 
+================================================ 2 failed, 6 passed, 8 warnings in 3.10s ================================================= 
 PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
