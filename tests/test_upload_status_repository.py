@@ -2,10 +2,10 @@ import pytest
 from datetime import datetime
 from moto import mock_aws
 import boto3
-from botocore.exceptions import ClientError
 from src.repositories.upload_status_repository import UploadStatusRepository
 from src.models.upload_status import UploadStatus
 from src.core import config
+from src.core.exceptions import DynamoDBException
 
 
 @pytest.fixture
@@ -123,7 +123,7 @@ class TestUploadStatusRepository:
         
         dynamodb_table.delete()
         
-        with pytest.raises(ClientError):
+        with pytest.raises(DynamoDBException):
             repo.create(upload_status)
 
     @mock_aws
@@ -131,7 +131,7 @@ class TestUploadStatusRepository:
         repo = UploadStatusRepository()
         dynamodb_table.delete()
         
-        with pytest.raises(ClientError):
+        with pytest.raises(DynamoDBException):
             repo.get_by_id("test-uuid")
 
     @mock_aws
@@ -139,5 +139,5 @@ class TestUploadStatusRepository:
         repo = UploadStatusRepository()
         dynamodb_table.delete()
         
-        with pytest.raises(ClientError):
+        with pytest.raises(DynamoDBException):
             repo.update("test-uuid", {"status": "completed"})
