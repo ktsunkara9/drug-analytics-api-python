@@ -1,53 +1,23 @@
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest tests/ -v
+PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\test_s3_repository.py
 ========================================================== test session starts ===========================================================
-platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\ktsun\AppData\Local\Programs\Python\Python312\python.exe
-cachedir: .pytest_cache
+platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0
 rootdir: D:\coding\GIT_Work_Space\drug-analytics-api-python
 plugins: anyio-4.11.0, asyncio-1.2.0, cov-7.0.0
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 30 items                                                                                                                        
+collected 4 items                                                                                                                         
 
-tests/test_drug_service.py::TestDrugService::test_upload_drug_data_success PASSED                                                   [  3%]
-tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_success PASSED                                                   [  6%]
-tests/test_drug_service.py::TestDrugService::test_get_drug_by_name_multiple_versions PASSED                                         [ 10%]
-tests/test_drug_service.py::TestDrugService::test_get_all_drugs_success PASSED                                                      [ 13%]
-tests/test_drug_service.py::TestDrugService::test_get_all_drugs_empty PASSED                                                        [ 16%]
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success PASSED                                               [ 20%]
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records PASSED                                      [ 23%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_save_drug_success PASSED                                                [ 26%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_by_drug_name_not_found PASSED                                      [ 30%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_find_all_success PASSED                                                 [ 33%]
-tests/test_dynamo_repository.py::TestDynamoRepository::test_batch_save_success PASSED                                               [ 36%]
-tests/test_file_service.py::TestFileService::test_validate_csv_structure_success PASSED                                             [ 40%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_missing_columns PASSED                                               [ 43%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_invalid_encoding PASSED                                              [ 46%] 
-tests/test_file_service.py::TestFileService::test_validate_csv_generic_exception PASSED                                             [ 50%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_success PASSED                                                          [ 53%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_file PASSED                                                       [ 56%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_drug_name PASSED                                                  [ 60%]
-tests/test_file_service.py::TestFileService::test_parse_csv_empty_target PASSED                                                     [ 63%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_invalid_efficacy_format PASSED                                          [ 66%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_low PASSED                                        [ 70%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_efficacy_out_of_range_high PASSED                                       [ 73%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values PASSED                                                  [ 76%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace PASSED                                                [ 80%] 
-tests/test_file_service.py::TestFileService::test_parse_csv_generic_exception PASSED                                                [ 83%]
-tests/test_file_service.py::TestFileService::test_row_to_drug_generic_exception PASSED                                              [ 86%] 
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_success FAILED                                                      [ 90%]
-tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys FAILED                                        [ 93%]
-tests/test_s3_repository.py::TestS3Repository::test_get_file_success FAILED                                                         [ 96%]
-tests/test_s3_repository.py::TestS3Repository::test_get_file_not_found PASSED                                                       [100%]
+tests\test_s3_repository.py FFF.                                                                                                    [100%]
 
-================================================================ FAILURES ================================================================ 
-_______________________________________________ TestS3Repository.test_upload_file_success ________________________________________________ 
+================================================================ FAILURES ================================================================
+_______________________________________________ TestS3Repository.test_upload_file_success ________________________________________________
 
-self = <src.repositories.s3_repository.S3Repository object at 0x000001A06D92E1E0>, file = <_io.BytesIO object at 0x000001A06BA56110>       
+self = <src.repositories.s3_repository.S3Repository object at 0x0000022630A27350>, file = <_io.BytesIO object at 0x000002262F9D8A40>
 filename = 'test.csv'
 
     def upload_file(self, file: BinaryIO, filename: str) -> dict:
         """
         Upload a file to S3.
-
+    
         Args:
             file: File object to upload
             filename: Original filename
@@ -99,8 +69,8 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
            ^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.client.S3 object at 0x000001A06DBCD700>, operation_name = 'PutObject'
-api_params = {'Body': <s3transfer.utils.ReadFileChunk object at 0x000001A06DBB3F20>, 'Bucket': 'drug-analytics-dev-482227257749', 'ChecksumAlgorithm': 'CRC32', 'ContentType': 'text/csv', ...}
+self = <botocore.client.S3 object at 0x0000022631A1A390>, operation_name = 'PutObject'
+api_params = {'Body': <s3transfer.utils.ReadFileChunk object at 0x0000022631A8E030>, 'Bucket': 'drug-analytics-dev-482227257749', 'ChecksumAlgorithm': 'CRC32', 'ContentType': 'text/csv', ...}
 
     @with_current_context()
     def _make_api_call(self, operation_name, api_params):
@@ -193,7 +163,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_s3_repository.TestS3Repository object at 0x000001A06A370D40>
+self = <tests.test_s3_repository.TestS3Repository object at 0x000002262F0CF860>
 
     @mock_aws
     def test_upload_file_success(self):
@@ -206,8 +176,17 @@ self = <tests.test_s3_repository.TestS3Repository object at 0x000001A06A370D40>
         s3 = boto3.client('s3', region_name='us-east-1')
         s3.create_bucket(Bucket='test-bucket')
 
+        # Verify bucket exists
+        buckets = s3.list_buckets()
+        print(f"Buckets after creation: {[b['Name'] for b in buckets['Buckets']]}")
+
         # Create repository
         repo = S3Repository()
+        print(f"Repo bucket name: {repo.bucket_name}")
+
+        # Verify repo can see the bucket
+        repo_buckets = repo.s3_client.list_buckets()
+        print(f"Buckets visible to repo: {[b['Name'] for b in repo_buckets['Buckets']]}")
 
         file_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5"
         file = io.BytesIO(file_content)
@@ -216,10 +195,10 @@ self = <tests.test_s3_repository.TestS3Repository object at 0x000001A06A370D40>
 >       result = repo.upload_file(file, filename)
                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests\test_s3_repository.py:50:
+tests\test_s3_repository.py:59:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.s3_repository.S3Repository object at 0x000001A06D92E1E0>, file = <_io.BytesIO object at 0x000001A06BA56110>       
+self = <src.repositories.s3_repository.S3Repository object at 0x0000022630A27350>, file = <_io.BytesIO object at 0x000002262F9D8A40>       
 filename = 'test.csv'
 
     def upload_file(self, file: BinaryIO, filename: str) -> dict:
@@ -263,9 +242,13 @@ filename = 'test.csv'
 E           src.core.exceptions.S3Exception: Failed to upload file to S3: An error occurred (NoSuchBucket) when calling the PutObject operation: The specified bucket does not exist
 
 src\repositories\s3_repository.py:58: S3Exception
-________________________________________ TestS3Repository.test_upload_file_generates_unique_keys _________________________________________
+---------------------------------------------------------- Captured stdout call ---------------------------------------------------------- 
+Buckets after creation: ['test-bucket']
+Repo bucket name: drug-analytics-dev-482227257749
+Buckets visible to repo: ['test-bucket']
+________________________________________ TestS3Repository.test_upload_file_generates_unique_keys _________________________________________ 
 
-self = <src.repositories.s3_repository.S3Repository object at 0x000001A06D1CABA0>, file = <_io.BytesIO object at 0x000001A06D10D760>       
+self = <src.repositories.s3_repository.S3Repository object at 0x0000022631C7CAA0>, file = <_io.BytesIO object at 0x000002262F9CBD30>       
 filename = 'test.csv'
 
     def upload_file(self, file: BinaryIO, filename: str) -> dict:
@@ -323,8 +306,8 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
            ^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.client.S3 object at 0x000001A06DC3BEC0>, operation_name = 'PutObject'
-api_params = {'Body': <s3transfer.utils.ReadFileChunk object at 0x000001A06E8CD8B0>, 'Bucket': 'drug-analytics-dev-482227257749', 'ChecksumAlgorithm': 'CRC32', 'ContentType': 'text/csv', ...}
+self = <botocore.client.S3 object at 0x0000022632A80B00>, operation_name = 'PutObject'
+api_params = {'Body': <s3transfer.utils.ReadFileChunk object at 0x0000022632AAF3E0>, 'Bucket': 'drug-analytics-dev-482227257749', 'ChecksumAlgorithm': 'CRC32', 'ContentType': 'text/csv', ...}
 
     @with_current_context()
     def _make_api_call(self, operation_name, api_params):
@@ -417,7 +400,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_s3_repository.TestS3Repository object at 0x000001A06A370920>
+self = <tests.test_s3_repository.TestS3Repository object at 0x000002262F9B68D0>
 
     @mock_aws
     def test_upload_file_generates_unique_keys(self):
@@ -439,10 +422,10 @@ self = <tests.test_s3_repository.TestS3Repository object at 0x000001A06A370920>
 >       result1 = repo.upload_file(file1, "test.csv")
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests\test_s3_repository.py:73:
+tests\test_s3_repository.py:82:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.s3_repository.S3Repository object at 0x000001A06D1CABA0>, file = <_io.BytesIO object at 0x000001A06D10D760>       
+self = <src.repositories.s3_repository.S3Repository object at 0x0000022631C7CAA0>, file = <_io.BytesIO object at 0x000002262F9CBD30>       
 filename = 'test.csv'
 
     def upload_file(self, file: BinaryIO, filename: str) -> dict:
@@ -488,7 +471,7 @@ E           src.core.exceptions.S3Exception: Failed to upload file to S3: An err
 src\repositories\s3_repository.py:58: S3Exception
 _________________________________________________ TestS3Repository.test_get_file_success _________________________________________________ 
 
-self = <src.repositories.s3_repository.S3Repository object at 0x000001A06F34E9F0>, file = <_io.BytesIO object at 0x000001A06E8D5850>       
+self = <src.repositories.s3_repository.S3Repository object at 0x00000226327B3A70>, file = <_io.BytesIO object at 0x0000022631B1BD80>       
 filename = 'test.csv'
 
     def upload_file(self, file: BinaryIO, filename: str) -> dict:
@@ -546,8 +529,8 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
            ^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.client.S3 object at 0x000001A06F403710>, operation_name = 'PutObject'
-api_params = {'Body': <s3transfer.utils.ReadFileChunk object at 0x000001A06F4461E0>, 'Bucket': 'drug-analytics-dev-482227257749', 'ChecksumAlgorithm': 'CRC32', 'ContentType': 'text/csv', ...}
+self = <botocore.client.S3 object at 0x0000022632A17710>, operation_name = 'PutObject'
+api_params = {'Body': <s3transfer.utils.ReadFileChunk object at 0x0000022630CE6150>, 'Bucket': 'drug-analytics-dev-482227257749', 'ChecksumAlgorithm': 'CRC32', 'ContentType': 'text/csv', ...}
 
     @with_current_context()
     def _make_api_call(self, operation_name, api_params):
@@ -640,7 +623,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_s3_repository.TestS3Repository object at 0x000001A06A3724E0>
+self = <tests.test_s3_repository.TestS3Repository object at 0x000002262F9B6AB0>
 
     @mock_aws
     def test_get_file_success(self):
@@ -662,10 +645,10 @@ self = <tests.test_s3_repository.TestS3Repository object at 0x000001A06A3724E0>
 >       upload_result = repo.upload_file(file, "test.csv")
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests\test_s3_repository.py:95:
+tests\test_s3_repository.py:104:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.s3_repository.S3Repository object at 0x000001A06F34E9F0>, file = <_io.BytesIO object at 0x000001A06E8D5850>       
+self = <src.repositories.s3_repository.S3Repository object at 0x00000226327B3A70>, file = <_io.BytesIO object at 0x0000022631B1BD80>       
 filename = 'test.csv'
 
     def upload_file(self, file: BinaryIO, filename: str) -> dict:
@@ -710,25 +693,9 @@ E           src.core.exceptions.S3Exception: Failed to upload file to S3: An err
 
 src\repositories\s3_repository.py:58: S3Exception
 ============================================================ warnings summary ============================================================ 
-src\models\dto\drug_dto.py:31
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
-    class DrugResponse(BaseModel):
-
 src\core\config.py:9
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\core\config.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
     class Settings(BaseSettings):
-
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_success
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
-tests/test_drug_service.py::TestDrugService::test_process_csv_and_save_multiple_records
-tests/test_file_service.py::TestFileService::test_parse_csv_success
-tests/test_file_service.py::TestFileService::test_parse_csv_success
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values
-tests/test_file_service.py::TestFileService::test_parse_csv_boundary_values
-tests/test_file_service.py::TestFileService::test_parse_csv_strips_whitespace
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\drug_model.py:23: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    self.upload_timestamp = upload_timestamp or datetime.utcnow()
 
 tests/test_s3_repository.py::TestS3Repository::test_upload_file_success
 tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys
@@ -741,5 +708,5 @@ tests/test_s3_repository.py::TestS3Repository::test_get_file_success
 FAILED tests/test_s3_repository.py::TestS3Repository::test_upload_file_success - src.core.exceptions.S3Exception: Failed to upload file to S3: An error occurred (NoSuchBucket) when calling the PutObject operation: T...
 FAILED tests/test_s3_repository.py::TestS3Repository::test_upload_file_generates_unique_keys - src.core.exceptions.S3Exception: Failed to upload file to S3: An error occurred (NoSuchBucket) when calling the PutObject operation: T...
 FAILED tests/test_s3_repository.py::TestS3Repository::test_get_file_success - src.core.exceptions.S3Exception: Failed to upload file to S3: An error occurred (NoSuchBucket) when calling the PutObject operation: T...
-=============================================== 3 failed, 27 passed, 14 warnings in 2.79s ================================================ 
+================================================ 3 failed, 1 passed, 4 warnings in 1.83s ================================================= 
 PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
