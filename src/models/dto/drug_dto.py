@@ -43,3 +43,15 @@ class DrugListResponse(BaseModel):
     """Response schema for listing multiple drugs."""
     drugs: list[DrugResponse]
     count: int
+
+
+class UploadStatusResponse(BaseModel):
+    """Response schema for upload status query."""
+    upload_id: str
+    status: str
+    filename: str
+    s3_key: str
+    created_at: datetime
+    total_rows: int = 0
+    processed_rows: int = 0
+    error_message: str = None
