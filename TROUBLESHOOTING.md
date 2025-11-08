@@ -171,6 +171,56 @@ ValidationError: Invalid characters in environment variables
 
 ---
 
+## 9. Test Table Name Isolation
+
+**Issue:** Tests fail when using production/dev table names (`DrugData-dev`) in test environment.
+
+**Problem:** 
+- Tests should never reference actual AWS resource names
+- Using `DrugData-dev` in tests risks accidental interaction with real resources
+- Inconsistent table names across test files cause test isolation failures
+
+**Error:**
+```
+ResourceNotFoundException: Requested resource not found
+TableName: 'DrugData-dev' (in test trying to use 'DrugData-test')
+```
+
+**Root Cause:**
+- DynamoRepository was importing `settings` object directly: `from src.core.config import settings`
+- When tests set environment variables and reload settings, the repository still used cached table name
+- Repository initialization happened before settings reload took effect
+
+**Solution:**
+
+1. **Use test-specific table name** in ALL test files:
+```python
+os.environ['DYNAMODB_TABLE_NAME'] = 'DrugData-test'  # Not DrugData-dev
+```
+
+2. **Import config module, not settings object**:
+```python
+# ❌ Wrong - caches settings at import time
+from src.core.config import settings
+self.table = dynamodb.Table(settings.dynamodb_table_name)
+
+# ✅ Correct - reads settings at runtime
+from src.core import config
+self.table = dynamodb.Table(config.settings.dynamodb_table_name)
+```
+
+3. **Standardize table names across all test files**:
+- `tests/test_dynamo_repository.py`: Use `DrugData-test`
+- `tests/test_api_integration.py`: Use `DrugData-test`
+- Never use `DrugData-dev` or `DrugData-prod` in tests
+
+**Files Updated:**
+- `src/repositories/dynamo_repository.py`: Changed to `from src.core import config`
+- `tests/test_dynamo_repository.py`: Uses `DrugData-test`
+- `tests/test_api_integration.py`: Uses `DrugData-test`
+
+---
+
 ## Testing Best Practices
 
 ### Moto Testing
