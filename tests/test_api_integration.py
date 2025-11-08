@@ -21,18 +21,20 @@ class TestAPIIntegration:
         os.environ['AWS_REGION'] = 'us-east-1'
         os.environ['S3_BUCKET_NAME'] = 'test-bucket'
         os.environ['DYNAMODB_TABLE_NAME'] = 'DrugData-test'
+        os.environ['UPLOAD_STATUS_TABLE_NAME'] = 'UploadStatus-test'
         os.environ['ENVIRONMENT'] = 'test'
         
         # Clear dependency injection cache
         from src.core import dependencies
         dependencies.get_s3_repository.cache_clear()
         dependencies.get_dynamo_repository.cache_clear()
+        dependencies.get_upload_status_repository.cache_clear()
         dependencies.get_file_service.cache_clear()
         dependencies.get_drug_service.cache_clear()
         
         yield
         
-        for key in ['S3_BUCKET_NAME', 'DYNAMODB_TABLE_NAME', 'ENVIRONMENT']:
+        for key in ['S3_BUCKET_NAME', 'DYNAMODB_TABLE_NAME', 'UPLOAD_STATUS_TABLE_NAME', 'ENVIRONMENT']:
             if key in os.environ:
                 del os.environ[key]
     
@@ -120,6 +122,12 @@ class TestAPIIntegration:
                 {'AttributeName': 'PK', 'AttributeType': 'S'},
                 {'AttributeName': 'SK', 'AttributeType': 'S'}
             ],
+            BillingMode='PAY_PER_REQUEST'
+        )
+        dynamodb.create_table(
+            TableName='UploadStatus-test',
+            KeySchema=[{'AttributeName': 'upload_id', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[{'AttributeName': 'upload_id', 'AttributeType': 'S'}],
             BillingMode='PAY_PER_REQUEST'
         )
         
@@ -222,6 +230,12 @@ class TestAPIIntegration:
                 {'AttributeName': 'PK', 'AttributeType': 'S'},
                 {'AttributeName': 'SK', 'AttributeType': 'S'}
             ],
+            BillingMode='PAY_PER_REQUEST'
+        )
+        dynamodb.create_table(
+            TableName='UploadStatus-test',
+            KeySchema=[{'AttributeName': 'upload_id', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[{'AttributeName': 'upload_id', 'AttributeType': 'S'}],
             BillingMode='PAY_PER_REQUEST'
         )
         
