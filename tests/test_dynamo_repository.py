@@ -16,13 +16,19 @@ from src.core.exceptions import DrugNotFoundException, DynamoDBException
 class TestDynamoRepository:
     """Test suite for DynamoRepository."""
     
-    @pytest.fixture
+    @pytest.fixture(autouse=True)
     def aws_credentials(self):
         """Mock AWS credentials for moto."""
         os.environ['AWS_ACCESS_KEY_ID'] = 'testing'
         os.environ['AWS_SECRET_ACCESS_KEY'] = 'testing'
         os.environ['AWS_SECURITY_TOKEN'] = 'testing'
         os.environ['AWS_SESSION_TOKEN'] = 'testing'
+        os.environ['DYNAMODB_TABLE_NAME'] = 'DrugData-dev'
+        
+        yield
+        
+        if 'DYNAMODB_TABLE_NAME' in os.environ:
+            del os.environ['DYNAMODB_TABLE_NAME']
     
     def _create_table(self):
         """Helper to create DynamoDB table."""
@@ -41,8 +47,11 @@ class TestDynamoRepository:
         )
     
     @mock_aws
-    def test_save_drug_success(self, aws_credentials):
+    def test_save_drug_success(self):
         """Test successful drug save to DynamoDB."""
+        from src.core import config
+        config.settings = config.Settings()
+        
         self._create_table()
         repo = DynamoRepository()
         
@@ -54,8 +63,11 @@ class TestDynamoRepository:
         assert drugs[0].drug_name == "Aspirin"
     
     @mock_aws
-    def test_find_by_drug_name_not_found(self, aws_credentials):
+    def test_find_by_drug_name_not_found(self):
         """Test finding non-existent drug raises exception."""
+        from src.core import config
+        config.settings = config.Settings()
+        
         self._create_table()
         repo = DynamoRepository()
         
@@ -63,8 +75,11 @@ class TestDynamoRepository:
             repo.find_by_drug_name("NonExistent")
     
     @mock_aws
-    def test_find_all_success(self, aws_credentials):
+    def test_find_all_success(self):
         """Test retrieving all drugs."""
+        from src.core import config
+        config.settings = config.Settings()
+        
         self._create_table()
         repo = DynamoRepository()
         
@@ -77,8 +92,11 @@ class TestDynamoRepository:
         assert len(drugs) == 2
     
     @mock_aws
-    def test_batch_save_success(self, aws_credentials):
+    def test_batch_save_success(self):
         """Test batch saving multiple drugs."""
+        from src.core import config
+        config.settings = config.Settings()
+        
         self._create_table()
         repo = DynamoRepository()
         
@@ -93,8 +111,11 @@ class TestDynamoRepository:
         assert len(all_drugs) == 3
     
     @mock_aws
-    def test_save_generic_exception(self, aws_credentials):
+    def test_save_generic_exception(self):
         """Test save handles generic exceptions."""
+        from src.core import config
+        config.settings = config.Settings()
+        
         self._create_table()
         repo = DynamoRepository()
         
@@ -107,8 +128,11 @@ class TestDynamoRepository:
             assert "Unexpected error saving drug data" in str(exc_info.value)
     
     @mock_aws
-    def test_find_by_drug_name_generic_exception(self, aws_credentials):
+    def test_find_by_drug_name_generic_exception(self):
         """Test find_by_drug_name handles generic exceptions."""
+        from src.core import config
+        config.settings = config.Settings()
+        
         self._create_table()
         repo = DynamoRepository()
         
@@ -119,8 +143,11 @@ class TestDynamoRepository:
             assert "Unexpected error querying drug data" in str(exc_info.value)
     
     @mock_aws
-    def test_find_all_generic_exception(self, aws_credentials):
+    def test_find_all_generic_exception(self):
         """Test find_all handles generic exceptions."""
+        from src.core import config
+        config.settings = config.Settings()
+        
         self._create_table()
         repo = DynamoRepository()
         
@@ -131,8 +158,11 @@ class TestDynamoRepository:
             assert "Unexpected error scanning drug data" in str(exc_info.value)
     
     @mock_aws
-    def test_batch_save_generic_exception(self, aws_credentials):
+    def test_batch_save_generic_exception(self):
         """Test batch_save handles generic exceptions."""
+        from src.core import config
+        config.settings = config.Settings()
+        
         self._create_table()
         repo = DynamoRepository()
         
