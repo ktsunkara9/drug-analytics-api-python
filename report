@@ -1,4 +1,4 @@
-S D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\test_upload_status_repository.py -v
+PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest .\tests\test_upload_status_repository.py -v
 ========================================================== test session starts ===========================================================
 platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\ktsun\AppData\Local\Programs\Python\Python312\python.exe
 cachedir: .pytest_cache
@@ -10,408 +10,16 @@ collected 8 items
 tests/test_upload_status_repository.py::TestUploadStatusRepository::test_create_success PASSED                                      [ 12%]
 tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_success PASSED                                   [ 25%]
 tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_not_found PASSED                                 [ 37%]
-tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_success FAILED                                      [ 50%]
-tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_multiple_fields FAILED                              [ 62%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_success PASSED                                      [ 50%]
+tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_multiple_fields PASSED                              [ 62%]
 tests/test_upload_status_repository.py::TestUploadStatusRepository::test_create_exception_handling FAILED                           [ 75%]
 tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_exception_handling FAILED                        [ 87%]
 tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_exception_handling FAILED                           [100%]
 
 ================================================================ FAILURES ================================================================ 
-_____________________________________________ TestUploadStatusRepository.test_update_success _____________________________________________ 
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA26F4110>, upload_id = 'test-uuid-789'        
-updates = {'status': 'processing'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-
-            for key, value in updates.items():
-                update_expression += f"{key} = :{key}, "
-                expression_values[f":{key}"] = value
-
-            update_expression = update_expression.rstrip(", ")
-
->           self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeValues=expression_values
-            )
-
-src\repositories\upload_status_repository.py:100:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
-    response = action(self, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
-    response = getattr(parent.meta.client, operation_name)(*args, **params)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
-    return self._make_api_call(operation_name, kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <botocore.client.DynamoDB object at 0x000001FBA27300B0>, operation_name = 'UpdateItem'
-api_params = {'ExpressionAttributeValues': {':status': {'S': 'processing'}}, 'Key': {'upload_id': {'S': 'test-uuid-789'}}, 'TableName': 'UploadStatus-test', 'UpdateExpression': 'SET status = :status'}
-
-    @with_current_context()
-    def _make_api_call(self, operation_name, api_params):
-        operation_model = self._service_model.operation_model(operation_name)
-        service_name = self._service_model.service_name
-        history_recorder.record(
-            'API_CALL',
-            {
-                'service': service_name,
-                'operation': operation_name,
-                'params': api_params,
-            },
-        )
-        if operation_model.deprecated:
-            logger.debug(
-                'Warning: %s.%s() is deprecated', service_name, operation_name
-            )
-        request_context = {
-            'client_region': self.meta.region_name,
-            'client_config': self.meta.config,
-            'has_streaming_input': operation_model.has_streaming_input,
-            'auth_type': operation_model.resolved_auth_type,
-            'unsigned_payload': operation_model.unsigned_payload,
-            'auth_options': self._service_model.metadata.get('auth'),
-        }
-
-        api_params = self._emit_api_params(
-            api_params=api_params,
-            operation_model=operation_model,
-            context=request_context,
-        )
-        (
-            endpoint_url,
-            additional_headers,
-            properties,
-        ) = self._resolve_endpoint_ruleset(
-            operation_model, api_params, request_context
-        )
-        if properties:
-            # Pass arbitrary endpoint info with the Request
-            # for use during construction.
-            request_context['endpoint_properties'] = properties
-        request_dict = self._convert_to_request_dict(
-            api_params=api_params,
-            operation_model=operation_model,
-            endpoint_url=endpoint_url,
-            context=request_context,
-            headers=additional_headers,
-        )
-        resolve_checksum_context(request_dict, operation_model, api_params)
-
-        service_id = self._service_model.service_id.hyphenize()
-        handler, event_response = self.meta.events.emit_until_response(
-            f'before-call.{service_id}.{operation_name}',
-            model=operation_model,
-            params=request_dict,
-            request_signer=self._request_signer,
-            context=request_context,
-        )
-
-        if event_response is not None:
-            http, parsed_response = event_response
-        else:
-            maybe_compress_request(
-                self.meta.config, request_dict, operation_model
-            )
-            apply_request_checksum(request_dict)
-            http, parsed_response = self._make_request(
-                operation_model, request_dict, request_context
-            )
-
-        self.meta.events.emit(
-            f'after-call.{service_id}.{operation_name}',
-            http_response=http,
-            parsed=parsed_response,
-            model=operation_model,
-            context=request_context,
-        )
-
-        if http.status_code >= 300:
-            error_info = parsed_response.get("Error", {})
-            error_code = request_context.get(
-                'error_code_override'
-            ) or error_info.get("Code")
-            error_class = self.exceptions.from_code(error_code)
->           raise error_class(parsed_response, operation_name)
-E           botocore.exceptions.ClientError: An error occurred (ValidationException) when calling the UpdateItem operation: Invalid UpdateExpression: Attribute name is a reserved keyword; reserved keyword: status
-
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1078: ClientError
-
-The above exception was the direct cause of the following exception:
-
-self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAD7E30>
-dynamodb_table = dynamodb.Table(name='UploadStatus-test')
-
-    @mock_aws
-    def test_update_success(self, dynamodb_table):
-        dynamodb_table.put_item(Item={
-            "upload_id": "test-uuid-789",
-            "status": "pending",
-            "filename": "test.csv",
-            "s3_key": "uploads/test-uuid-789/test.csv",
-            "created_at": "2024-01-01T12:00:00"
-        })
-
-        repo = UploadStatusRepository()
->       repo.update("test-uuid-789", {"status": "processing"})
-
-tests\test_upload_status_repository.py:90:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA26F4110>, upload_id = 'test-uuid-789'        
-updates = {'status': 'processing'}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-
-            for key, value in updates.items():
-                update_expression += f"{key} = :{key}, "
-                expression_values[f":{key}"] = value
-
-            update_expression = update_expression.rstrip(", ")
-
-            self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeValues=expression_values
-            )
-
-        except ClientError as e:
->           raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ValidationException) when calling the UpdateItem operation: Invalid UpdateExpression: Attribute name is a reserved keyword; reserved keyword: status
-
-src\repositories\upload_status_repository.py:107: DynamoDBException
-_________________________________________ TestUploadStatusRepository.test_update_multiple_fields _________________________________________ 
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA27303B0>, upload_id = 'test-uuid-999'        
-updates = {'processed_rows': 50, 'status': 'completed', 'total_rows': 50}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-
-            for key, value in updates.items():
-                update_expression += f"{key} = :{key}, "
-                expression_values[f":{key}"] = value
-
-            update_expression = update_expression.rstrip(", ")
-
->           self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeValues=expression_values
-            )
-
-src\repositories\upload_status_repository.py:100:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
-    response = action(self, *args, **kwargs)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\action.py:88: in __call__
-    response = getattr(parent.meta.client, operation_name)(*args, **params)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:602: in _api_call
-    return self._make_api_call(operation_name, kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\context.py:123: in wrapper
-    return func(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <botocore.client.DynamoDB object at 0x000001FBA1F6E060>, operation_name = 'UpdateItem'
-api_params = {'ExpressionAttributeValues': {':processed_rows': {'N': '50'}, ':status': {'S': 'completed'}, ':total_rows': {'N': '50...adStatus-test', 'UpdateExpression': 'SET status = :status, total_rows = :total_rows, processed_rows = :processed_rows'}
-
-    @with_current_context()
-    def _make_api_call(self, operation_name, api_params):
-        operation_model = self._service_model.operation_model(operation_name)
-        service_name = self._service_model.service_name
-        history_recorder.record(
-            'API_CALL',
-            {
-                'service': service_name,
-                'operation': operation_name,
-                'params': api_params,
-            },
-        )
-        if operation_model.deprecated:
-            logger.debug(
-                'Warning: %s.%s() is deprecated', service_name, operation_name
-            )
-        request_context = {
-            'client_region': self.meta.region_name,
-            'client_config': self.meta.config,
-            'has_streaming_input': operation_model.has_streaming_input,
-            'auth_type': operation_model.resolved_auth_type,
-            'unsigned_payload': operation_model.unsigned_payload,
-            'auth_options': self._service_model.metadata.get('auth'),
-        }
-
-        api_params = self._emit_api_params(
-            api_params=api_params,
-            operation_model=operation_model,
-            context=request_context,
-        )
-        (
-            endpoint_url,
-            additional_headers,
-            properties,
-        ) = self._resolve_endpoint_ruleset(
-            operation_model, api_params, request_context
-        )
-        if properties:
-            # Pass arbitrary endpoint info with the Request
-            # for use during construction.
-            request_context['endpoint_properties'] = properties
-        request_dict = self._convert_to_request_dict(
-            api_params=api_params,
-            operation_model=operation_model,
-            endpoint_url=endpoint_url,
-            context=request_context,
-            headers=additional_headers,
-        )
-        resolve_checksum_context(request_dict, operation_model, api_params)
-
-        service_id = self._service_model.service_id.hyphenize()
-        handler, event_response = self.meta.events.emit_until_response(
-            f'before-call.{service_id}.{operation_name}',
-            model=operation_model,
-            params=request_dict,
-            request_signer=self._request_signer,
-            context=request_context,
-        )
-
-        if event_response is not None:
-            http, parsed_response = event_response
-        else:
-            maybe_compress_request(
-                self.meta.config, request_dict, operation_model
-            )
-            apply_request_checksum(request_dict)
-            http, parsed_response = self._make_request(
-                operation_model, request_dict, request_context
-            )
-
-        self.meta.events.emit(
-            f'after-call.{service_id}.{operation_name}',
-            http_response=http,
-            parsed=parsed_response,
-            model=operation_model,
-            context=request_context,
-        )
-
-        if http.status_code >= 300:
-            error_info = parsed_response.get("Error", {})
-            error_code = request_context.get(
-                'error_code_override'
-            ) or error_info.get("Code")
-            error_class = self.exceptions.from_code(error_code)
->           raise error_class(parsed_response, operation_name)
-E           botocore.exceptions.ClientError: An error occurred (ValidationException) when calling the UpdateItem operation: Invalid UpdateExpression: Attribute name is a reserved keyword; reserved keyword: status
-
-C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocore\client.py:1078: ClientError
-
-The above exception was the direct cause of the following exception:
-
-self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAF8050>
-dynamodb_table = dynamodb.Table(name='UploadStatus-test')
-
-    @mock_aws
-    def test_update_multiple_fields(self, dynamodb_table):
-        dynamodb_table.put_item(Item={
-            "upload_id": "test-uuid-999",
-            "status": "processing",
-            "filename": "test.csv",
-            "s3_key": "uploads/test-uuid-999/test.csv",
-            "created_at": "2024-01-01T12:00:00"
-        })
-
-        repo = UploadStatusRepository()
->       repo.update("test-uuid-999", {"status": "completed", "total_rows": 50, "processed_rows": 50})
-
-tests\test_upload_status_repository.py:106:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
-
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA27303B0>, upload_id = 'test-uuid-999'        
-updates = {'processed_rows': 50, 'status': 'completed', 'total_rows': 50}
-
-    def update(self, upload_id: str, updates: dict) -> None:
-        """
-        Update upload status fields.
-
-        Args:
-            upload_id: Upload identifier
-            updates: Dictionary of fields to update
-
-        Raises:
-            DynamoDBException: If update operation fails
-        """
-        try:
-            update_expression = "SET "
-            expression_values = {}
-
-            for key, value in updates.items():
-                update_expression += f"{key} = :{key}, "
-                expression_values[f":{key}"] = value
-
-            update_expression = update_expression.rstrip(", ")
-
-            self.table.update_item(
-                Key={'upload_id': upload_id},
-                UpdateExpression=update_expression,
-                ExpressionAttributeValues=expression_values
-            )
-
-        except ClientError as e:
->           raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
-E           src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ValidationException) when calling the UpdateItem operation: Invalid UpdateExpression: Attribute name is a reserved keyword; reserved keyword: status
-
-src\repositories\upload_status_repository.py:107: DynamoDBException
 _______________________________________ TestUploadStatusRepository.test_create_exception_handling ________________________________________ 
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1F53D10>
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002038950FFB0>
 upload_status = UploadStatus(upload_id=test-uuid-error, status=pending, filename=test.csv)
 
     def create(self, upload_status: UploadStatus) -> None:
@@ -456,8 +64,8 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
            ^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.client.DynamoDB object at 0x000001FBA28CA6F0>, operation_name = 'PutItem'
-api_params = {'Item': {'created_at': {'S': '2025-11-09T01:49:41.202315'}, 'filename': {'S': 'test.csv'}, 'processed_rows': {'N': '0'}, 's3_key': {'S': 'uploads/test.csv'}, ...}, 'TableName': 'UploadStatus-test'}
+self = <botocore.client.DynamoDB object at 0x000002039014A660>, operation_name = 'PutItem'
+api_params = {'Item': {'created_at': {'S': '2025-11-09T01:52:37.254618'}, 'filename': {'S': 'test.csv'}, 'processed_rows': {'N': '0'}, 's3_key': {'S': 'uploads/test.csv'}, ...}, 'TableName': 'UploadStatus-test'}
 
     @with_current_context()
     def _make_api_call(self, operation_name, api_params):
@@ -550,7 +158,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAF8230>
+self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000002038C81C140>
 dynamodb_table = dynamodb.Table(name='UploadStatus-test')
 
     @mock_aws
@@ -572,7 +180,7 @@ dynamodb_table = dynamodb.Table(name='UploadStatus-test')
 tests\test_upload_status_repository.py:127:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1F53D10>
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000002038950FFB0>
 upload_status = UploadStatus(upload_id=test-uuid-error, status=pending, filename=test.csv)
 
     def create(self, upload_status: UploadStatus) -> None:
@@ -608,7 +216,7 @@ E           src.core.exceptions.DynamoDBException: Failed to create upload statu
 src\repositories\upload_status_repository.py:48: DynamoDBException
 ______________________________________ TestUploadStatusRepository.test_get_by_id_exception_handling ______________________________________ 
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1E35490>, upload_id = 'test-uuid'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x0000020390230B90>, upload_id = 'test-uuid'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
@@ -643,7 +251,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
            ^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.client.DynamoDB object at 0x000001FBA326BB30>, operation_name = 'GetItem'
+self = <botocore.client.DynamoDB object at 0x0000020390EAF230>, operation_name = 'GetItem'
 api_params = {'Key': {'upload_id': {'S': 'test-uuid'}}, 'TableName': 'UploadStatus-test'}
 
     @with_current_context()
@@ -737,7 +345,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAF8410>
+self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000002038C81C320>
 dynamodb_table = dynamodb.Table(name='UploadStatus-test')
 
     @mock_aws
@@ -751,7 +359,7 @@ dynamodb_table = dynamodb.Table(name='UploadStatus-test')
 tests\test_upload_status_repository.py:135:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1E35490>, upload_id = 'test-uuid'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x0000020390230B90>, upload_id = 'test-uuid'
 
     def get_by_id(self, upload_id: str) -> Optional[UploadStatus]:
         """
@@ -782,7 +390,7 @@ E           src.core.exceptions.DynamoDBException: Failed to get upload status: 
 src\repositories\upload_status_repository.py:75: DynamoDBException
 _______________________________________ TestUploadStatusRepository.test_update_exception_handling ________________________________________ 
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1E5ECC0>, upload_id = 'test-uuid'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x0000020389636120>, upload_id = 'test-uuid'
 updates = {'status': 'completed'}
 
     def update(self, upload_id: str, updates: dict) -> None:
@@ -799,20 +407,23 @@ updates = {'status': 'completed'}
         try:
             update_expression = "SET "
             expression_values = {}
+            expression_names = {}
 
             for key, value in updates.items():
-                update_expression += f"{key} = :{key}, "
+                update_expression += f"#{key} = :{key}, "
                 expression_values[f":{key}"] = value
+                expression_names[f"#{key}"] = key
 
             update_expression = update_expression.rstrip(", ")
 
 >           self.table.update_item(
                 Key={'upload_id': upload_id},
                 UpdateExpression=update_expression,
+                ExpressionAttributeNames=expression_names,
                 ExpressionAttributeValues=expression_values
             )
 
-src\repositories\upload_status_repository.py:100:
+src\repositories\upload_status_repository.py:102:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\boto3\resources\factory.py:581: in do_action
     response = action(self, *args, **kwargs)
@@ -828,8 +439,8 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
            ^^^^^^^^^^^^^^^^^^^^^
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <botocore.client.DynamoDB object at 0x000001FBA3C14E00>, operation_name = 'UpdateItem'
-api_params = {'ExpressionAttributeValues': {':status': {'S': 'completed'}}, 'Key': {'upload_id': {'S': 'test-uuid'}}, 'TableName': 'UploadStatus-test', 'UpdateExpression': 'SET status = :status'}
+self = <botocore.client.DynamoDB object at 0x00000203918504A0>, operation_name = 'UpdateItem'
+api_params = {'ExpressionAttributeNames': {'#status': 'status'}, 'ExpressionAttributeValues': {':status': {'S': 'completed'}}, 'Key': {'upload_id': {'S': 'test-uuid'}}, 'TableName': 'UploadStatus-test', ...}
 
     @with_current_context()
     def _make_api_call(self, operation_name, api_params):
@@ -922,7 +533,7 @@ C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\site-packages\botocor
 
 The above exception was the direct cause of the following exception:
 
-self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000001FB9EAF85F0>
+self = <tests.test_upload_status_repository.TestUploadStatusRepository object at 0x000002038C81C500>
 dynamodb_table = dynamodb.Table(name='UploadStatus-test')
 
     @mock_aws
@@ -936,13 +547,13 @@ dynamodb_table = dynamodb.Table(name='UploadStatus-test')
 tests\test_upload_status_repository.py:143:
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  
 
-self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x000001FBA1E5ECC0>, upload_id = 'test-uuid'
+self = <src.repositories.upload_status_repository.UploadStatusRepository object at 0x0000020389636120>, upload_id = 'test-uuid'
 updates = {'status': 'completed'}
 
     def update(self, upload_id: str, updates: dict) -> None:
         """
         Update upload status fields.
-
+    
         Args:
             upload_id: Upload identifier
             updates: Dictionary of fields to update
@@ -953,16 +564,19 @@ updates = {'status': 'completed'}
         try:
             update_expression = "SET "
             expression_values = {}
+            expression_names = {}
 
             for key, value in updates.items():
-                update_expression += f"{key} = :{key}, "
+                update_expression += f"#{key} = :{key}, "
                 expression_values[f":{key}"] = value
+                expression_names[f"#{key}"] = key
 
             update_expression = update_expression.rstrip(", ")
 
             self.table.update_item(
                 Key={'upload_id': upload_id},
                 UpdateExpression=update_expression,
+                ExpressionAttributeNames=expression_names,
                 ExpressionAttributeValues=expression_values
             )
 
@@ -970,7 +584,7 @@ updates = {'status': 'completed'}
 >           raise DynamoDBException(f"Failed to update upload status: {str(e)}") from e
 E           src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ResourceNotFoundException) when calling the UpdateItem operation: Requested resource not found
 
-src\repositories\upload_status_repository.py:107: DynamoDBException
+src\repositories\upload_status_repository.py:110: DynamoDBException
 ============================================================ warnings summary ============================================================ 
 src\core\config.py:9
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\core\config.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
@@ -978,10 +592,8 @@ src\core\config.py:9
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 ======================================================== short test summary info ========================================================= 
-FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_success - src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ValidationException) when calling the Update...
-FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_multiple_fields - src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ValidationException) when calling the Update...
 FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_create_exception_handling - src.core.exceptions.DynamoDBException: Failed to create upload status: An error occurred (ResourceNotFoundException) when calling the ...
 FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_get_by_id_exception_handling - src.core.exceptions.DynamoDBException: Failed to get upload status: An error occurred (ResourceNotFoundException) when calling the Get...
 FAILED tests/test_upload_status_repository.py::TestUploadStatusRepository::test_update_exception_handling - src.core.exceptions.DynamoDBException: Failed to update upload status: An error occurred (ResourceNotFoundException) when calling the ...
-================================================= 5 failed, 3 passed, 1 warning in 2.65s ================================================= 
+================================================= 3 failed, 5 passed, 1 warning in 2.73s ================================================= 
 PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
