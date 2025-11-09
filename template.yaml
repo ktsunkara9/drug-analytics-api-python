@@ -240,6 +240,10 @@ Resources:
       DefaultRouteSettings:
         ThrottlingBurstLimit: 100
         ThrottlingRateLimit: 50
+      RouteSettings:
+        'POST /v1/api/drugs/upload':
+          ThrottlingBurstLimit: 10
+          ThrottlingRateLimit: 5
       AccessLogSettings:
         DestinationArn: !GetAtt ApiAccessLogGroup.Arn
         Format: '$context.requestId $context.error.message $context.error.messageString'

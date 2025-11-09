@@ -175,11 +175,24 @@ print(response.json())
 - `completed` - Successfully processed
 - `failed` - Processing failed (includes error_message)
 
-### 3. Get All Drugs
+### 3. Get All Drugs (with Pagination)
 
-**cURL:**
+**Query Parameters:**
+- `limit` (optional): Number of items per page (default: 10, max: 1000)
+- `next_token` (optional): Pagination token from previous response
+
+**cURL (First Page):**
 ```bash
+# Get first 10 drugs (default)
 curl http://localhost:8000/v1/api/drugs
+
+# Get first 50 drugs
+curl "http://localhost:8000/v1/api/drugs?limit=10"
+```
+
+**cURL (Next Page):**
+```bash
+curl "http://localhost:8000/v1/api/drugs?limit=10&next_token=eyJkcnVnX2NhdGVnb3J5IjoiQUxMIi..."
 ```
 
 **Python:**
@@ -187,25 +200,56 @@ curl http://localhost:8000/v1/api/drugs
 import requests
 
 url = "http://localhost:8000/v1/api/drugs"
-response = requests.get(url)
-print(response.json())
+
+# Get first page
+response = requests.get(url, params={"limit": 10})
+data = response.json()
+print(f"Retrieved {data['count']} drugs")
+print(f"Next token: {data['next_token']}")
+
+# Get next page if available
+if data['next_token']:
+    response = requests.get(url, params={"limit": 10, "next_token": data['next_token']})
+    next_page = response.json()
+    print(f"Next page: {next_page['count']} drugs")
 ```
 
 **Response (200 OK):**
 ```json
-[
-  {
-    "drug_name": "Aspirin",
-    "target": "COX-2",
-    "efficacy": 85.5
-  },
-  {
-    "drug_name": "Ibuprofen",
-    "target": "COX-1",
-    "efficacy": 90.0
-  }
-]
+{
+  "drugs": [
+    {
+      "drug_name": "Aspirin",
+      "target": "COX-2",
+      "efficacy": 85.5,
+      "upload_timestamp": "2024-01-15T10:30:00"
+    },
+    {
+      "drug_name": "Ibuprofen",
+      "target": "COX-1",
+      "efficacy": 90.0,
+      "upload_timestamp": "2024-01-15T11:00:00"
+    }
+  ],
+  "count": 2,
+  "next_token": "eyJkcnVnX2NhdGVnb3J5IjoiQUxMIiwidXBsb2FkX3RpbWVzdGFtcCI6IjIwMjQtMDEtMTVUMTE6MDA6MDAifQ=="
+}
 ```
+
+**Response (Last Page):**
+```json
+{
+  "drugs": [...],
+  "count": 5,
+  "next_token": null
+}
+```
+
+**Pagination Notes:**
+- Results are sorted by upload timestamp (newest first)
+- `next_token` is `null` when there are no more results
+- Token is opaque - do not decode or modify it
+- Tokens may expire if data changes significantly
 
 ### 4. Get Specific Drug
 
@@ -263,6 +307,34 @@ print(response.json())
 }
 ```
 
+### 6. Paginate Through All Results
+
+**Python:**
+```python
+import requests
+
+url = "http://localhost:8000/v1/api/drugs"
+all_drugs = []
+next_token = None
+
+while True:
+    params = {"limit": 100}
+    if next_token:
+        params["next_token"] = next_token
+    
+    response = requests.get(url, params=params)
+    data = response.json()
+    
+    all_drugs.extend(data["drugs"])
+    print(f"Retrieved {data['count']} drugs (Total: {len(all_drugs)})")
+    
+    next_token = data["next_token"]
+    if not next_token:
+        break
+
+print(f"Total drugs retrieved: {len(all_drugs)}")
+```
+
 ### Complete Workflow Example
 
 **Python:**
@@ -289,11 +361,12 @@ while True:
         break
     time.sleep(2)
 
-# 3. Query processed data
+# 3. Query processed data with pagination
 if status == "completed":
-    response = requests.get(f"{BASE_URL}/drugs")
-    drugs = response.json()
-    print(f"Total drugs: {len(drugs)}")
+    response = requests.get(f"{BASE_URL}/drugs", params={"limit": 100})
+    data = response.json()
+    print(f"Retrieved {data['count']} drugs")
+    print(f"More results available: {data['next_token'] is not None}")
 ```
 
 ## CSV Format
@@ -406,6 +479,39 @@ open htmlcov/index.html
 - ✅ **Scalable** - Serverless architecture scales automatically
 - ✅ **File Validation** - File size (10MB) and row count (10,000) limits
 - ✅ **Data Validation** - Comprehensive CSV structure and data validation
+- ✅ **Pagination** - Efficient cursor-based pagination for large datasets (default 10, max 1000 per page)
+- ✅ **Rate Limiting** - API Gateway throttling prevents abuse and controls costs
+
+## Security
+
+### Rate Limiting
+
+API Gateway enforces rate limiting to prevent abuse, protect backend services, and control costs.
+
+**Global Limits (All Endpoints):**
+- Burst Capacity: 100 requests
+- Steady-State Rate: 50 requests/second
+
+**Upload Endpoint Limits (POST /v1/api/drugs/upload):**
+- Burst Capacity: 10 requests
+- Steady-State Rate: 5 requests/second
+
+**How It Works:**
+- API Gateway uses token bucket algorithm
+- Throttled requests return 429 before reaching Lambda (no cost)
+
+**Rate Limit Response (429 Too Many Requests):**
+```json
+{
+  "message": "Too Many Requests"
+}
+```
+
+**Best Practices:**
+- Implement exponential backoff in client code
+- Cache GET responses when possible
+- Use pagination to reduce request frequency
+- Monitor CloudWatch for throttling events
 
 ## Troubleshooting
 
@@ -431,18 +537,13 @@ Key issues covered:
 - [x] Comprehensive test suite (94% coverage)
 - [x] AWS deployment automation
 - [x] Production deployment and testing
+- [x] Rate limiting (API Gateway throttling)
 
 ### Future Enhancements
 - [ ] Authentication & authorization
-- [ ] Rate limiting
-- [ ] Pagination for large datasets
 - [ ] CloudWatch monitoring dashboards
-- [ ] CI/CD pipeline
-- [ ] WebSocket for real-time updates
+- [ ] S3 bucket encryption
 
-## Contributing
-
-See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for development guidelines and known issues.
 =======
 ## Testing
 
@@ -480,21 +581,3 @@ open htmlcov/index.html
 ## Troubleshooting
 
 For known issues and workarounds, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-
-Key issues covered:
-- Python 3.13 compatibility with Moto
-- SAM circular dependency with S3/Lambda
-- Settings import patterns for testing
-- API Gateway routing
-- DynamoDB type conversions
-
-## Development Status
-
-- [x] Project setup
-- [x] Dependencies installed
-- [x] Core structure
-- [x] FastAPI implementation
-- [x] AWS integration
-- [x] Testing
-- [x] Deployment
->>>>>>> 4e5921eb365129fa8eb9c1cd2751dadc25bf4d3b
