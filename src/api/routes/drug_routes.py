@@ -1,6 +1,6 @@
 """
 Drug API routes.
-Handles HTTP endpoints for drug data operations.
+Handles HTTP endpoints for drug data operations and CSV uploads.
 """
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Query
 from typing import Optional
@@ -9,10 +9,10 @@ from src.core.dependencies import get_drug_service
 from src.models.dto.drug_dto import DrugUploadResponse, DrugListResponse, UploadStatusResponse
 from src.core import config
 
-router = APIRouter(prefix="/v1/api/drugs", tags=["Drugs"])
+router = APIRouter(prefix="/v1/api")
 
 
-@router.post("/upload", response_model=DrugUploadResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post("/uploads", tags=["Uploads"], response_model=DrugUploadResponse, status_code=status.HTTP_202_ACCEPTED)
 async def upload_drug_csv(
     file: UploadFile = File(..., description="CSV file containing drug data"),
     drug_service: DrugService = Depends(get_drug_service)
@@ -48,7 +48,18 @@ async def upload_drug_csv(
     return result
 
 
-@router.get("", response_model=DrugListResponse)
+@router.get("/uploads/{upload_id}", tags=["Uploads"], response_model=UploadStatusResponse)
+async def get_upload_status(
+    upload_id: str,
+    drug_service: DrugService = Depends(get_drug_service)
+):
+    """
+    Get the processing status of an uploaded CSV file.
+    """
+    return drug_service.get_upload_status(upload_id)
+
+
+@router.get("/drugs", tags=["Drugs"], response_model=DrugListResponse)
 async def get_all_drugs(
     limit: int = Query(default=10, ge=1, le=1000, description="Maximum number of items to return"),
     next_token: Optional[str] = Query(default=None, description="Pagination token from previous response"),
@@ -65,7 +76,7 @@ async def get_all_drugs(
     return response
 
 
-@router.get("/{drug_name}", response_model=DrugListResponse)
+@router.get("/drugs/{drug_name}", tags=["Drugs"], response_model=DrugListResponse)
 async def get_drug_by_name(
     drug_name: str,
     drug_service: DrugService = Depends(get_drug_service)
@@ -74,14 +85,3 @@ async def get_drug_by_name(
     Retrieve all versions of a specific drug by name.
     """
     return drug_service.get_drug_by_name(drug_name)
-
-
-@router.get("/status/{upload_id}", response_model=UploadStatusResponse)
-async def get_upload_status(
-    upload_id: str,
-    drug_service: DrugService = Depends(get_drug_service)
-):
-    """
-    Get the processing status of an uploaded CSV file.
-    """
-    return drug_service.get_upload_status(upload_id)

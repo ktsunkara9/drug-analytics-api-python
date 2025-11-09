@@ -985,3 +985,519 @@ DrugApiFunction:
 - [HTTP API vs REST API](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html)
 - [HTTP API Throttling](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-throttling.html)
 - [REST API Throttling](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-request-throttling.html)
+
+---
+
+## 14. CSV Processing Failure Recovery
+
+### Problem
+
+When CSV processor Lambda crashes after successful S3 upload, the S3 event is lost and files remain unprocessed. Users must re-upload files after bugs are fixed.
+
+**Current Behavior:**
+```
+1. User uploads file.csv to S3 ✅
+2. S3 triggers Lambda ✅
+3. Lambda crashes (bug, memory, timeout) ❌
+4. S3 event is lost forever ❌
+5. File sits in S3, status = "failed" ❌
+6. Fix bug and redeploy ✅
+7. Lambda does NOT auto-retry ❌
+8. User must re-upload file ❌
+```
+
+### Solutions
+
+#### Option 1: SQS Dead Letter Queue (DLQ) ⭐ RECOMMENDED
+
+Capture failed Lambda executions for manual replay after fixing bugs.
+
+**Implementation:**
+```yaml
+# Add to template.yaml
+CsvProcessorDLQ:
+  Type: AWS::SQS::Queue
+  Properties:
+    QueueName: !Sub 'csv-processor-dlq-${Environment}'
+    MessageRetentionPeriod: 1209600  # 14 days
+    Tags:
+      - Key: Environment
+        Value: !Ref Environment
+
+CsvProcessorFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    # ... existing properties ...
+    DeadLetterQueue:
+      Type: SQS
+      TargetArn: !GetAtt CsvProcessorDLQ.Arn
+```
+
+**How it works:**
+1. Lambda crashes → Event sent to DLQ
+2. Fix bug and redeploy
+3. Manually replay events from DLQ
+4. Files get processed without re-upload
+
+**Replay failed events:**
+```bash
+# Get messages from DLQ
+aws sqs receive-message \
+  --queue-url https://sqs.us-east-1.amazonaws.com/<account>/csv-processor-dlq-dev \
+  --max-number-of-messages 10
+
+# Invoke Lambda with failed event
+aws lambda invoke \
+  --function-name csv-processor-dev \
+  --payload file://failed-event.json \
+  response.json
+
+# Delete message after successful processing
+aws sqs delete-message \
+  --queue-url <queue-url> \
+  --receipt-handle <receipt-handle>
+```
+
+**Pros:**
+- ✅ No lost events
+- ✅ Can retry after fixing bugs
+- ✅ Audit trail of failures
+- ✅ Low cost ($0.40 per million requests)
+
+**Cons:**
+- ❌ Manual replay needed
+- ❌ Slightly more complex setup
+
+#### Option 2: S3 → SQS → Lambda Architecture
+
+Use SQS as buffer between S3 and Lambda for automatic retries.
+
+**Implementation:**
+```yaml
+CsvProcessingQueue:
+  Type: AWS::SQS::Queue
+  Properties:
+    QueueName: !Sub 'csv-processing-queue-${Environment}'
+    VisibilityTimeout: 360  # 6 minutes (Lambda timeout + buffer)
+    RedrivePolicy:
+      deadLetterTargetArn: !GetAtt CsvProcessorDLQ.Arn
+      maxReceiveCount: 5  # Retry 5 times before DLQ
+
+CsvProcessorFunction:
+  Events:
+    SQSEvent:
+      Type: SQS
+      Properties:
+        Queue: !GetAtt CsvProcessingQueue.Arn
+        BatchSize: 1
+```
+
+**How it works:**
+1. S3 → SQS queue → Lambda
+2. Lambda crashes → Message stays in queue
+3. Lambda auto-retries (up to 5 times)
+4. After 5 failures → Message goes to DLQ
+5. Fix bug, manually replay DLQ
+
+**Pros:**
+- ✅ Automatic retries (5 attempts)
+- ✅ No lost events
+- ✅ Better for high volume
+- ✅ Decouples S3 from Lambda
+
+**Cons:**
+- ❌ More infrastructure (SQS queue)
+- ❌ Slightly higher latency
+
+#### Option 3: Manual Reprocessing Endpoint
+
+Create admin API endpoint to reprocess failed uploads.
+
+**Implementation:**
+```python
+# Add to FastAPI routes
+@router.post("/admin/reprocess/{upload_id}")
+async def reprocess_upload(upload_id: str):
+    """Reprocess a failed upload without re-uploading file."""
+    # 1. Get upload status from DynamoDB
+    status = await upload_status_repo.get_status(upload_id)
+    
+    if status["status"] != "failed":
+        raise HTTPException(400, "Only failed uploads can be reprocessed")
+    
+    # 2. Get S3 file location
+    s3_key = status["s3_key"]
+    
+    # 3. Manually invoke CSV processor Lambda
+    lambda_client.invoke(
+        FunctionName="csv-processor-dev",
+        InvocationType="Event",
+        Payload=json.dumps({
+            "Records": [{
+                "s3": {
+                    "bucket": {"name": bucket_name},
+                    "object": {"key": s3_key}
+                }
+            }]
+        })
+    )
+    
+    return {"message": "Reprocessing initiated", "upload_id": upload_id}
+```
+
+**Usage:**
+```bash
+# After fixing bug and redeploying
+curl -X POST https://api-url/v1/api/admin/reprocess/a1b2c3d4-5678-9abc-def0-123456789012
+```
+
+**Pros:**
+- ✅ Simple to implement
+- ✅ No additional AWS services
+- ✅ Full control
+
+**Cons:**
+- ❌ Manual intervention required
+- ❌ Need to build admin endpoint
+
+#### Option 4: Scheduled Retry Lambda
+
+Periodically scan for failed uploads and retry.
+
+**Implementation:**
+```yaml
+RetryScheduler:
+  Type: AWS::Serverless::Function
+  Properties:
+    Handler: lambda_functions.retry_scheduler.handler
+    Events:
+      Schedule:
+        Type: Schedule
+        Properties:
+          Schedule: rate(1 hour)
+```
+
+```python
+# lambda_functions/retry_scheduler.py
+def handler(event, context):
+    # 1. Query DynamoDB for status = "failed"
+    failed_uploads = upload_status_repo.get_failed_uploads()
+    
+    # 2. For each failed upload, invoke CSV processor
+    for upload in failed_uploads:
+        lambda_client.invoke(
+            FunctionName="csv-processor-dev",
+            InvocationType="Event",
+            Payload=json.dumps({...})
+        )
+```
+
+**Pros:**
+- ✅ Automatic retry
+- ✅ No manual intervention
+
+**Cons:**
+- ❌ Delayed retry (hourly)
+- ❌ Additional Lambda costs
+- ❌ May retry same failures repeatedly
+
+### Recommended Approach
+
+**Phase 1: Add DLQ (Immediate - 10 min)**
+- Capture failed events so they're not lost
+- Provides safety net for production
+
+**Phase 2: Add Reprocess Endpoint (Later - 30 min)**
+- Allow manual reprocessing without re-upload
+- Better user experience
+
+**Phase 3: Consider SQS Architecture (Future)**
+- If failure rate is high
+- If automatic retry is critical
+
+### Status: PENDING IMPLEMENTATION
+
+This feature is documented but not yet implemented. Priority: Medium
+
+### References
+- [Lambda DLQ](https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html#invocation-dlq)
+- [SQS as Event Source](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html)
+- [Lambda Error Handling](https://docs.aws.amazon.com/lambda/latest/dg/invocation-retries.html)
+
+---
+
+## 15. Multipart Upload: When and Why
+
+### Question
+
+Should we implement S3 multipart upload for CSV file uploads?
+
+### Current Implementation
+
+**Single Upload (Current):**
+```python
+@router.post("/drugs/upload")
+async def upload_csv(file: UploadFile):
+    file_content = await file.read()  # Read entire file
+    s3_repository.upload_file(file_content, s3_key)  # Single PUT
+```
+
+**Constraints:**
+- Max file size: 10MB
+- Max row count: 10,000 rows
+- API Gateway payload limit: 10MB
+- Upload time: 1-3 seconds (typical)
+
+### Decision: NO Multipart Upload Needed
+
+**Reasons:**
+
+1. **File Size Too Small**
+   - Current: 10MB max
+   - Multipart recommended: 100MB+
+   - Multipart required: 5GB+
+
+2. **API Gateway Limitation**
+   - HTTP API Gateway max payload: 10MB
+   - Already at the limit
+   - Can't increase without architecture change
+
+3. **Cost Increase**
+   ```
+   Single upload:  1 S3 PUT = $0.000005
+   Multipart (2 parts): 1 initiate + 2 uploads + 1 complete = $0.000020
+   Cost increase: 4x for no benefit
+   ```
+
+4. **Complexity Increase**
+   - Single upload: 5 lines of code
+   - Multipart upload: 50+ lines of code
+   - Error handling: Simple vs Complex
+   - Testing: Easy vs Difficult
+
+5. **Performance**
+   - 10MB uploads complete in 1-3 seconds
+   - Rarely fail on modern networks
+   - No need for resume capability
+
+### When Multipart Upload IS Needed
+
+| Scenario | File Size | Solution |
+|----------|-----------|----------|
+| **Large CSV files** | 100MB - 5GB | Multipart + Presigned URLs |
+| **Very large files** | 5GB - 5TB | Multipart (required by S3) |
+| **Unreliable network** | Any | Multipart with resume |
+| **Parallel upload speed** | 100MB+ | Multipart (faster) |
+
+### Future: Supporting Larger Files
+
+If file size limit needs to increase beyond 10MB:
+
+#### Option 1: S3 Presigned URLs (Recommended)
+
+**Architecture Change:**
+```
+Current: Client → API Gateway → Lambda → S3
+New:     Client → S3 directly (presigned URL)
+```
+
+**Implementation:**
+```python
+# Step 1: Generate presigned URL
+@router.post("/drugs/upload/presigned")
+def get_presigned_url(filename: str, file_size: int):
+    upload_id = str(uuid.uuid4())
+    s3_key = f"uploads/{upload_id}/{filename}"
+    
+    # Generate presigned URL for direct S3 upload
+    url = s3_client.generate_presigned_url(
+        'put_object',
+        Params={'Bucket': bucket_name, 'Key': s3_key},
+        ExpiresIn=3600  # 1 hour
+    )
+    
+    # Create upload status record
+    upload_status_repo.create(upload_id, filename, s3_key)
+    
+    return {
+        "upload_id": upload_id,
+        "upload_url": url,
+        "expires_in": 3600
+    }
+
+# Step 2: Client uploads directly to S3 using presigned URL
+# (No API Gateway involvement, bypasses 10MB limit)
+
+# Step 3: S3 event triggers Lambda for processing
+```
+
+**Benefits:**
+- ✅ Bypasses API Gateway 10MB limit
+- ✅ Supports files up to 5GB (single upload)
+- ✅ Supports files up to 5TB (with multipart)
+- ✅ Reduces Lambda execution time (no file proxying)
+- ✅ Lower cost (no API Gateway data transfer)
+
+**Drawbacks:**
+- ❌ More complex client implementation
+- ❌ Two-step process (get URL, then upload)
+- ❌ CORS configuration needed on S3
+
+#### Option 2: Multipart Upload with Presigned URLs
+
+**For files > 100MB:**
+
+```python
+# Step 1: Initiate multipart upload
+@router.post("/drugs/upload/multipart/initiate")
+def initiate_multipart(filename: str, file_size: int):
+    upload_id = str(uuid.uuid4())
+    s3_key = f"uploads/{upload_id}/{filename}"
+    
+    response = s3_client.create_multipart_upload(
+        Bucket=bucket_name,
+        Key=s3_key
+    )
+    
+    return {
+        "upload_id": upload_id,
+        "s3_upload_id": response['UploadId'],
+        "part_size": 5 * 1024 * 1024  # 5MB parts
+    }
+
+# Step 2: Generate presigned URLs for each part
+@router.post("/drugs/upload/multipart/part-url")
+def get_part_url(upload_id: str, s3_upload_id: str, part_number: int):
+    s3_key = get_s3_key_from_upload_id(upload_id)
+    
+    url = s3_client.generate_presigned_url(
+        'upload_part',
+        Params={
+            'Bucket': bucket_name,
+            'Key': s3_key,
+            'UploadId': s3_upload_id,
+            'PartNumber': part_number
+        },
+        ExpiresIn=3600
+    )
+    
+    return {"part_url": url, "part_number": part_number}
+
+# Step 3: Complete multipart upload
+@router.post("/drugs/upload/multipart/complete")
+def complete_multipart(upload_id: str, s3_upload_id: str, parts: List[dict]):
+    s3_key = get_s3_key_from_upload_id(upload_id)
+    
+    s3_client.complete_multipart_upload(
+        Bucket=bucket_name,
+        Key=s3_key,
+        UploadId=s3_upload_id,
+        MultipartUpload={'Parts': parts}
+    )
+    
+    return {"status": "completed", "upload_id": upload_id}
+
+# Step 4: Abort on failure
+@router.post("/drugs/upload/multipart/abort")
+def abort_multipart(upload_id: str, s3_upload_id: str):
+    s3_key = get_s3_key_from_upload_id(upload_id)
+    
+    s3_client.abort_multipart_upload(
+        Bucket=bucket_name,
+        Key=s3_key,
+        UploadId=s3_upload_id
+    )
+    
+    return {"status": "aborted"}
+```
+
+**Client Implementation:**
+```python
+import requests
+import math
+
+def upload_large_file(file_path: str, api_url: str):
+    file_size = os.path.getsize(file_path)
+    part_size = 5 * 1024 * 1024  # 5MB
+    
+    # 1. Initiate multipart upload
+    response = requests.post(f"{api_url}/drugs/upload/multipart/initiate", 
+        json={"filename": os.path.basename(file_path), "file_size": file_size})
+    data = response.json()
+    upload_id = data['upload_id']
+    s3_upload_id = data['s3_upload_id']
+    
+    # 2. Upload parts
+    parts = []
+    with open(file_path, 'rb') as f:
+        part_number = 1
+        while True:
+            chunk = f.read(part_size)
+            if not chunk:
+                break
+            
+            # Get presigned URL for this part
+            url_response = requests.post(f"{api_url}/drugs/upload/multipart/part-url",
+                json={"upload_id": upload_id, "s3_upload_id": s3_upload_id, "part_number": part_number})
+            part_url = url_response.json()['part_url']
+            
+            # Upload part directly to S3
+            part_response = requests.put(part_url, data=chunk)
+            etag = part_response.headers['ETag']
+            
+            parts.append({"PartNumber": part_number, "ETag": etag})
+            part_number += 1
+    
+    # 3. Complete multipart upload
+    requests.post(f"{api_url}/drugs/upload/multipart/complete",
+        json={"upload_id": upload_id, "s3_upload_id": s3_upload_id, "parts": parts})
+    
+    print(f"Upload completed: {upload_id}")
+```
+
+### Cost Comparison
+
+**Current (10MB file, single upload):**
+```
+1 S3 PUT request = $0.000005
+Total: $0.000005
+```
+
+**Presigned URL (100MB file, single upload):**
+```
+1 S3 PUT request = $0.000005
+Total: $0.000005 (same cost, no API Gateway)
+```
+
+**Multipart (100MB file, 5MB parts = 20 parts):**
+```
+1 initiate + 20 part uploads + 1 complete = 22 S3 requests
+22 × $0.000005 = $0.00011
+Total: $0.00011 (22x more expensive)
+```
+
+### Recommendation
+
+**Current implementation (single upload via API Gateway) is optimal for:**
+- ✅ Files up to 10MB
+- ✅ CSV files with up to 10,000 rows
+- ✅ Simple, reliable, low-cost
+
+**Upgrade to presigned URLs when:**
+- Files need to be 10MB - 100MB
+- Want to reduce Lambda execution time
+- Want to reduce API Gateway costs
+
+**Upgrade to multipart upload when:**
+- Files need to be 100MB+
+- Network reliability is a concern
+- Need resume capability for failed uploads
+
+### Status: Current Implementation Sufficient
+
+No changes needed unless file size requirements increase beyond 10MB.
+
+### References
+- [S3 Multipart Upload](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html)
+- [S3 Presigned URLs](https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html)
+- [API Gateway Limits](https://docs.aws.amazon.com/apigateway/latest/developerguide/limits.html)

@@ -540,11 +540,13 @@ Key issues covered:
 - [x] AWS deployment automation
 - [x] Production deployment and testing
 - [x] Rate limiting (API Gateway throttling)
+- [x] S3 bucket encryption (SSE-S3 AES-256)
 
 ### Future Enhancements
-- [ ] Authentication & authorization
-- [ ] CloudWatch monitoring dashboards
-- [ ] S3 bucket encryption
+- [ ] **CSV Processing Failure Recovery** - Add DLQ + reprocess endpoint (see [TROUBLESHOOTING.md](TROUBLESHOOTING.md#14-csv-processing-failure-recovery))
+- [ ] **Authentication & Authorization** - API Keys (requires REST API) or Lambda Authorizer + JWT
+- [ ] **CloudWatch Alarms** - Lambda errors, API 5xx errors, DynamoDB throttling, cost monitoring
+- [ ] **CloudWatch Dashboards** - Operational visibility for API, Lambda, DynamoDB metrics
 
 =======
 ## Testing
