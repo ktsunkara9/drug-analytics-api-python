@@ -285,6 +285,9 @@ Resources:
           DYNAMODB_TABLE_NAME: !Ref DrugDataTable
           UPLOAD_STATUS_TABLE_NAME: !Ref UploadStatusTable
           USERS_TABLE_NAME: !Ref UsersTable
+          JWT_SECRET: change-this-in-production-use-secrets-manager
+          JWT_ALGORITHM: HS256
+          JWT_EXPIRATION_HOURS: '24'
       Events:
         ApiEvent:
           Type: HttpApi
