@@ -319,7 +319,7 @@ Resources:
       Statistic: Average
       Period: 300
       EvaluationPeriods: 1
-      Threshold: 200000
+      Threshold: 10000
       ComparisonOperator: GreaterThanThreshold
       Dimensions:
         - Name: FunctionName
