@@ -5,7 +5,7 @@ Handles HTTP endpoints for drug data operations.
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from src.services.drug_service import DrugService
 from src.core.dependencies import get_drug_service
-from src.models.dto.drug_dto import DrugUploadResponse, DrugListResponse
+from src.models.dto.drug_dto import DrugUploadResponse, DrugListResponse, UploadStatusResponse
 
 router = APIRouter(prefix="/v1/api/drugs", tags=["Drugs"])
 
@@ -51,3 +51,14 @@ async def get_drug_by_name(
     Retrieve all versions of a specific drug by name.
     """
     return drug_service.get_drug_by_name(drug_name)
+
+
+@router.get("/status/{upload_id}", response_model=UploadStatusResponse)
+async def get_upload_status(
+    upload_id: str,
+    drug_service: DrugService = Depends(get_drug_service)
+):
+    """
+    Get the processing status of an uploaded CSV file.
+    """
+    return drug_service.get_upload_status(upload_id)

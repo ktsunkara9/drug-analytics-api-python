@@ -48,6 +48,24 @@ Resources:
         - Key: Application
           Value: DrugAnalytics
 
+  # DynamoDB Table for upload status tracking
+  UploadStatusTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'UploadStatus-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: upload_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: upload_id
+          KeyType: HASH
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: DrugAnalytics
+
   # CloudWatch Log Group for API access logs
   ApiAccessLogGroup:
     Type: AWS::Logs::LogGroup
@@ -134,7 +152,9 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                   - dynamodb:BatchWriteItem
-                Resource: !GetAtt DrugDataTable.Arn
+                Resource:
+                  - !GetAtt DrugDataTable.Arn
+                  - !GetAtt UploadStatusTable.Arn
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -174,8 +194,11 @@ Resources:
               - Effect: Allow
                 Action:
                   - dynamodb:PutItem
+                  - dynamodb:UpdateItem
                   - dynamodb:BatchWriteItem
-                Resource: !GetAtt DrugDataTable.Arn
+                Resource:
+                  - !GetAtt DrugDataTable.Arn
+                  - !GetAtt UploadStatusTable.Arn
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -223,6 +246,7 @@ Resources:
         Variables:
           S3_BUCKET_NAME: !Ref DrugDataBucket
           DYNAMODB_TABLE_NAME: !Ref DrugDataTable
+          UPLOAD_STATUS_TABLE_NAME: !Ref UploadStatusTable
       Events:
         ApiEvent:
           Type: HttpApi
@@ -249,6 +273,7 @@ Resources:
         Variables:
           S3_BUCKET_NAME: !Ref DrugDataBucket
           DYNAMODB_TABLE_NAME: !Ref DrugDataTable
+          UPLOAD_STATUS_TABLE_NAME: !Ref UploadStatusTable
       Tags:
         Environment: !Ref Environment
         Application: DrugAnalytics
@@ -265,6 +290,12 @@ Outputs:
     Value: !Ref DrugDataTable
     Export:
       Name: !Sub '${AWS::StackName}-DynamoDBTable'
+
+  UploadStatusTableName:
+    Description: DynamoDB table name for upload status tracking
+    Value: !Ref UploadStatusTable
+    Export:
+      Name: !Sub '${AWS::StackName}-UploadStatusTable'
 
   ApiUrl:
     Description: API Gateway endpoint URL

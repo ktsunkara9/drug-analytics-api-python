@@ -11,8 +11,9 @@ class Settings(BaseSettings):
     
     # AWS Configuration
     aws_region: str = os.getenv("AWS_REGION", "us-east-1")
-    s3_bucket_name: str = os.getenv("S3_BUCKET_NAME", "drug-analytics-dev")
-    dynamodb_table_name: str = os.getenv("DYNAMODB_TABLE_NAME", "DrugData-dev")
+    s3_bucket_name: str = os.getenv("S3_BUCKET_NAME", "")
+    dynamodb_table_name: str = os.getenv("DYNAMODB_TABLE_NAME", "")
+    upload_status_table_name: str = os.getenv("UPLOAD_STATUS_TABLE_NAME", "")
     
     # API Configuration
     api_title: str = os.getenv("API_TITLE", "Drug Analytics API")

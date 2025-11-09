@@ -107,6 +107,50 @@ Required fields:
 - `target` (string)
 - `efficacy` (float, 0-100)
 
+## Testing
+
+### Run Tests
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run specific test file
+pytest tests/test_file_service.py -v
+
+# Run specific test
+pytest tests/test_file_service.py::TestFileService::test_parse_csv_success -v
+```
+
+### Code Coverage
+
+```bash
+# Run tests with coverage report
+pytest tests/ --cov=src --cov-report=term-missing
+
+# Generate HTML coverage report
+pytest tests/ --cov=src --cov-report=html
+
+# View HTML report (opens in browser)
+# Windows
+start htmlcov/index.html
+
+# Linux/Mac
+open htmlcov/index.html
+```
+
+
+## Troubleshooting
+
+For known issues and workarounds, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+Key issues covered:
+- Python 3.13 compatibility with Moto
+- SAM circular dependency with S3/Lambda
+- Settings import patterns for testing
+- API Gateway routing
+- DynamoDB type conversions
+
 ## Development Status
 
 - [x] Project setup
@@ -114,5 +158,5 @@ Required fields:
 - [x] Core structure
 - [x] FastAPI implementation
 - [x] AWS integration
-- [ ] Testing
+- [x] Testing
 - [x] Deployment

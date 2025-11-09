@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import List, Optional
 import boto3
 from botocore.exceptions import ClientError
-from src.core.config import settings
+from src.core import config
 from src.core.exceptions import DynamoDBException, DrugNotFoundException
 from src.models.drug_model import Drug
 
@@ -16,8 +16,8 @@ class DynamoRepository:
     """Repository for DynamoDB operations."""
     
     def __init__(self):
-        self.dynamodb = boto3.resource('dynamodb', region_name=settings.aws_region)
-        self.table = self.dynamodb.Table(settings.dynamodb_table_name)
+        self.dynamodb = boto3.resource('dynamodb', region_name=config.settings.aws_region)
+        self.table = self.dynamodb.Table(config.settings.dynamodb_table_name)
     
     def save(self, drug: Drug) -> None:
         """

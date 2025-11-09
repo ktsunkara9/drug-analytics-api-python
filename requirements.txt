@@ -19,6 +19,7 @@ pytest
 pytest-asyncio
 moto
 pytest-cov
+httpx
 
 # Development
 python-dotenv
