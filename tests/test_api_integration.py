@@ -261,19 +261,7 @@ class TestAPIIntegration:
         s3 = boto3.client('s3', region_name='us-east-1')
         s3.create_bucket(Bucket='test-bucket')
         
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        dynamodb.create_table(
-            TableName='DrugData-test',
-            KeySchema=[
-                {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'PK', 'AttributeType': 'S'},
-                {'AttributeName': 'SK', 'AttributeType': 'S'}
-            ],
-            BillingMode='PAY_PER_REQUEST'
-        )
+        self._create_table_with_gsi()
         
         from src.main import app
         client = TestClient(app)
@@ -286,6 +274,8 @@ class TestAPIIntegration:
         data = response.json()
         assert data["count"] == 0
         assert data["drugs"] == []
+        assert "next_token" in data
+        assert data["next_token"] is None
     
     @mock_aws
     def test_get_drug_by_name_not_found(self):
