@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     s3_bucket_name: str = os.getenv("S3_BUCKET_NAME", "")
     dynamodb_table_name: str = os.getenv("DYNAMODB_TABLE_NAME", "")
     upload_status_table_name: str = os.getenv("UPLOAD_STATUS_TABLE_NAME", "")
+    users_table_name: str = os.getenv("USERS_TABLE_NAME", "")
     
     # API Configuration
     api_title: str = os.getenv("API_TITLE", "Drug Analytics API")
@@ -26,6 +27,11 @@ class Settings(BaseSettings):
     # Pagination Configuration
     pagination_default_limit: int = int(os.getenv("PAGINATION_DEFAULT_LIMIT", "10"))
     pagination_max_limit: int = int(os.getenv("PAGINATION_MAX_LIMIT", "1000"))
+    
+    # Authentication
+    jwt_secret: str = os.getenv("JWT_SECRET", "dev-secret-change-in-production")
+    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
+    jwt_expiration_hours: int = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
     
     # Environment
     environment: str = os.getenv("ENVIRONMENT", "dev")
