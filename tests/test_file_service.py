@@ -162,3 +162,43 @@ class TestFileService:
             with pytest.raises(ValidationException) as exc_info:
                 file_service.parse_csv_to_drugs(file)
             assert "Invalid data" in str(exc_info.value)
+    
+    def test_parse_csv_exceeds_max_rows(self, file_service):
+        """Test parsing fails when CSV exceeds max rows limit."""
+        # Create CSV with 5 rows
+        csv_content = b"drug_name,target,efficacy\n"
+        for i in range(5):
+            csv_content += f"Drug{i},Target{i},50.0\n".encode()
+        
+        file = io.BytesIO(csv_content)
+        
+        # Set max_rows to 3
+        with pytest.raises(ValidationException) as exc_info:
+            file_service.parse_csv_to_drugs(file, max_rows=3)
+        assert "exceeds maximum allowed rows of 3" in str(exc_info.value)
+    
+    def test_parse_csv_within_max_rows(self, file_service):
+        """Test parsing succeeds when CSV is within max rows limit."""
+        # Create CSV with 3 rows
+        csv_content = b"drug_name,target,efficacy\n"
+        for i in range(3):
+            csv_content += f"Drug{i},Target{i},50.0\n".encode()
+        
+        file = io.BytesIO(csv_content)
+        
+        # Set max_rows to 5
+        drugs = file_service.parse_csv_to_drugs(file, max_rows=5)
+        assert len(drugs) == 3
+    
+    def test_parse_csv_no_max_rows_limit(self, file_service):
+        """Test parsing works without max_rows limit."""
+        # Create CSV with many rows
+        csv_content = b"drug_name,target,efficacy\n"
+        for i in range(100):
+            csv_content += f"Drug{i},Target{i},50.0\n".encode()
+        
+        file = io.BytesIO(csv_content)
+        
+        # No max_rows specified
+        drugs = file_service.parse_csv_to_drugs(file)
+        assert len(drugs) == 100

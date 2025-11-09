@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     
     # File Upload Limits
     max_file_size_mb: int = int(os.getenv("MAX_FILE_SIZE_MB", "10"))
+    max_csv_rows: int = int(os.getenv("MAX_CSV_ROWS", "10000"))
     
     # Environment
     environment: str = os.getenv("ENVIRONMENT", "dev")

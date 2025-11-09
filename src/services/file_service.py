@@ -44,19 +44,20 @@ class FileService:
         except Exception as e:
             raise CSVProcessingException(f"Failed to validate CSV structure: {str(e)}") from e
     
-    def parse_csv_to_drugs(self, file: BinaryIO) -> List[Drug]:
+    def parse_csv_to_drugs(self, file: BinaryIO, max_rows: int = None) -> List[Drug]:
         """
         Parse CSV file and convert to Drug domain models.
         
         Args:
             file: CSV file to parse
+            max_rows: Maximum number of rows allowed (optional)
             
         Returns:
             List of Drug objects
             
         Raises:
             CSVProcessingException: If parsing fails
-            ValidationException: If data validation fails
+            ValidationException: If data validation fails or row limit exceeded
         """
         try:
             content = file.read().decode('utf-8')
@@ -64,6 +65,12 @@ class FileService:
             
             drugs = []
             for row_num, row in enumerate(csv_reader, start=2):  # Start at 2 (header is row 1)
+                # Check row limit before processing
+                if max_rows and len(drugs) >= max_rows:
+                    raise ValidationException(
+                        f"CSV exceeds maximum allowed rows of {max_rows}"
+                    )
+                
                 try:
                     drug = self._row_to_drug(row, row_num)
                     drugs.append(drug)

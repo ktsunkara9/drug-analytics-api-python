@@ -13,6 +13,7 @@ from src.repositories.s3_repository import S3Repository
 from src.repositories.dynamo_repository import DynamoRepository
 from src.repositories.upload_status_repository import UploadStatusRepository
 from src.services.file_service import FileService
+from src.core import config
 
 
 class DrugService:
@@ -149,8 +150,8 @@ class DrugService:
         # Wrap bytes in BytesIO to provide file-like interface
         file_obj = io.BytesIO(file_content)
         
-        # Parse CSV
-        drugs = self.file_service.parse_csv_to_drugs(file_obj)
+        # Parse CSV with row limit
+        drugs = self.file_service.parse_csv_to_drugs(file_obj, max_rows=config.settings.max_csv_rows)
         
         # Set s3_key for all drugs
         for drug in drugs:
