@@ -5,7 +5,7 @@ Orchestrates drug data operations between API and repositories.
 import io
 import uuid
 from datetime import datetime
-from typing import List, BinaryIO
+from typing import List, BinaryIO, Optional, Tuple
 from src.models.drug_model import Drug
 from src.models.upload_status import UploadStatus
 from src.models.dto.drug_dto import DrugUploadResponse, DrugResponse, DrugListResponse, UploadStatusResponse
@@ -127,6 +127,35 @@ class DrugService:
         ]
         
         return DrugListResponse(drugs=drug_responses, count=len(drug_responses))
+    
+    def get_all_drugs_paginated(self, limit: int = 10, next_token: Optional[str] = None) -> Tuple[DrugListResponse, Optional[str]]:
+        """
+        Retrieve all drug records with pagination.
+        
+        Args:
+            limit: Maximum number of items to return (default 10)
+            next_token: Pagination token from previous request
+            
+        Returns:
+            Tuple of (DrugListResponse, next_token or None)
+            
+        Raises:
+            DynamoDBException: If query fails
+            ValidationException: If next_token is invalid
+        """
+        drugs, next_token = self.dynamo_repository.find_all_paginated(limit, next_token)
+        
+        drug_responses = [
+            DrugResponse(
+                drug_name=drug.drug_name,
+                target=drug.target,
+                efficacy=drug.efficacy,
+                upload_timestamp=drug.upload_timestamp
+            )
+            for drug in drugs
+        ]
+        
+        return DrugListResponse(drugs=drug_responses, count=len(drug_responses)), next_token
     
     def process_csv_and_save(self, s3_key: str) -> int:
         """

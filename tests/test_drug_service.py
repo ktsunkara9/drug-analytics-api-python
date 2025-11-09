@@ -187,3 +187,49 @@ class TestDrugService:
         saved_drugs = mock_dynamo_repo.batch_save.call_args[0][0]
         assert len(saved_drugs) == 3
         assert all(drug.s3_key == s3_key for drug in saved_drugs)
+    
+    def test_get_all_drugs_paginated_success(self, drug_service, mock_dynamo_repo):
+        """Test paginated drug retrieval."""
+        # Setup
+        drugs = [
+            Drug("Drug1", "T1", 85.5, datetime(2024, 1, 1), "key1"),
+            Drug("Drug2", "T2", 90.0, datetime(2024, 1, 2), "key2")
+        ]
+        mock_dynamo_repo.find_all_paginated.return_value = (drugs, 'token123')
+        
+        # Execute
+        result, token = drug_service.get_all_drugs_paginated(limit=10)
+        
+        # Assert
+        assert isinstance(result, DrugListResponse)
+        assert result.count == 2
+        assert len(result.drugs) == 2
+        assert token == 'token123'
+        mock_dynamo_repo.find_all_paginated.assert_called_once_with(10, None)
+    
+    def test_get_all_drugs_paginated_with_token(self, drug_service, mock_dynamo_repo):
+        """Test paginated retrieval with next_token."""
+        # Setup
+        drugs = [Drug("Drug3", "T3", 75.0, datetime(2024, 1, 3), "key3")]
+        mock_dynamo_repo.find_all_paginated.return_value = (drugs, None)
+        
+        # Execute
+        result, token = drug_service.get_all_drugs_paginated(limit=10, next_token='token123')
+        
+        # Assert
+        assert result.count == 1
+        assert token is None
+        mock_dynamo_repo.find_all_paginated.assert_called_once_with(10, 'token123')
+    
+    def test_get_all_drugs_paginated_empty(self, drug_service, mock_dynamo_repo):
+        """Test paginated retrieval with no results."""
+        # Setup
+        mock_dynamo_repo.find_all_paginated.return_value = ([], None)
+        
+        # Execute
+        result, token = drug_service.get_all_drugs_paginated(limit=10)
+        
+        # Assert
+        assert result.count == 0
+        assert len(result.drugs) == 0
+        assert token is None

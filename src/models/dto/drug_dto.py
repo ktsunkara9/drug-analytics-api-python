@@ -43,6 +43,7 @@ class DrugListResponse(BaseModel):
     """Response schema for listing multiple drugs."""
     drugs: list[DrugResponse]
     count: int
+    next_token: str | None = None
 
 
 class UploadStatusResponse(BaseModel):

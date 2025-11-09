@@ -209,3 +209,10 @@ Naproxen,COX,88.0"""
         assert response["Item"]["status"] == "completed"
         assert response["Item"]["total_rows"] == 4
         assert response["Item"]["processed_rows"] == 4
+        
+        # Verify drugs were saved with drug_category attribute
+        drug_table = dynamodb.Table("DrugData-test")
+        scan_response = drug_table.scan()
+        assert len(scan_response["Items"]) == 4
+        for item in scan_response["Items"]:
+            assert item["drug_category"] == "ALL"

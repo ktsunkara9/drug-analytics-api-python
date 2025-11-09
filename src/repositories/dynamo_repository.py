@@ -4,11 +4,13 @@ Handles CRUD operations for drug data in DynamoDB.
 """
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import List, Optional, Tuple
+import json
+import base64
 import boto3
 from botocore.exceptions import ClientError
 from src.core import config
-from src.core.exceptions import DynamoDBException, DrugNotFoundException
+from src.core.exceptions import DynamoDBException, DrugNotFoundException, ValidationException
 from src.models.drug_model import Drug
 
 
@@ -102,6 +104,56 @@ class DynamoRepository:
             raise DynamoDBException(f"Failed to scan drug data: {str(e)}") from e
         except Exception as e:
             raise DynamoDBException(f"Unexpected error scanning drug data: {str(e)}") from e
+    
+    def find_all_paginated(self, limit: int = 10, next_token: Optional[str] = None) -> Tuple[List[Drug], Optional[str]]:
+        """
+        Retrieve all drug records with pagination using GSI.
+        
+        Args:
+            limit: Maximum number of items to return (default 10, max 1000)
+            next_token: Base64-encoded pagination token from previous request
+            
+        Returns:
+            Tuple of (list of Drug objects, next_token or None)
+            
+        Raises:
+            DynamoDBException: If query fails
+            ValidationException: If next_token is invalid
+        """
+        try:
+            query_kwargs = {
+                'IndexName': 'DrugCategoryIndex',
+                'KeyConditionExpression': 'drug_category = :cat',
+                'ExpressionAttributeValues': {':cat': 'ALL'},
+                'Limit': min(limit, 10),
+                'ScanIndexForward': False
+            }
+            
+            if next_token:
+                try:
+                    last_key = json.loads(base64.b64decode(next_token))
+                    query_kwargs['ExclusiveStartKey'] = last_key
+                except Exception:
+                    raise ValidationException("Invalid pagination token")
+            
+            response = self.table.query(**query_kwargs)
+            items = response.get('Items', [])
+            drugs = [self._item_to_drug(item) for item in items]
+            
+            next_token = None
+            if 'LastEvaluatedKey' in response:
+                next_token = base64.b64encode(
+                    json.dumps(response['LastEvaluatedKey']).encode()
+                ).decode()
+            
+            return drugs, next_token
+            
+        except ValidationException:
+            raise
+        except ClientError as e:
+            raise DynamoDBException(f"Failed to query drug data: {str(e)}") from e
+        except Exception as e:
+            raise DynamoDBException(f"Unexpected error querying drug data: {str(e)}") from e
     
     def batch_save(self, drugs: List[Drug]) -> None:
         """

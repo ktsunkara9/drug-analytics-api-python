@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     max_file_size_mb: int = int(os.getenv("MAX_FILE_SIZE_MB", "10"))
     max_csv_rows: int = int(os.getenv("MAX_CSV_ROWS", "10000"))
     
+    # Pagination Configuration
+    pagination_default_limit: int = int(os.getenv("PAGINATION_DEFAULT_LIMIT", "10"))
+    pagination_max_limit: int = int(os.getenv("PAGINATION_MAX_LIMIT", "1000"))
+    
     # Environment
     environment: str = os.getenv("ENVIRONMENT", "dev")
     

@@ -2,7 +2,8 @@
 Drug API routes.
 Handles HTTP endpoints for drug data operations.
 """
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Query
+from typing import Optional
 from src.services.drug_service import DrugService
 from src.core.dependencies import get_drug_service
 from src.models.dto.drug_dto import DrugUploadResponse, DrugListResponse, UploadStatusResponse
@@ -49,12 +50,19 @@ async def upload_drug_csv(
 
 @router.get("", response_model=DrugListResponse)
 async def get_all_drugs(
+    limit: int = Query(default=10, ge=1, le=1000, description="Maximum number of items to return"),
+    next_token: Optional[str] = Query(default=None, description="Pagination token from previous response"),
     drug_service: DrugService = Depends(get_drug_service)
 ):
     """
-    Retrieve all drug records from the database.
+    Retrieve all drug records with pagination.
+    
+    - **limit**: Number of items per page (default 10, max 1000)
+    - **next_token**: Token from previous response to get next page
     """
-    return drug_service.get_all_drugs()
+    response, token = drug_service.get_all_drugs_paginated(limit, next_token)
+    response.next_token = token
+    return response
 
 
 @router.get("/{drug_name}", response_model=DrugListResponse)

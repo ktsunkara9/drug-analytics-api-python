@@ -319,3 +319,94 @@ class TestAPIIntegration:
             print(f"Response body: {response.text}")
         assert response.status_code == 404
         assert "not found" in response.text.lower()
+    
+    def _create_table_with_gsi(self):
+        """Helper to create DynamoDB table with GSI."""
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb.create_table(
+            TableName='DrugData-test',
+            KeySchema=[
+                {'AttributeName': 'PK', 'KeyType': 'HASH'},
+                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
+            ],
+            AttributeDefinitions=[
+                {'AttributeName': 'PK', 'AttributeType': 'S'},
+                {'AttributeName': 'SK', 'AttributeType': 'S'},
+                {'AttributeName': 'drug_category', 'AttributeType': 'S'},
+                {'AttributeName': 'upload_timestamp', 'AttributeType': 'S'}
+            ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'DrugCategoryIndex',
+                    'KeySchema': [
+                        {'AttributeName': 'drug_category', 'KeyType': 'HASH'},
+                        {'AttributeName': 'upload_timestamp', 'KeyType': 'RANGE'}
+                    ],
+                    'Projection': {'ProjectionType': 'ALL'}
+                }
+            ],
+            BillingMode='PAY_PER_REQUEST'
+        )
+    
+    @mock_aws
+    def test_get_all_drugs_pagination_response_structure(self):
+        """Test that pagination response includes next_token field."""
+        from src.core import config
+        config.settings = config.Settings()
+        
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+        
+        self._create_table_with_gsi()
+        
+        from src.main import app
+        client = TestClient(app)
+        
+        response = client.get("/v1/api/drugs/")
+        assert response.status_code == 200
+        data = response.json()
+        assert "drugs" in data
+        assert "count" in data
+        assert "next_token" in data
+        assert data["next_token"] is None
+    
+    @mock_aws
+    def test_get_all_drugs_with_limit_parameter(self):
+        """Test pagination with custom limit."""
+        from src.core import config
+        config.settings = config.Settings()
+        
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+        
+        self._create_table_with_gsi()
+        
+        from src.main import app
+        client = TestClient(app)
+        
+        response = client.get("/v1/api/drugs/?limit=5")
+        assert response.status_code == 200
+        data = response.json()
+        assert "next_token" in data
+    
+    @mock_aws
+    def test_get_all_drugs_limit_validation(self):
+        """Test limit parameter validation."""
+        from src.core import config
+        config.settings = config.Settings()
+        
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket='test-bucket')
+        
+        self._create_table_with_gsi()
+        
+        from src.main import app
+        client = TestClient(app)
+        
+        # Test limit > 1000
+        response = client.get("/v1/api/drugs/?limit=5000")
+        assert response.status_code == 422
+        
+        # Test limit < 1
+        response = client.get("/v1/api/drugs/?limit=0")
+        assert response.status_code == 422

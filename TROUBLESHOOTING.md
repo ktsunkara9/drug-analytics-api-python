@@ -528,3 +528,326 @@ aws dynamodb describe-table --table-name DrugData-dev \
 ### References
 - [AWS DynamoDB Secondary Indexes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SecondaryIndexes.html)
 - [GSI Best Practices](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-indexes-general.html)
+
+
+---
+
+## 12. DynamoDB Pagination: Cursor-based vs Offset-based
+
+### Problem
+Implementing pagination for the `/v1/api/drugs` endpoint to handle large datasets efficiently.
+
+### Context
+When designing pagination, there are two common approaches: offset-based (SQL-style) and cursor-based (token-style). Understanding which approach works with DynamoDB is critical for performance and cost optimization.
+
+### Why Offset-based Pagination Doesn't Work with DynamoDB
+
+**Offset-based (SQL-style):**
+```
+GET /drugs?limit=10&offset=20
+```
+
+**Problems:**
+- ❌ DynamoDB has no native "OFFSET" operation
+- ❌ Must scan through ALL items to skip offset (reads 20 items to skip them)
+- ❌ Extremely expensive: offset=1000 means reading 1000 items just to skip them
+- ❌ Slow: Performance degrades linearly with offset size
+- ❌ Inconsistent: Results change if items are added/deleted between requests
+
+**Example Cost:**
+```python
+# User requests page 10 (offset=900, limit=100)
+# DynamoDB must:
+# 1. Read items 1-900 (900 RCUs) ← Wasted reads
+# 2. Discard items 1-900
+# 3. Read items 901-1000 (100 RCUs)
+# Total: 1000 RCUs to return 100 items!
+```
+
+### Cursor-based Pagination (DynamoDB Native)
+
+**How it works:**
+1. Client requests first page with `limit` parameter
+2. DynamoDB returns items + `LastEvaluatedKey` (cursor)
+3. Client requests next page using cursor as `ExclusiveStartKey`
+4. DynamoDB continues from exact position (no scanning)
+
+**API Design:**
+
+**Request Page 1:**
+```
+GET /v1/api/drugs?limit=50
+```
+
+**Response Page 1:**
+```json
+{
+  "drugs": [
+    {"drug_name": "Aspirin", "target": "COX-2", "efficacy": 85.5},
+    ...49 more items...
+  ],
+  "count": 50,
+  "next_token": "eyJkcnVnX2NhdGVnb3J5IjoiQUxMIiwidXBsb2FkX3RpbWVzdGFtcCI6IjIwMjQtMDEtMTVUMTA6MzA6MDAifQ=="
+}
+```
+
+**Request Page 2:**
+```
+GET /v1/api/drugs?limit=50&next_token=eyJkcnVnX2NhdGVnb3J5IjoiQUxMIiwidXBsb2FkX3RpbWVzdGFtcCI6IjIwMjQtMDEtMTVUMTA6MzA6MDAifQ==
+```
+
+**Response Page 2:**
+```json
+{
+  "drugs": [...50 more items...],
+  "count": 50,
+  "next_token": "eyJ..." // or null if last page
+}
+```
+
+### How Pagination Tokens are Generated
+
+**1. DynamoDB Returns LastEvaluatedKey:**
+```python
+response = table.query(
+    IndexName='DrugCategoryIndex',
+    KeyConditionExpression='drug_category = :cat',
+    ExpressionAttributeValues={':cat': 'ALL'},
+    Limit=50
+)
+
+# DynamoDB returns:
+{
+    'Items': [...],
+    'LastEvaluatedKey': {
+        'drug_category': 'ALL',
+        'upload_timestamp': '2024-01-15T10:30:00',
+        'PK': 'DRUG#Aspirin',
+        'SK': 'METADATA#2024-01-15T10:30:00'
+    }
+}
+```
+
+**2. Encode LastEvaluatedKey as Token:**
+```python
+import json
+import base64
+
+def encode_pagination_token(last_key: dict) -> str:
+    """Convert DynamoDB LastEvaluatedKey to base64 token."""
+    json_str = json.dumps(last_key)
+    token = base64.b64encode(json_str.encode()).decode()
+    return token
+
+# Example:
+last_key = {
+    'drug_category': 'ALL',
+    'upload_timestamp': '2024-01-15T10:30:00',
+    'PK': 'DRUG#Aspirin',
+    'SK': 'METADATA#2024-01-15T10:30:00'
+}
+token = encode_pagination_token(last_key)
+# Result: "eyJkcnVnX2NhdGVnb3J5IjoiQUxMIiwidXBsb2FkX3RpbWVzdGFtcCI6IjIwMjQtMDEtMTVUMTA6MzA6MDAiLCJQSyI6IkRSVUcjQXNwaXJpbiIsIlNLIjoiTUVUQURBVEEjMjAyNC0wMS0xNVQxMDozMDowMCJ9"
+```
+
+**3. Decode Token for Next Request:**
+```python
+def decode_pagination_token(token: str) -> dict:
+    """Convert base64 token back to DynamoDB key."""
+    json_str = base64.b64decode(token.encode()).decode()
+    last_key = json.loads(json_str)
+    return last_key
+
+# Use in query:
+token = request.query_params.get('next_token')
+if token:
+    last_key = decode_pagination_token(token)
+    response = table.query(
+        IndexName='DrugCategoryIndex',
+        KeyConditionExpression='drug_category = :cat',
+        ExpressionAttributeValues={':cat': 'ALL'},
+        Limit=50,
+        ExclusiveStartKey=last_key  # Start from this key
+    )
+```
+
+**4. Token Contents (Decoded Example):**
+```json
+{
+  "drug_category": "ALL",
+  "upload_timestamp": "2024-01-15T10:30:00",
+  "PK": "DRUG#Aspirin",
+  "SK": "METADATA#2024-01-15T10:30:00"
+}
+```
+
+**Why Base64 Encoding?**
+- ✅ URL-safe (no special characters)
+- ✅ Compact representation
+- ✅ Hides internal key structure from clients
+- ✅ Standard practice (AWS, Stripe, GitHub use this)
+
+### Implementation Details
+
+**Repository Method:**
+```python
+from typing import List, Optional, Tuple
+import json
+import base64
+
+class DynamoRepository:
+    def find_all_paginated(
+        self, 
+        limit: int = 100, 
+        next_token: Optional[str] = None
+    ) -> Tuple[List[Drug], Optional[str]]:
+        """
+        Query all drugs with pagination using GSI.
+        
+        Args:
+            limit: Max items to return (default 100, max 1000)
+            next_token: Base64-encoded pagination token
+            
+        Returns:
+            Tuple of (drugs list, next_token or None)
+        """
+        query_kwargs = {
+            'IndexName': 'DrugCategoryIndex',
+            'KeyConditionExpression': 'drug_category = :cat',
+            'ExpressionAttributeValues': {':cat': 'ALL'},
+            'Limit': min(limit, 1000),  # Cap at 1000
+            'ScanIndexForward': False  # Newest first
+        }
+        
+        # Decode token if provided
+        if next_token:
+            try:
+                last_key = json.loads(base64.b64decode(next_token))
+                query_kwargs['ExclusiveStartKey'] = last_key
+            except Exception:
+                raise ValidationException("Invalid pagination token")
+        
+        response = self.table.query(**query_kwargs)
+        drugs = [self._item_to_drug(item) for item in response['Items']]
+        
+        # Encode next token if more results exist
+        next_token = None
+        if 'LastEvaluatedKey' in response:
+            next_token = base64.b64encode(
+                json.dumps(response['LastEvaluatedKey']).encode()
+            ).decode()
+        
+        return drugs, next_token
+```
+
+**API Endpoint:**
+```python
+from fastapi import Query
+
+@router.get("/drugs")
+def get_all_drugs(
+    limit: int = Query(default=100, ge=1, le=1000),
+    next_token: Optional[str] = Query(default=None)
+):
+    drugs, next_token = drug_service.get_all_drugs_paginated(limit, next_token)
+    return {
+        "drugs": drugs,
+        "count": len(drugs),
+        "next_token": next_token
+    }
+```
+
+### Configuration
+
+**Recommended Settings:**
+```python
+# config.py
+class Settings(BaseSettings):
+    pagination_default_limit: int = 100
+    pagination_max_limit: int = 1000
+```
+
+**Rationale:**
+- Default 100: Good balance between performance and UX
+- Max 1000: DynamoDB query limit is 1MB (typically 1000-5000 items)
+- Prevents abuse (client requesting limit=1000000)
+
+### Using Pagination in Postman
+
+**Step 1: Get First Page**
+```
+GET http://localhost:8000/v1/api/drugs?limit=50
+```
+
+**Step 2: Copy next_token from Response**
+```json
+{
+  "drugs": [...],
+  "count": 50,
+  "next_token": "eyJkcnVnX2NhdGVnb3J5IjoiQUxMIiwidXBsb2FkX3RpbWVzdGFtcCI6IjIwMjQtMDEtMTVUMTA6MzA6MDAifQ=="
+}
+```
+
+**Step 3: Request Next Page**
+```
+GET http://localhost:8000/v1/api/drugs?limit=50&next_token=eyJkcnVnX2NhdGVnb3J5IjoiQUxMIiwidXBsb2FkX3RpbWVzdGFtcCI6IjIwMjQtMDEtMTVUMTA6MzA6MDAifQ==
+```
+
+**Step 4: Continue Until next_token is null**
+```json
+{
+  "drugs": [...],
+  "count": 25,
+  "next_token": null  // Last page
+}
+```
+
+### Performance Comparison
+
+| Approach | Operation | Items Read | Cost (RCUs) | Speed |
+|----------|-----------|------------|-------------|-------|
+| **Offset-based** | Scan + Skip | offset + limit | 1000+ | Slow, degrades |
+| **Cursor-based** | Query from key | limit only | 100 | Fast, consistent |
+
+**Example: Get page 10 (items 901-1000)**
+- Offset-based: Read 1000 items, return 100 → 1000 RCUs
+- Cursor-based: Read 100 items, return 100 → 100 RCUs
+- **Savings: 90% cost reduction**
+
+### Industry Standards
+
+Cursor-based pagination is used by:
+- ✅ AWS APIs (S3, DynamoDB, CloudWatch)
+- ✅ Stripe API
+- ✅ GitHub API
+- ✅ Twitter API
+- ✅ Facebook Graph API
+
+### Limitations
+
+**Cannot jump to arbitrary page:**
+```
+# ❌ Not possible with cursor pagination
+GET /drugs?page=5
+```
+- Must traverse pages sequentially (1 → 2 → 3 → 4 → 5)
+- Trade-off: Performance and cost vs. random access
+
+**Workaround for "Jump to Page N":**
+- Cache tokens for pages 1-10 in client
+- Provide "First, Previous, Next, Last" navigation
+- Most users only view first few pages anyway
+
+### Best Practices
+
+1. **Always return next_token** (even if null) for consistent API contract
+2. **Validate token format** to prevent injection attacks
+3. **Set reasonable limits** (default 100, max 1000)
+4. **Document token format** as opaque (clients shouldn't decode)
+5. **Handle expired tokens** gracefully (tokens may become invalid if data changes)
+6. **Use HTTPS** to protect tokens in transit
+
+### References
+- [DynamoDB Pagination](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html)
+- [API Pagination Best Practices](https://www.moesif.com/blog/technical/api-design/REST-API-Design-Filtering-Sorting-and-Pagination/)
+- [Stripe API Pagination](https://stripe.com/docs/api/pagination)
