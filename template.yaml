@@ -296,6 +296,43 @@ Resources:
         Environment: !Ref Environment
         Application: DrugAnalytics
 
+  # SNS Topic for CloudWatch Alarms
+  AlarmNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'drug-analytics-alarms-${Environment}'
+      DisplayName: Drug Analytics API Alarms
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: DrugAnalytics
+
+  # CloudWatch Alarm: CSV Processor High Duration
+  CsvProcessorDurationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'csv-processor-high-duration-${Environment}'
+      AlarmDescription: Alert when CSV processor runs longer than 200 seconds (cost control)
+      MetricName: Duration
+      Namespace: AWS/Lambda
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 200000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CsvProcessorFunction
+      AlarmActions:
+        - !Ref AlarmNotificationTopic
+      TreatMissingData: notBreaching
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: DrugAnalytics
+
 Outputs:
   S3BucketName:
     Description: S3 bucket name for CSV uploads
@@ -336,3 +373,9 @@ Outputs:
   CsvProcessorRoleArn:
     Description: CSV Processor Lambda execution role ARN
     Value: !GetAtt CsvProcessorExecutionRole.Arn
+
+  AlarmTopicArn:
+    Description: SNS Topic ARN for alarm notifications
+    Value: !Ref AlarmNotificationTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-AlarmTopic'
