@@ -58,6 +58,13 @@ class TestDynamoRepository:
         drug = Drug("Aspirin", "COX-2", 85.5, datetime(2024, 1, 1), "key1")
         repo.save(drug)
         
+        # Verify drug was saved with drug_category attribute
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        table = dynamodb.Table('DrugData-test')
+        response = table.get_item(Key={'PK': 'DRUG#Aspirin', 'SK': f'METADATA#{datetime(2024, 1, 1).isoformat()}'})
+        assert 'Item' in response
+        assert response['Item']['drug_category'] == 'ALL'
+        
         drugs = repo.find_by_drug_name("Aspirin")
         assert len(drugs) == 1
         assert drugs[0].drug_name == "Aspirin"
@@ -107,6 +114,15 @@ class TestDynamoRepository:
         ]
         
         repo.batch_save(drugs)
+        
+        # Verify all drugs were saved with drug_category attribute
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        table = dynamodb.Table('DrugData-test')
+        for drug in drugs:
+            response = table.get_item(Key={'PK': f'DRUG#{drug.drug_name}', 'SK': f'METADATA#{drug.upload_timestamp.isoformat()}'})
+            assert 'Item' in response
+            assert response['Item']['drug_category'] == 'ALL'
+        
         all_drugs = repo.find_all()
         assert len(all_drugs) == 3
     

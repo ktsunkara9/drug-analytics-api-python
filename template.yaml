@@ -35,11 +35,24 @@ Resources:
           AttributeType: S
         - AttributeName: SK
           AttributeType: S
+        - AttributeName: drug_category
+          AttributeType: S
+        - AttributeName: upload_timestamp
+          AttributeType: S
       KeySchema:
         - AttributeName: PK
           KeyType: HASH
         - AttributeName: SK
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: DrugCategoryIndex
+          KeySchema:
+            - AttributeName: drug_category
+              KeyType: HASH
+            - AttributeName: upload_timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       Tags:
@@ -154,6 +167,7 @@ Resources:
                   - dynamodb:BatchWriteItem
                 Resource:
                   - !GetAtt DrugDataTable.Arn
+                  - !Sub '${DrugDataTable.Arn}/index/*'
                   - !GetAtt UploadStatusTable.Arn
       Tags:
         - Key: Environment

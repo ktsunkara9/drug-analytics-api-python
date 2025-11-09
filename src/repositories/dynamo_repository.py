@@ -33,6 +33,7 @@ class DynamoRepository:
             item = {
                 'PK': self._create_pk(drug.drug_name),
                 'SK': self._create_sk(drug.upload_timestamp),
+                'drug_category': 'ALL',
                 'drug_name': drug.drug_name,
                 'target': drug.target,
                 'efficacy': Decimal(str(drug.efficacy)),
@@ -119,6 +120,7 @@ class DynamoRepository:
                     item = {
                         'PK': self._create_pk(drug.drug_name),
                         'SK': self._create_sk(drug.upload_timestamp),
+                        'drug_category': 'ALL',
                         'drug_name': drug.drug_name,
                         'target': drug.target,
                         'efficacy': Decimal(str(drug.efficacy)),

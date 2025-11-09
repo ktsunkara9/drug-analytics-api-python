@@ -328,3 +328,203 @@ dependencies.get_upload_status_repository.cache_clear()
 - **Integration Tests**: API endpoints with mocked AWS (8 tests)
 - **Lambda Tests**: CSV processor with S3/DynamoDB mocking (8 tests)
 - **Total**: 74 tests, all passing
+
+
+## 11. DynamoDB Secondary Indexes: GSI vs LSI
+
+### Problem
+Choosing between Global Secondary Index (GSI) and Local Secondary Index (LSI) for query optimization and pagination.
+
+### Context
+When implementing pagination for the `/v1/api/drugs` endpoint, we needed to query all drugs sorted by upload timestamp (newest first). This required understanding the differences between GSI and LSI to make the right architectural decision.
+
+### Key Differences
+
+| Feature | LSI (Local Secondary Index) | GSI (Global Secondary Index) |
+|---------|----------------------------|------------------------------|
+| **When to create** | Table creation ONLY ❌ | Anytime (before or after) ✅ |
+| **Partition key** | Same as base table | Different (new partition key) |
+| **Sort key** | Different from base table | Different (new sort key) |
+| **Query scope** | Within single partition | Across all partitions |
+| **Use case** | Alternative sort order for same partition | New access pattern across table |
+| **Consistency** | Strong or eventual | Eventual only |
+| **Size limit** | 10GB per partition | No limit |
+| **Max indexes** | 5 per table | 20 per table |
+| **Cost** | Included in table cost | Extra storage + RCU/WCU |
+
+### Our Use Case: Pagination with Recent Uploads First
+
+**Requirement**: Get all drugs sorted by upload_timestamp (newest first) with efficient pagination.
+
+**Why LSI Won't Work:**
+```python
+# LSI can only query within ONE partition
+# Example: Get all versions of "Aspirin" sorted by efficacy
+table.query(
+    KeyConditionExpression='PK = :pk',  # Must specify partition key
+    ExpressionAttributeValues={':pk': 'DRUG#Aspirin'},
+    IndexName='EfficacyLSI'
+)
+# ❌ Cannot query across all drugs - only one drug at a time
+# ❌ Would require N queries for N different drugs
+```
+
+**Why GSI Works:**
+```python
+# GSI creates new partition key for ALL records
+# All drugs share GSI1PK = "ALL_DRUGS"
+table.query(
+    IndexName='UploadTimestampIndex',
+    KeyConditionExpression='GSI1PK = :pk',
+    ExpressionAttributeValues={':pk': 'ALL_DRUGS'},
+    ScanIndexForward=False,  # Newest first
+    Limit=100
+)
+# ✅ Queries ALL drugs across all partitions, sorted by timestamp
+# ✅ Single efficient query operation
+```
+
+### Solution: Implement GSI
+
+**1. Table Structure:**
+```
+Base Table:
+  PK: DRUG#{drug_name}
+  SK: METADATA#{timestamp}
+
+GSI (UploadTimestampIndex):
+  GSI1PK: "ALL_DRUGS" (same for all records)
+  upload_timestamp: ISO timestamp (sort key)
+```
+
+**2. CloudFormation (template.yaml):**
+```yaml
+DrugDataTable:
+  Type: AWS::DynamoDB::Table
+  Properties:
+    AttributeDefinitions:
+      - AttributeName: PK
+        AttributeType: S
+      - AttributeName: SK
+        AttributeType: S
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: upload_timestamp
+        AttributeType: S
+    KeySchema:
+      - AttributeName: PK
+        KeyType: HASH
+      - AttributeName: SK
+        KeyType: RANGE
+    GlobalSecondaryIndexes:
+      - IndexName: UploadTimestampIndex
+        KeySchema:
+          - AttributeName: GSI1PK
+            KeyType: HASH
+          - AttributeName: upload_timestamp
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+```
+
+**3. Code Changes:**
+```python
+# When saving drugs, add GSI1PK
+item = {
+    'PK': self._create_pk(drug.drug_name),
+    'SK': self._create_sk(drug.upload_timestamp),
+    'GSI1PK': 'ALL_DRUGS',  # Add this for GSI
+    'drug_name': drug.drug_name,
+    'target': drug.target,
+    'efficacy': Decimal(str(drug.efficacy)),
+    'upload_timestamp': drug.upload_timestamp.isoformat(),
+    's3_key': drug.s3_key
+}
+```
+
+**4. Query with Pagination:**
+```python
+def find_all_paginated(self, limit: int = 100, last_key: str = None):
+    query_kwargs = {
+        'IndexName': 'UploadTimestampIndex',
+        'KeyConditionExpression': 'GSI1PK = :pk',
+        'ExpressionAttributeValues': {':pk': 'ALL_DRUGS'},
+        'Limit': limit,
+        'ScanIndexForward': False  # Descending (newest first)
+    }
+    
+    if last_key:
+        query_kwargs['ExclusiveStartKey'] = {
+            'GSI1PK': 'ALL_DRUGS',
+            'upload_timestamp': last_key,
+            'PK': 'PLACEHOLDER',
+            'SK': 'PLACEHOLDER'
+        }
+    
+    response = self.table.query(**query_kwargs)
+    return response['Items'], response.get('LastEvaluatedKey')
+```
+
+### Adding GSI to Existing Table
+
+**Process:**
+1. Update `template.yaml` with GSI definition
+2. Deploy: `sam build && sam deploy`
+3. DynamoDB automatically creates GSI (status: CREATING → ACTIVE)
+4. Backfill existing records with `GSI1PK = 'ALL_DRUGS'`
+5. New records automatically include GSI1PK
+
+**Backfill Script:**
+```python
+import boto3
+
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+table = dynamodb.Table('DrugData-dev')
+
+response = table.scan()
+with table.batch_writer() as batch:
+    for item in response['Items']:
+        item['GSI1PK'] = 'ALL_DRUGS'
+        batch.put_item(Item=item)
+```
+
+**Check GSI Status:**
+```bash
+aws dynamodb describe-table --table-name DrugData-dev \
+  --query 'Table.GlobalSecondaryIndexes[0].IndexStatus'
+# Output: CREATING → ACTIVE (5-30 minutes)
+```
+
+### Performance Comparison
+
+**Without GSI (Scan):**
+- Operation: `table.scan()`
+- Reads: ALL items in table (10,000 items)
+- Cost: ~10,000 RCUs
+- Speed: Slow, degrades with table size
+- Order: Random/unordered
+
+**With GSI (Query):**
+- Operation: `table.query(IndexName='UploadTimestampIndex')`
+- Reads: Only requested items (100 items)
+- Cost: ~100 RCUs (100x cheaper)
+- Speed: Fast, consistent performance
+- Order: Sorted by timestamp (newest first)
+
+### Decision Matrix
+
+**Use LSI when:**
+- ✅ You need alternative sort order within same partition
+- ✅ You need strong consistency
+- ✅ Table doesn't exist yet (can create at table creation)
+- ✅ Example: "Get all versions of Aspirin sorted by efficacy"
+
+**Use GSI when:**
+- ✅ You need to query across all partitions
+- ✅ You need new access pattern (different partition key)
+- ✅ Table already exists (can add anytime)
+- ✅ Example: "Get all drugs sorted by upload time" ← Our use case
+
+### References
+- [AWS DynamoDB Secondary Indexes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/SecondaryIndexes.html)
+- [GSI Best Practices](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-indexes-general.html)

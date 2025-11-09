@@ -298,18 +298,71 @@ if status == "completed":
 
 ## CSV Format
 
-Required fields:
-- `drug_name` (string) - Name of the drug
-- `target` (string) - Target protein or pathway
-- `efficacy` (float, 0-100) - Efficacy percentage
+### Required Fields
+- `drug_name` (string) - Name of the drug (cannot be empty)
+- `target` (string) - Target protein or pathway (cannot be empty)
+- `efficacy` (float, 0-100) - Efficacy percentage (must be between 0 and 100)
 
-<<<<<<< HEAD
-Example:
+### Validation Rules
+- **File Type**: Only `.csv` files are accepted
+- **File Size**: Maximum 10MB (configurable via `MAX_FILE_SIZE_MB` env var)
+- **Row Count**: Maximum 10,000 rows (configurable via `MAX_CSV_ROWS` env var)
+- **File Encoding**: Must be UTF-8 encoded
+- **Required Columns**: All three columns (drug_name, target, efficacy) must be present
+- **Empty Values**: None of the fields can be empty or contain only whitespace
+- **Efficacy Range**: Must be a valid number between 0 and 100 (inclusive)
+- **Empty File**: CSV must contain at least one data row (excluding header)
+
+### Example CSV
 ```csv
 drug_name,target,efficacy
 Aspirin,COX-2,85.5
 Ibuprofen,COX-1,90.0
 Paracetamol,COX-3,75.0
+```
+
+### Error Responses
+
+**File Too Large (413 Request Entity Too Large):**
+```json
+{
+  "detail": "File size (15.50MB) exceeds maximum allowed size of 10MB"
+}
+```
+
+**Too Many Rows (400 Bad Request):**
+```json
+{
+  "detail": "CSV exceeds maximum allowed rows of 10000"
+}
+```
+
+**Invalid File Type (400 Bad Request):**
+```json
+{
+  "detail": "Only CSV files are allowed"
+}
+```
+
+**Missing Columns (400 Bad Request):**
+```json
+{
+  "detail": "Missing required columns: efficacy"
+}
+```
+
+**Invalid Data (400 Bad Request):**
+```json
+{
+  "detail": "Row 3: efficacy must be between 0 and 100, got: 150"
+}
+```
+
+**Empty Fields (400 Bad Request):**
+```json
+{
+  "detail": "Row 2: drug_name cannot be empty"
+}
 ```
 
 ## Testing
@@ -351,6 +404,8 @@ open htmlcov/index.html
 - ✅ **Status Tracking** - Real-time status updates via API
 - ✅ **Event-Driven** - S3 triggers Lambda automatically
 - ✅ **Scalable** - Serverless architecture scales automatically
+- ✅ **File Validation** - File size (10MB) and row count (10,000) limits
+- ✅ **Data Validation** - Comprehensive CSV structure and data validation
 
 ## Troubleshooting
 
@@ -372,6 +427,7 @@ Key issues covered:
 - [x] DynamoDB tables (Drug data + Upload status)
 - [x] S3 event-driven processing
 - [x] Upload status tracking system
+- [x] File size and row count validation
 - [x] Comprehensive test suite (94% coverage)
 - [x] AWS deployment automation
 - [x] Production deployment and testing
