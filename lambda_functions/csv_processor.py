@@ -4,7 +4,6 @@ Triggered by S3 ObjectCreated events.
 """
 import json
 import re
-import time
 from src.services.drug_service import DrugService
 from src.repositories.upload_status_repository import UploadStatusRepository
 from src.core.exceptions import CSVProcessingException, ValidationException, DynamoDBException
@@ -38,9 +37,6 @@ def handler(event, context):
             # Update status to processing
             if upload_id:
                 upload_status_repo.update(upload_id, {'status': 'processing'})
-            
-            # TEST: Simulate slow processing
-            time.sleep(15)
             
             # Process CSV and save to DynamoDB
             count = drug_service.process_csv_and_save(s3_key)
