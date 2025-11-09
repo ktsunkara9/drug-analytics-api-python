@@ -99,8 +99,8 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
 > 💡 For complete API documentation with all parameters and responses, see the [Swagger UI](http://localhost:8000/docs)
 
 ### Upload & Status Tracking
-- `POST /v1/api/drugs/upload` - Upload CSV file, returns upload_id
-- `GET /v1/api/drugs/status/{upload_id}` - Check upload processing status
+- `POST /v1/api/uploads` - Upload CSV file, returns upload_id
+- `GET /v1/api/uploads/{upload_id}` - Check upload processing status
 
 ### Drug Data
 - `GET /v1/api/drugs` - Retrieve all drug data
@@ -115,7 +115,7 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
 
 **cURL:**
 ```bash
-curl -X POST http://localhost:8000/v1/api/drugs/upload \
+curl -X POST http://localhost:8000/v1/api/uploads \
   -F "file=@drugs.csv"
 ```
 
@@ -123,7 +123,7 @@ curl -X POST http://localhost:8000/v1/api/drugs/upload \
 ```python
 import requests
 
-url = "http://localhost:8000/v1/api/drugs/upload"
+url = "http://localhost:8000/v1/api/uploads"
 with open("drugs.csv", "rb") as f:
     files = {"file": f}
     response = requests.post(url, files=files)
@@ -144,7 +144,7 @@ with open("drugs.csv", "rb") as f:
 
 **cURL:**
 ```bash
-curl http://localhost:8000/v1/api/drugs/status/a1b2c3d4-5678-9abc-def0-123456789012
+curl http://localhost:8000/v1/api/uploads/a1b2c3d4-5678-9abc-def0-123456789012
 ```
 
 **Python:**
@@ -152,7 +152,7 @@ curl http://localhost:8000/v1/api/drugs/status/a1b2c3d4-5678-9abc-def0-123456789
 import requests
 
 upload_id = "a1b2c3d4-5678-9abc-def0-123456789012"
-url = f"http://localhost:8000/v1/api/drugs/status/{upload_id}"
+url = f"http://localhost:8000/v1/api/uploads/{upload_id}"
 response = requests.get(url)
 print(response.json())
 ```
@@ -346,13 +346,13 @@ BASE_URL = "http://localhost:8000/v1/api"
 
 # 1. Upload CSV
 with open("drugs.csv", "rb") as f:
-    response = requests.post(f"{BASE_URL}/drugs/upload", files={"file": f})
+    response = requests.post(f"{BASE_URL}/uploads", files={"file": f})
     upload_id = response.json()["upload_id"]
     print(f"Upload ID: {upload_id}")
 
 # 2. Poll status until completed
 while True:
-    response = requests.get(f"{BASE_URL}/drugs/status/{upload_id}")
+    response = requests.get(f"{BASE_URL}/uploads/{upload_id}")
     status_data = response.json()
     status = status_data["status"]
     print(f"Status: {status}")
@@ -541,11 +541,12 @@ Key issues covered:
 - [x] Production deployment and testing
 - [x] Rate limiting (API Gateway throttling)
 - [x] S3 bucket encryption (SSE-S3 AES-256)
+- [x] CloudWatch Alarms (CSV Processor duration + errors)
 
 ### Future Enhancements
 - [ ] **CSV Processing Failure Recovery** - Add DLQ + reprocess endpoint (see [TROUBLESHOOTING.md](TROUBLESHOOTING.md#14-csv-processing-failure-recovery))
 - [ ] **Authentication & Authorization** - API Keys (requires REST API) or Lambda Authorizer + JWT
-- [ ] **CloudWatch Alarms** - Lambda errors, API 5xx errors, DynamoDB throttling, cost monitoring
+- [ ] **Additional CloudWatch Alarms** - API Lambda errors, API Gateway 5xx errors, DynamoDB throttling
 - [ ] **CloudWatch Dashboards** - Operational visibility for API, Lambda, DynamoDB metrics
 
 =======

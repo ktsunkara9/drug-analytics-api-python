@@ -79,6 +79,24 @@ Resources:
         - Key: Application
           Value: DrugAnalytics
 
+  # DynamoDB Table for user authentication
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'users-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: username
+          AttributeType: S
+      KeySchema:
+        - AttributeName: username
+          KeyType: HASH
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: DrugAnalytics
+
   # CloudWatch Log Group for API access logs
   ApiAccessLogGroup:
     Type: AWS::Logs::LogGroup
@@ -173,6 +191,7 @@ Resources:
                   - !GetAtt DrugDataTable.Arn
                   - !Sub '${DrugDataTable.Arn}/index/*'
                   - !GetAtt UploadStatusTable.Arn
+                  - !GetAtt UsersTable.Arn
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -265,6 +284,7 @@ Resources:
           S3_BUCKET_NAME: !Ref DrugDataBucket
           DYNAMODB_TABLE_NAME: !Ref DrugDataTable
           UPLOAD_STATUS_TABLE_NAME: !Ref UploadStatusTable
+          USERS_TABLE_NAME: !Ref UsersTable
       Events:
         ApiEvent:
           Type: HttpApi
@@ -376,6 +396,12 @@ Outputs:
     Value: !Ref UploadStatusTable
     Export:
       Name: !Sub '${AWS::StackName}-UploadStatusTable'
+
+  UsersTableName:
+    Description: DynamoDB table name for user authentication
+    Value: !Ref UsersTable
+    Export:
+      Name: !Sub '${AWS::StackName}-UsersTable'
 
   ApiUrl:
     Description: API Gateway endpoint URL
