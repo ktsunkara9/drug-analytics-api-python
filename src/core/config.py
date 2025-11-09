@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     api_title: str = os.getenv("API_TITLE", "Drug Analytics API")
     api_version: str = os.getenv("API_VERSION", "1.0.0")
     
+    # File Upload Limits
+    max_file_size_mb: int = int(os.getenv("MAX_FILE_SIZE_MB", "10"))
+    
     # Environment
     environment: str = os.getenv("ENVIRONMENT", "dev")
     

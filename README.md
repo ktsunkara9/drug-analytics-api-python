@@ -5,11 +5,11 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
 ## Architecture
 
 - **FastAPI** - REST API framework
-- **AWS Lambda** - Serverless compute
+- **AWS Lambda** - Serverless compute (API + CSV processor)
 - **API Gateway** - HTTP routing
 - **Amazon S3** - CSV file storage
-- **DynamoDB** - Drug data storage
-- **Event-driven processing** - S3 triggers Lambda for data processing
+- **DynamoDB** - Drug data storage + Upload status tracking
+- **Event-driven processing** - S3 triggers Lambda for async CSV processing
 
 ## Setup
 
@@ -96,16 +96,220 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
 
 ## API Endpoints
 
-- `POST /upload` - Upload CSV file with drug data
-- `GET /drugs` - Retrieve all drug data
-- `GET /drugs/{drug_name}` - Retrieve specific drug data
+> 💡 For complete API documentation with all parameters and responses, see the [Swagger UI](http://localhost:8000/docs)
+
+### Upload & Status Tracking
+- `POST /v1/api/drugs/upload` - Upload CSV file, returns upload_id
+- `GET /v1/api/drugs/status/{upload_id}` - Check upload processing status
+
+### Drug Data
+- `GET /v1/api/drugs` - Retrieve all drug data
+- `GET /v1/api/drugs/{drug_name}` - Retrieve specific drug data
+
+### Health
+- `GET /v1/api/health` - API health check
+
+## API Usage Examples
+
+### 1. Upload CSV File
+
+**cURL:**
+```bash
+curl -X POST http://localhost:8000/v1/api/drugs/upload \
+  -F "file=@drugs.csv"
+```
+
+**Python:**
+```python
+import requests
+
+url = "http://localhost:8000/v1/api/drugs/upload"
+with open("drugs.csv", "rb") as f:
+    files = {"file": f}
+    response = requests.post(url, files=files)
+    print(response.json())
+```
+
+**Response (202 Accepted):**
+```json
+{
+  "upload_id": "a1b2c3d4-5678-9abc-def0-123456789012",
+  "status": "pending",
+  "message": "File uploaded successfully. Processing in progress.",
+  "s3_location": "s3://bucket/uploads/a1b2c3d4-5678-9abc-def0-123456789012/drugs.csv"
+}
+```
+
+### 2. Check Upload Status
+
+**cURL:**
+```bash
+curl http://localhost:8000/v1/api/drugs/status/a1b2c3d4-5678-9abc-def0-123456789012
+```
+
+**Python:**
+```python
+import requests
+
+upload_id = "a1b2c3d4-5678-9abc-def0-123456789012"
+url = f"http://localhost:8000/v1/api/drugs/status/{upload_id}"
+response = requests.get(url)
+print(response.json())
+```
+
+**Response (200 OK):**
+```json
+{
+  "upload_id": "a1b2c3d4-5678-9abc-def0-123456789012",
+  "status": "completed",
+  "filename": "drugs.csv",
+  "total_rows": 100,
+  "processed_rows": 100,
+  "created_at": "2024-01-15T10:30:00"
+}
+```
+
+**Status Values:**
+- `pending` - File uploaded, awaiting processing
+- `processing` - Lambda actively processing CSV
+- `completed` - Successfully processed
+- `failed` - Processing failed (includes error_message)
+
+### 3. Get All Drugs
+
+**cURL:**
+```bash
+curl http://localhost:8000/v1/api/drugs
+```
+
+**Python:**
+```python
+import requests
+
+url = "http://localhost:8000/v1/api/drugs"
+response = requests.get(url)
+print(response.json())
+```
+
+**Response (200 OK):**
+```json
+[
+  {
+    "drug_name": "Aspirin",
+    "target": "COX-2",
+    "efficacy": 85.5
+  },
+  {
+    "drug_name": "Ibuprofen",
+    "target": "COX-1",
+    "efficacy": 90.0
+  }
+]
+```
+
+### 4. Get Specific Drug
+
+**cURL:**
+```bash
+curl http://localhost:8000/v1/api/drugs/Aspirin
+```
+
+**Python:**
+```python
+import requests
+
+drug_name = "Aspirin"
+url = f"http://localhost:8000/v1/api/drugs/{drug_name}"
+response = requests.get(url)
+print(response.json())
+```
+
+**Response (200 OK):**
+```json
+{
+  "drug_name": "Aspirin",
+  "target": "COX-2",
+  "efficacy": 85.5
+}
+```
+
+**Response (404 Not Found):**
+```json
+{
+  "detail": "Drug 'Unknown' not found"
+}
+```
+
+### 5. Health Check
+
+**cURL:**
+```bash
+curl http://localhost:8000/v1/api/health
+```
+
+**Python:**
+```python
+import requests
+
+url = "http://localhost:8000/v1/api/health"
+response = requests.get(url)
+print(response.json())
+```
+
+**Response (200 OK):**
+```json
+{
+  "status": "healthy"
+}
+```
+
+### Complete Workflow Example
+
+**Python:**
+```python
+import requests
+import time
+
+BASE_URL = "http://localhost:8000/v1/api"
+
+# 1. Upload CSV
+with open("drugs.csv", "rb") as f:
+    response = requests.post(f"{BASE_URL}/drugs/upload", files={"file": f})
+    upload_id = response.json()["upload_id"]
+    print(f"Upload ID: {upload_id}")
+
+# 2. Poll status until completed
+while True:
+    response = requests.get(f"{BASE_URL}/drugs/status/{upload_id}")
+    status_data = response.json()
+    status = status_data["status"]
+    print(f"Status: {status}")
+    
+    if status in ["completed", "failed"]:
+        break
+    time.sleep(2)
+
+# 3. Query processed data
+if status == "completed":
+    response = requests.get(f"{BASE_URL}/drugs")
+    drugs = response.json()
+    print(f"Total drugs: {len(drugs)}")
+```
 
 ## CSV Format
 
 Required fields:
-- `drug_name` (string)
-- `target` (string)
-- `efficacy` (float, 0-100)
+- `drug_name` (string) - Name of the drug
+- `target` (string) - Target protein or pathway
+- `efficacy` (float, 0-100) - Efficacy percentage
+
+Example:
+```csv
+drug_name,target,efficacy
+Aspirin,COX-2,85.5
+Ibuprofen,COX-1,90.0
+Paracetamol,COX-3,75.0
+```
 
 ## Testing
 
@@ -140,6 +344,13 @@ open htmlcov/index.html
 ```
 
 
+## Features
+
+- ✅ **Async CSV Processing** - Upload returns immediately, processing happens in background
+- ✅ **Status Tracking** - Real-time status updates via API
+- ✅ **Event-Driven** - S3 triggers Lambda automatically
+- ✅ **Scalable** - Serverless architecture scales automatically
+
 ## Troubleshooting
 
 For known issues and workarounds, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
@@ -150,13 +361,28 @@ Key issues covered:
 - Settings import patterns for testing
 - API Gateway routing
 - DynamoDB type conversions
+- Upload status race condition fix
 
-## Development Status
+## Project Status
 
-- [x] Project setup
-- [x] Dependencies installed
-- [x] Core structure
-- [x] FastAPI implementation
-- [x] AWS integration
-- [x] Testing
-- [x] Deployment
+### Completed ✅
+- [x] FastAPI REST API with async processing
+- [x] AWS Lambda functions (API + CSV processor)
+- [x] DynamoDB tables (Drug data + Upload status)
+- [x] S3 event-driven processing
+- [x] Upload status tracking system
+- [x] Comprehensive test suite (94% coverage)
+- [x] AWS deployment automation
+- [x] Production deployment and testing
+
+### Future Enhancements
+- [ ] Authentication & authorization
+- [ ] Rate limiting
+- [ ] Pagination for large datasets
+- [ ] CloudWatch monitoring dashboards
+- [ ] CI/CD pipeline
+- [ ] WebSocket for real-time updates
+
+## Contributing
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for development guidelines and known issues.

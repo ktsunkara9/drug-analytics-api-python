@@ -247,3 +247,46 @@ class TestUploadStatusAPI:
         data = response.json()
         assert data["status"] == "failed"
         assert data["error_message"] == "Invalid CSV format"
+
+    @mock_aws
+    def test_upload_file_exceeds_size_limit(self, setup_test_env):
+        config.settings = config.Settings()
+        
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="test-bucket")
+        
+        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+        dynamodb.create_table(
+            TableName="DrugData-test",
+            KeySchema=[
+                {"AttributeName": "PK", "KeyType": "HASH"},
+                {"AttributeName": "SK", "KeyType": "RANGE"}
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "PK", "AttributeType": "S"},
+                {"AttributeName": "SK", "AttributeType": "S"}
+            ],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        dynamodb.create_table(
+            TableName="UploadStatus-test",
+            KeySchema=[{"AttributeName": "upload_id", "KeyType": "HASH"}],
+            AttributeDefinitions=[{"AttributeName": "upload_id", "AttributeType": "S"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        
+        from src.main import app
+        client = TestClient(app)
+        
+        # Create file larger than limit (default 10MB)
+        max_size_bytes = config.settings.max_file_size_mb * 1024 * 1024
+        large_content = "x" * (max_size_bytes + 1024)
+        
+        response = client.post(
+            "/v1/api/drugs/upload",
+            files={"file": ("large.csv", large_content, "text/csv")}
+        )
+        
+        assert response.status_code == 413
+        assert "exceeds maximum allowed size" in response.json()["detail"]
+        assert f"{config.settings.max_file_size_mb}MB" in response.json()["detail"]
