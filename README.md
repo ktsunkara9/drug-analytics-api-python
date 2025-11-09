@@ -488,17 +488,19 @@ open htmlcov/index.html
 
 API Gateway enforces rate limiting to prevent abuse, protect backend services, and control costs.
 
-**Global Limits (All Endpoints):**
+**Throttling Limits (All Endpoints):**
 - Burst Capacity: 100 requests
 - Steady-State Rate: 50 requests/second
 
-**Upload Endpoint Limits (POST /v1/api/drugs/upload):**
-- Burst Capacity: 10 requests
-- Steady-State Rate: 5 requests/second
-
 **How It Works:**
 - API Gateway uses token bucket algorithm
-- Throttled requests return 429 before reaching Lambda (no cost)
+- Throttled requests return 429 before reaching Lambda (no Lambda cost)
+- Limits apply globally across all endpoints
+
+**Additional Upload Protection:**
+- File size limit: 10MB
+- Row count limit: 10,000 rows
+- File type validation: CSV only
 
 **Rate Limit Response (429 Too Many Requests):**
 ```json

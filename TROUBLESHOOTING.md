@@ -851,3 +851,137 @@ GET /drugs?page=5
 - [DynamoDB Pagination](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html)
 - [API Pagination Best Practices](https://www.moesif.com/blog/technical/api-design/REST-API-Design-Filtering-Sorting-and-Pagination/)
 - [Stripe API Pagination](https://stripe.com/docs/api/pagination)
+
+---
+
+## 13. HTTP API Gateway: Per-Route Throttling Limitation
+
+### Issue
+
+Attempting to configure per-route throttling in HTTP API Gateway (v2) causes deployment failure.
+
+**Error:**
+```
+unable to find route by key POST /v1/api/drugs/upload
+```
+
+**Root Cause:**
+HTTP API Gateway (v2) has limited support for `RouteSettings` compared to REST API Gateway (v1).
+
+### Problem Configuration
+
+```yaml
+# This FAILS with HTTP API
+DrugAnalyticsApi:
+  Type: AWS::Serverless::HttpApi
+  Properties:
+    DefaultRouteSettings:
+      ThrottlingBurstLimit: 100
+      ThrottlingRateLimit: 50
+    RouteSettings:  # ❌ Not supported
+      'POST /v1/api/drugs/upload':
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 5
+```
+
+### Solution: Use Global Throttling Only
+
+```yaml
+# This WORKS with HTTP API
+DrugAnalyticsApi:
+  Type: AWS::Serverless::HttpApi
+  Properties:
+    DefaultRouteSettings:
+      ThrottlingBurstLimit: 100
+      ThrottlingRateLimit: 50
+    # Remove RouteSettings section
+```
+
+**Result:**
+- ✅ All endpoints share same throttling limits (100 burst, 50/sec)
+- ✅ Deployment succeeds
+- ✅ 70% cheaper than REST API
+
+### HTTP API vs REST API Comparison
+
+| Feature | HTTP API (v2) | REST API (v1) |
+|---------|---------------|---------------|
+| **Per-route throttling** | ❌ Not supported | ✅ Supported |
+| **Global throttling** | ✅ Supported | ✅ Supported |
+| **Cost** | $1.00/million | $3.50/million |
+| **Performance** | Faster (~50ms) | Slower (~100ms) |
+| **API Keys** | ❌ Not supported | ✅ Supported |
+| **Usage Plans** | ❌ Not supported | ✅ Supported |
+
+### Alternative: Switch to REST API
+
+If per-route throttling is required:
+
+```yaml
+DrugAnalyticsApi:
+  Type: AWS::Serverless::Api  # Changed from HttpApi
+  Properties:
+    StageName: !Ref Environment
+    Cors:
+      AllowOrigin: "'*'"
+      AllowHeaders: "'*'"
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+    MethodSettings:
+      - ResourcePath: "/*"
+        HttpMethod: "*"
+        ThrottlingBurstLimit: 100
+        ThrottlingRateLimit: 50
+      - ResourcePath: "/v1/api/drugs/upload"
+        HttpMethod: "POST"
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 5
+
+DrugApiFunction:
+  Events:
+    ApiEvent:
+      Type: Api  # Changed from HttpApi
+      Properties:
+        RestApiId: !Ref DrugAnalyticsApi
+        Path: /{proxy+}
+        Method: ANY
+```
+
+**Trade-offs:**
+- ✅ Per-route throttling works
+- ❌ 3.5x more expensive
+- ❌ Slower performance
+- ❌ More complex configuration
+
+### Recommended Approach
+
+**Use HTTP API with global throttling + application-level protections:**
+
+1. **Global rate limiting:** 100 burst, 50/sec (API Gateway)
+2. **File size limit:** 10MB (FastAPI validation)
+3. **Row count limit:** 10,000 rows (FastAPI validation)
+4. **File type validation:** CSV only (FastAPI validation)
+
+**Why this works:**
+- Upload endpoint already has strong protections (file size, row count, type)
+- Global throttling prevents API abuse
+- 70% cost savings vs REST API
+- Simpler configuration
+
+### Decision Matrix
+
+**Use HTTP API (current approach) when:**
+- ✅ Cost is important
+- ✅ Performance matters
+- ✅ Application-level validation is sufficient
+- ✅ Don't need API Keys/Usage Plans
+
+**Use REST API when:**
+- ✅ Need per-route throttling
+- ✅ Need API Keys for client tracking
+- ✅ Need request/response transformation
+- ✅ Enterprise compliance requires it
+
+### References
+- [HTTP API vs REST API](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html)
+- [HTTP API Throttling](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-throttling.html)
+- [REST API Throttling](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-request-throttling.html)
