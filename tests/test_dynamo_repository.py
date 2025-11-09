@@ -278,3 +278,36 @@ class TestDynamoRepository:
         
         # Should return all 5 drugs (less than limit)
         assert len(result_drugs) == 5
+    
+    @mock_aws
+    def test_find_all_paginated_client_error(self):
+        """Test find_all_paginated handles ClientError."""
+        from src.core import config
+        config.settings = config.Settings()
+        
+        self._create_table()
+        repo = DynamoRepository()
+        
+        from unittest.mock import patch
+        from botocore.exceptions import ClientError
+        
+        error_response = {'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Table not found'}}
+        with patch.object(repo.table, 'query', side_effect=ClientError(error_response, 'Query')):
+            with pytest.raises(DynamoDBException) as exc_info:
+                repo.find_all_paginated(limit=10)
+            assert "Failed to query drug data" in str(exc_info.value)
+    
+    @mock_aws
+    def test_find_all_paginated_generic_exception(self):
+        """Test find_all_paginated handles generic exceptions."""
+        from src.core import config
+        config.settings = config.Settings()
+        
+        self._create_table()
+        repo = DynamoRepository()
+        
+        from unittest.mock import patch
+        with patch.object(repo.table, 'query', side_effect=Exception("Unexpected error")):
+            with pytest.raises(DynamoDBException) as exc_info:
+                repo.find_all_paginated(limit=10)
+            assert "Unexpected error querying drug data" in str(exc_info.value)
