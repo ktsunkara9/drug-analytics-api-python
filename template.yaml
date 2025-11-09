@@ -333,6 +333,31 @@ Resources:
         - Key: Application
           Value: DrugAnalytics
 
+  # CloudWatch Alarm: CSV Processor Errors
+  CsvProcessorErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'csv-processor-errors-${Environment}'
+      AlarmDescription: Alert when CSV processor encounters errors (crashes, exceptions, timeouts)
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CsvProcessorFunction
+      AlarmActions:
+        - !Ref AlarmNotificationTopic
+      TreatMissingData: notBreaching
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: DrugAnalytics
+
 Outputs:
   S3BucketName:
     Description: S3 bucket name for CSV uploads
