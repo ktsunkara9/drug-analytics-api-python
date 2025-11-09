@@ -137,7 +137,7 @@ class TestAPIIntegration:
         csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5\nIbuprofen,COX-1,90.0"
         files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
         
-        response = client.post("/v1/api/drugs/upload", files=files)
+        response = client.post("/v1/api/uploads", files=files)
         assert response.status_code == 202
         data = response.json()
         assert "message" in data
@@ -173,7 +173,7 @@ class TestAPIIntegration:
         
         files = {"file": ("test.txt", io.BytesIO(b"invalid"), "text/plain")}
         
-        response = client.post("/v1/api/drugs/upload", files=files)
+        response = client.post("/v1/api/uploads", files=files)
         assert response.status_code == 400
         assert "CSV" in response.text
     
@@ -206,7 +206,7 @@ class TestAPIIntegration:
         csv_content = b"drug_name,target\nAspirin,COX-2"
         files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
         
-        response = client.post("/v1/api/drugs/upload", files=files)
+        response = client.post("/v1/api/uploads", files=files)
         assert response.status_code == 400
         assert "Missing required columns" in response.text
     
@@ -245,7 +245,7 @@ class TestAPIIntegration:
         csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,invalid"
         files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
         
-        response = client.post("/v1/api/drugs/upload", files=files)
+        response = client.post("/v1/api/uploads", files=files)
         # File is uploaded successfully (202), validation happens async
         assert response.status_code == 202
         data = response.json()
@@ -266,7 +266,7 @@ class TestAPIIntegration:
         from src.main import app
         client = TestClient(app)
         
-        response = client.get("/v1/api/drugs/")
+        response = client.get("/v1/api/drugs")
         if response.status_code != 200:
             print(f"\nError response: {response.status_code}")
             print(f"Response body: {response.text}")
@@ -352,7 +352,7 @@ class TestAPIIntegration:
         from src.main import app
         client = TestClient(app)
         
-        response = client.get("/v1/api/drugs/")
+        response = client.get("/v1/api/drugs")
         assert response.status_code == 200
         data = response.json()
         assert "drugs" in data
@@ -374,7 +374,7 @@ class TestAPIIntegration:
         from src.main import app
         client = TestClient(app)
         
-        response = client.get("/v1/api/drugs/?limit=5")
+        response = client.get("/v1/api/drugs?limit=5")
         assert response.status_code == 200
         data = response.json()
         assert "next_token" in data
@@ -394,9 +394,9 @@ class TestAPIIntegration:
         client = TestClient(app)
         
         # Test limit > 1000
-        response = client.get("/v1/api/drugs/?limit=5000")
+        response = client.get("/v1/api/drugs?limit=5000")
         assert response.status_code == 422
         
         # Test limit < 1
-        response = client.get("/v1/api/drugs/?limit=0")
+        response = client.get("/v1/api/drugs?limit=0")
         assert response.status_code == 422

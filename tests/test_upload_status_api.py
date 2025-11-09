@@ -66,7 +66,7 @@ class TestUploadStatusAPI:
         csv_content = "drug_name,target,efficacy\nAspirin,COX,85.5"
         
         response = client.post(
-            "/v1/api/drugs/upload",
+            "/v1/api/uploads",
             files={"file": ("test.csv", csv_content, "text/csv")}
         )
         
@@ -115,7 +115,7 @@ class TestUploadStatusAPI:
         
         from src.main import app
         client = TestClient(app)
-        response = client.get("/v1/api/drugs/status/test-uuid-123")
+        response = client.get("/v1/api/uploads/test-uuid-123")
         
         assert response.status_code == 200
         data = response.json()
@@ -153,7 +153,7 @@ class TestUploadStatusAPI:
         
         from src.main import app
         client = TestClient(app)
-        response = client.get("/v1/api/drugs/status/nonexistent-id")
+        response = client.get("/v1/api/uploads/nonexistent-id")
         
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
@@ -195,7 +195,7 @@ class TestUploadStatusAPI:
         
         from src.main import app
         client = TestClient(app)
-        response = client.get("/v1/api/drugs/status/test-uuid-456")
+        response = client.get("/v1/api/uploads/test-uuid-456")
         
         assert response.status_code == 200
         data = response.json()
@@ -241,7 +241,7 @@ class TestUploadStatusAPI:
         
         from src.main import app
         client = TestClient(app)
-        response = client.get("/v1/api/drugs/status/test-uuid-789")
+        response = client.get("/v1/api/uploads/test-uuid-789")
         
         assert response.status_code == 200
         data = response.json()
@@ -283,7 +283,7 @@ class TestUploadStatusAPI:
         large_content = "x" * (max_size_bytes + 1024)
         
         response = client.post(
-            "/v1/api/drugs/upload",
+            "/v1/api/uploads",
             files={"file": ("large.csv", large_content, "text/csv")}
         )
         
