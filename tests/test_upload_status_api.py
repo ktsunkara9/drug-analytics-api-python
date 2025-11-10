@@ -35,7 +35,7 @@ def setup_test_env():
 
 class TestUploadStatusAPI:
     @mock_aws
-    def test_upload_returns_upload_id_and_pending_status(self, setup_test_env):
+    def test_upload_returns_upload_id_and_pending_status(self, setup_test_env, auth_headers):
         config.settings = config.Settings()
         
         s3 = boto3.client("s3", region_name="us-east-1")
@@ -67,7 +67,8 @@ class TestUploadStatusAPI:
         
         response = client.post(
             "/v1/api/uploads",
-            files={"file": ("test.csv", csv_content, "text/csv")}
+            files={"file": ("test.csv", csv_content, "text/csv")},
+            headers=auth_headers
         )
         
         assert response.status_code == 202
@@ -77,7 +78,7 @@ class TestUploadStatusAPI:
         assert "successfully" in data["message"].lower()
 
     @mock_aws
-    def test_get_upload_status_success(self, setup_test_env):
+    def test_get_upload_status_success(self, setup_test_env, auth_headers):
         config.settings = config.Settings()
         
         s3 = boto3.client("s3", region_name="us-east-1")
@@ -115,7 +116,7 @@ class TestUploadStatusAPI:
         
         from src.main import app
         client = TestClient(app)
-        response = client.get("/v1/api/uploads/test-uuid-123")
+        response = client.get("/v1/api/uploads/test-uuid-123", headers=auth_headers)
         
         assert response.status_code == 200
         data = response.json()
@@ -125,7 +126,7 @@ class TestUploadStatusAPI:
         assert data["processed_rows"] == 50
 
     @mock_aws
-    def test_get_upload_status_not_found(self, setup_test_env):
+    def test_get_upload_status_not_found(self, setup_test_env, auth_headers):
         config.settings = config.Settings()
         
         s3 = boto3.client("s3", region_name="us-east-1")
@@ -153,13 +154,13 @@ class TestUploadStatusAPI:
         
         from src.main import app
         client = TestClient(app)
-        response = client.get("/v1/api/uploads/nonexistent-id")
+        response = client.get("/v1/api/uploads/nonexistent-id", headers=auth_headers)
         
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
     @mock_aws
-    def test_get_upload_status_processing(self, setup_test_env):
+    def test_get_upload_status_processing(self, setup_test_env, auth_headers):
         config.settings = config.Settings()
         
         s3 = boto3.client("s3", region_name="us-east-1")
@@ -195,7 +196,7 @@ class TestUploadStatusAPI:
         
         from src.main import app
         client = TestClient(app)
-        response = client.get("/v1/api/uploads/test-uuid-456")
+        response = client.get("/v1/api/uploads/test-uuid-456", headers=auth_headers)
         
         assert response.status_code == 200
         data = response.json()
@@ -204,7 +205,7 @@ class TestUploadStatusAPI:
         assert data["processed_rows"] == 0
 
     @mock_aws
-    def test_get_upload_status_failed(self, setup_test_env):
+    def test_get_upload_status_failed(self, setup_test_env, auth_headers):
         config.settings = config.Settings()
         
         s3 = boto3.client("s3", region_name="us-east-1")
@@ -241,7 +242,7 @@ class TestUploadStatusAPI:
         
         from src.main import app
         client = TestClient(app)
-        response = client.get("/v1/api/uploads/test-uuid-789")
+        response = client.get("/v1/api/uploads/test-uuid-789", headers=auth_headers)
         
         assert response.status_code == 200
         data = response.json()
@@ -249,7 +250,7 @@ class TestUploadStatusAPI:
         assert data["error_message"] == "Invalid CSV format"
 
     @mock_aws
-    def test_upload_file_exceeds_size_limit(self, setup_test_env):
+    def test_upload_file_exceeds_size_limit(self, setup_test_env, auth_headers):
         config.settings = config.Settings()
         
         s3 = boto3.client("s3", region_name="us-east-1")
@@ -284,7 +285,8 @@ class TestUploadStatusAPI:
         
         response = client.post(
             "/v1/api/uploads",
-            files={"file": ("large.csv", large_content, "text/csv")}
+            files={"file": ("large.csv", large_content, "text/csv")},
+            headers=auth_headers
         )
         
         assert response.status_code == 413

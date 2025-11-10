@@ -103,7 +103,7 @@ class TestAPIIntegration:
         assert "message" in data
     
     @mock_aws
-    def test_upload_csv_success(self):
+    def test_upload_csv_success(self, auth_headers):
         """Test successful CSV file upload."""
         from src.core import config
         config.settings = config.Settings()
@@ -137,7 +137,7 @@ class TestAPIIntegration:
         csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5\nIbuprofen,COX-1,90.0"
         files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
         
-        response = client.post("/v1/api/uploads", files=files)
+        response = client.post("/v1/api/uploads", files=files, headers=auth_headers)
         assert response.status_code == 202
         data = response.json()
         assert "message" in data
@@ -146,7 +146,7 @@ class TestAPIIntegration:
         assert data["status"] == "pending"
     
     @mock_aws
-    def test_upload_csv_invalid_file_type(self):
+    def test_upload_csv_invalid_file_type(self, auth_headers):
         """Test upload with invalid file type."""
         from src.core import config
         config.settings = config.Settings()
@@ -173,12 +173,12 @@ class TestAPIIntegration:
         
         files = {"file": ("test.txt", io.BytesIO(b"invalid"), "text/plain")}
         
-        response = client.post("/v1/api/uploads", files=files)
+        response = client.post("/v1/api/uploads", files=files, headers=auth_headers)
         assert response.status_code == 400
         assert "CSV" in response.text
     
     @mock_aws
-    def test_upload_csv_missing_columns(self):
+    def test_upload_csv_missing_columns(self, auth_headers):
         """Test upload with missing required columns."""
         from src.core import config
         config.settings = config.Settings()
@@ -206,12 +206,12 @@ class TestAPIIntegration:
         csv_content = b"drug_name,target\nAspirin,COX-2"
         files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
         
-        response = client.post("/v1/api/uploads", files=files)
+        response = client.post("/v1/api/uploads", files=files, headers=auth_headers)
         assert response.status_code == 400
         assert "Missing required columns" in response.text
     
     @mock_aws
-    def test_upload_csv_invalid_data(self):
+    def test_upload_csv_invalid_data(self, auth_headers):
         """Test upload with invalid efficacy value."""
         from src.core import config
         config.settings = config.Settings()
@@ -245,7 +245,7 @@ class TestAPIIntegration:
         csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,invalid"
         files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
         
-        response = client.post("/v1/api/uploads", files=files)
+        response = client.post("/v1/api/uploads", files=files, headers=auth_headers)
         # File is uploaded successfully (202), validation happens async
         assert response.status_code == 202
         data = response.json()
@@ -253,7 +253,7 @@ class TestAPIIntegration:
         assert data["status"] == "pending"
     
     @mock_aws
-    def test_get_all_drugs_empty(self):
+    def test_get_all_drugs_empty(self, auth_headers):
         """Test getting all drugs when database is empty."""
         from src.core import config
         config.settings = config.Settings()
@@ -266,7 +266,7 @@ class TestAPIIntegration:
         from src.main import app
         client = TestClient(app)
         
-        response = client.get("/v1/api/drugs")
+        response = client.get("/v1/api/drugs", headers=auth_headers)
         if response.status_code != 200:
             print(f"\nError response: {response.status_code}")
             print(f"Response body: {response.text}")
@@ -278,7 +278,7 @@ class TestAPIIntegration:
         assert data["next_token"] is None
     
     @mock_aws
-    def test_get_drug_by_name_not_found(self):
+    def test_get_drug_by_name_not_found(self, auth_headers):
         """Test getting non-existent drug."""
         from src.core import config
         config.settings = config.Settings()
@@ -303,7 +303,7 @@ class TestAPIIntegration:
         from src.main import app
         client = TestClient(app)
         
-        response = client.get("/v1/api/drugs/NonExistent")
+        response = client.get("/v1/api/drugs/NonExistent", headers=auth_headers)
         if response.status_code not in [404, 200]:
             print(f"\nError response: {response.status_code}")
             print(f"Response body: {response.text}")
@@ -339,7 +339,7 @@ class TestAPIIntegration:
         )
     
     @mock_aws
-    def test_get_all_drugs_pagination_response_structure(self):
+    def test_get_all_drugs_pagination_response_structure(self, auth_headers):
         """Test that pagination response includes next_token field."""
         from src.core import config
         config.settings = config.Settings()
@@ -352,7 +352,7 @@ class TestAPIIntegration:
         from src.main import app
         client = TestClient(app)
         
-        response = client.get("/v1/api/drugs")
+        response = client.get("/v1/api/drugs", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert "drugs" in data
@@ -361,7 +361,7 @@ class TestAPIIntegration:
         assert data["next_token"] is None
     
     @mock_aws
-    def test_get_all_drugs_with_limit_parameter(self):
+    def test_get_all_drugs_with_limit_parameter(self, auth_headers):
         """Test pagination with custom limit."""
         from src.core import config
         config.settings = config.Settings()
@@ -374,13 +374,13 @@ class TestAPIIntegration:
         from src.main import app
         client = TestClient(app)
         
-        response = client.get("/v1/api/drugs?limit=5")
+        response = client.get("/v1/api/drugs?limit=5", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert "next_token" in data
     
     @mock_aws
-    def test_get_all_drugs_limit_validation(self):
+    def test_get_all_drugs_limit_validation(self, auth_headers):
         """Test limit parameter validation."""
         from src.core import config
         config.settings = config.Settings()
@@ -394,9 +394,9 @@ class TestAPIIntegration:
         client = TestClient(app)
         
         # Test limit > 1000
-        response = client.get("/v1/api/drugs?limit=5000")
+        response = client.get("/v1/api/drugs?limit=5000", headers=auth_headers)
         assert response.status_code == 422
         
         # Test limit < 1
-        response = client.get("/v1/api/drugs?limit=0")
+        response = client.get("/v1/api/drugs?limit=0", headers=auth_headers)
         assert response.status_code == 422

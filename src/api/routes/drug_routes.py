@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status,
 from typing import Optional
 from src.services.drug_service import DrugService
 from src.core.dependencies import get_drug_service
+from src.core.auth_dependencies import verify_token
 from src.models.dto.drug_dto import DrugUploadResponse, DrugListResponse, UploadStatusResponse
 from src.core import config
 
@@ -15,7 +16,8 @@ router = APIRouter(prefix="/v1/api")
 @router.post("/uploads", tags=["Uploads"], response_model=DrugUploadResponse, status_code=status.HTTP_202_ACCEPTED)
 async def upload_drug_csv(
     file: UploadFile = File(..., description="CSV file containing drug data"),
-    drug_service: DrugService = Depends(get_drug_service)
+    drug_service: DrugService = Depends(get_drug_service),
+    username: str = Depends(verify_token)
 ):
     """
     Upload CSV file with drug discovery data.
@@ -51,7 +53,8 @@ async def upload_drug_csv(
 @router.get("/uploads/{upload_id}", tags=["Uploads"], response_model=UploadStatusResponse)
 async def get_upload_status(
     upload_id: str,
-    drug_service: DrugService = Depends(get_drug_service)
+    drug_service: DrugService = Depends(get_drug_service),
+    username: str = Depends(verify_token)
 ):
     """
     Get the processing status of an uploaded CSV file.
@@ -63,7 +66,8 @@ async def get_upload_status(
 async def get_all_drugs(
     limit: int = Query(default=10, ge=1, le=1000, description="Maximum number of items to return"),
     next_token: Optional[str] = Query(default=None, description="Pagination token from previous response"),
-    drug_service: DrugService = Depends(get_drug_service)
+    drug_service: DrugService = Depends(get_drug_service),
+    username: str = Depends(verify_token)
 ):
     """
     Retrieve all drug records with pagination.
@@ -79,7 +83,8 @@ async def get_all_drugs(
 @router.get("/drugs/{drug_name}", tags=["Drugs"], response_model=DrugListResponse)
 async def get_drug_by_name(
     drug_name: str,
-    drug_service: DrugService = Depends(get_drug_service)
+    drug_service: DrugService = Depends(get_drug_service),
+    username: str = Depends(verify_token)
 ):
     """
     Retrieve all versions of a specific drug by name.
