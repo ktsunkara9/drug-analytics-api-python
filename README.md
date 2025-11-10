@@ -58,7 +58,7 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
 6. **Access the application**
    - API: http://localhost:8000
    - Swagger UI: http://localhost:8000/docs
-   - Health Check: http://localhost:8000/api/health
+   - Health Check: http://localhost:8000/v1/api/health
 
 ## AWS Deployment
 
@@ -94,19 +94,139 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
    - Health Check: `https://<api-id>.execute-api.us-east-1.amazonaws.com/dev/v1/api/health`
    - Swagger UI: `https://<api-id>.execute-api.us-east-1.amazonaws.com/dev/docs`
 
+## Authentication
+
+### Overview
+
+The API uses JWT (JSON Web Token) authentication. All endpoints except `/v1/api/auth/login` and `/v1/api/health` require authentication.
+
+**Authentication Flow:**
+1. Login with username/password → Receive JWT token
+2. Include token in `Authorization: Bearer <token>` header for all requests
+3. Token expires after 24 hours (configurable)
+
+### Login
+
+**Endpoint:** `POST /v1/api/auth/login`
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/v1/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "alice", "password": "password123"}'
+```
+
+**Response (200 OK):**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+**Response (401 Unauthorized):**
+```json
+{
+  "detail": "Invalid username or password"
+}
+```
+
+### Using Authentication Token
+
+Include the token in the `Authorization` header for all protected endpoints:
+
+**cURL:**
+```bash
+curl http://localhost:8000/v1/api/drugs \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Python:**
+```python
+import requests
+
+# Login
+response = requests.post(
+    "http://localhost:8000/v1/api/auth/login",
+    json={"username": "alice", "password": "password123"}
+)
+token = response.json()["access_token"]
+
+# Use token for authenticated requests
+headers = {"Authorization": f"Bearer {token}"}
+response = requests.get(
+    "http://localhost:8000/v1/api/drugs",
+    headers=headers
+)
+print(response.json())
+```
+
+### Token Expiration
+
+- Tokens expire after 24 hours (default)
+- Configurable via `JWT_EXPIRATION_HOURS` environment variable
+- Expired tokens return 401 Unauthorized
+- Client must login again to get new token
+
+### User Management
+
+**Creating Users:**
+
+Users are stored in DynamoDB `users-{environment}` table. Create users manually:
+
+```python
+import boto3
+import bcrypt
+
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+table = dynamodb.Table('users-dev')
+
+# Hash password
+password_hash = bcrypt.hashpw('password123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+# Create user
+table.put_item(Item={
+    'username': 'alice',
+    'password_hash': password_hash,
+    'role': 'admin'
+})
+```
+
+**AWS CLI:**
+```bash
+# Generate password hash (requires Python + bcrypt)
+PASSWORD_HASH=$(python -c "import bcrypt; print(bcrypt.hashpw(b'password123', bcrypt.gensalt()).decode())")
+
+# Create user in DynamoDB
+aws dynamodb put-item \
+  --table-name users-dev \
+  --item '{"username": {"S": "alice"}, "password_hash": {"S": "'$PASSWORD_HASH'"}, "role": {"S": "admin"}}'
+```
+
+### Security Notes
+
+- **JWT Secret:** Set `JWT_SECRET` environment variable (use AWS Secrets Manager in production)
+- **Password Storage:** Passwords are hashed with bcrypt (never stored in plaintext)
+- **HTTPS Required:** Always use HTTPS in production to protect tokens in transit
+- **Token Storage:** Store tokens securely (e.g., httpOnly cookies, secure storage)
+- **Rate Limiting:** Login endpoint is protected by API Gateway throttling (100 burst, 50/sec)
+
 ## API Endpoints
 
 > 💡 For complete API documentation with all parameters and responses, see the [Swagger UI](http://localhost:8000/docs)
 
-### Upload & Status Tracking
+### Authentication
+- `POST /v1/api/auth/login` - Login and receive JWT token (public)
+
+### Upload & Status Tracking (Protected)
 - `POST /v1/api/uploads` - Upload CSV file, returns upload_id
 - `GET /v1/api/uploads/{upload_id}` - Check upload processing status
 
-### Drug Data
+### Drug Data (Protected)
 - `GET /v1/api/drugs` - Retrieve all drug data
 - `GET /v1/api/drugs/{drug_name}` - Retrieve specific drug data
 
-### Health
+### Health (Public)
 - `GET /v1/api/health` - API health check
 
 ## API Usage Examples
@@ -115,7 +235,14 @@ A cloud-based analytics service for drug discovery data using AWS serverless arc
 
 **cURL:**
 ```bash
+# Get token first
+TOKEN=$(curl -X POST http://localhost:8000/v1/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "alice", "password": "password123"}' | jq -r '.access_token')
+
+# Upload with token
 curl -X POST http://localhost:8000/v1/api/uploads \
+  -H "Authorization: Bearer $TOKEN" \
   -F "file=@drugs.csv"
 ```
 
@@ -123,10 +250,19 @@ curl -X POST http://localhost:8000/v1/api/uploads \
 ```python
 import requests
 
+# Login first
+login_response = requests.post(
+    "http://localhost:8000/v1/api/auth/login",
+    json={"username": "alice", "password": "password123"}
+)
+token = login_response.json()["access_token"]
+headers = {"Authorization": f"Bearer {token}"}
+
+# Upload with authentication
 url = "http://localhost:8000/v1/api/uploads"
 with open("drugs.csv", "rb") as f:
     files = {"file": f}
-    response = requests.post(url, files=files)
+    response = requests.post(url, files=files, headers=headers)
     print(response.json())
 ```
 
@@ -144,7 +280,8 @@ with open("drugs.csv", "rb") as f:
 
 **cURL:**
 ```bash
-curl http://localhost:8000/v1/api/uploads/a1b2c3d4-5678-9abc-def0-123456789012
+curl http://localhost:8000/v1/api/uploads/a1b2c3d4-5678-9abc-def0-123456789012 \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 **Python:**
@@ -153,7 +290,8 @@ import requests
 
 upload_id = "a1b2c3d4-5678-9abc-def0-123456789012"
 url = f"http://localhost:8000/v1/api/uploads/{upload_id}"
-response = requests.get(url)
+headers = {"Authorization": f"Bearer {token}"}
+response = requests.get(url, headers=headers)
 print(response.json())
 ```
 
@@ -184,15 +322,18 @@ print(response.json())
 **cURL (First Page):**
 ```bash
 # Get first 10 drugs (default)
-curl http://localhost:8000/v1/api/drugs
+curl http://localhost:8000/v1/api/drugs \
+  -H "Authorization: Bearer $TOKEN"
 
 # Get first 50 drugs
-curl "http://localhost:8000/v1/api/drugs?limit=10"
+curl "http://localhost:8000/v1/api/drugs?limit=10" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 **cURL (Next Page):**
 ```bash
-curl "http://localhost:8000/v1/api/drugs?limit=10&next_token=eyJkcnVnX2NhdGVnb3J5IjoiQUxMIi..."
+curl "http://localhost:8000/v1/api/drugs?limit=10&next_token=eyJkcnVnX2NhdGVnb3J5IjoiQUxMIi..." \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 **Python:**
@@ -200,16 +341,17 @@ curl "http://localhost:8000/v1/api/drugs?limit=10&next_token=eyJkcnVnX2NhdGVnb3J
 import requests
 
 url = "http://localhost:8000/v1/api/drugs"
+headers = {"Authorization": f"Bearer {token}"}
 
 # Get first page
-response = requests.get(url, params={"limit": 10})
+response = requests.get(url, params={"limit": 10}, headers=headers)
 data = response.json()
 print(f"Retrieved {data['count']} drugs")
 print(f"Next token: {data['next_token']}")
 
 # Get next page if available
 if data['next_token']:
-    response = requests.get(url, params={"limit": 10, "next_token": data['next_token']})
+    response = requests.get(url, params={"limit": 10, "next_token": data['next_token']}, headers=headers)
     next_page = response.json()
     print(f"Next page: {next_page['count']} drugs")
 ```
@@ -255,7 +397,8 @@ if data['next_token']:
 
 **cURL:**
 ```bash
-curl http://localhost:8000/v1/api/drugs/Aspirin
+curl http://localhost:8000/v1/api/drugs/Aspirin \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 **Python:**
@@ -264,7 +407,8 @@ import requests
 
 drug_name = "Aspirin"
 url = f"http://localhost:8000/v1/api/drugs/{drug_name}"
-response = requests.get(url)
+headers = {"Authorization": f"Bearer {token}"}
+response = requests.get(url, headers=headers)
 print(response.json())
 ```
 
@@ -303,7 +447,9 @@ print(response.json())
 **Response (200 OK):**
 ```json
 {
-  "status": "healthy"
+  "status": "healthy",
+  "service": "Drug Analytics API",
+  "version": "1.0.0"
 }
 ```
 
@@ -314,6 +460,7 @@ print(response.json())
 import requests
 
 url = "http://localhost:8000/v1/api/drugs"
+headers = {"Authorization": f"Bearer {token}"}
 all_drugs = []
 next_token = None
 
@@ -322,7 +469,7 @@ while True:
     if next_token:
         params["next_token"] = next_token
     
-    response = requests.get(url, params=params)
+    response = requests.get(url, params=params, headers=headers)
     data = response.json()
     
     all_drugs.extend(data["drugs"])
@@ -333,40 +480,6 @@ while True:
         break
 
 print(f"Total drugs retrieved: {len(all_drugs)}")
-```
-
-### Complete Workflow Example
-
-**Python:**
-```python
-import requests
-import time
-
-BASE_URL = "http://localhost:8000/v1/api"
-
-# 1. Upload CSV
-with open("drugs.csv", "rb") as f:
-    response = requests.post(f"{BASE_URL}/uploads", files={"file": f})
-    upload_id = response.json()["upload_id"]
-    print(f"Upload ID: {upload_id}")
-
-# 2. Poll status until completed
-while True:
-    response = requests.get(f"{BASE_URL}/uploads/{upload_id}")
-    status_data = response.json()
-    status = status_data["status"]
-    print(f"Status: {status}")
-    
-    if status in ["completed", "failed"]:
-        break
-    time.sleep(2)
-
-# 3. Query processed data with pagination
-if status == "completed":
-    response = requests.get(f"{BASE_URL}/drugs", params={"limit": 100})
-    data = response.json()
-    print(f"Retrieved {data['count']} drugs")
-    print(f"More results available: {data['next_token'] is not None}")
 ```
 
 ## CSV Format
@@ -392,50 +505,6 @@ drug_name,target,efficacy
 Aspirin,COX-2,85.5
 Ibuprofen,COX-1,90.0
 Paracetamol,COX-3,75.0
-```
-
-### Error Responses
-
-**File Too Large (413 Request Entity Too Large):**
-```json
-{
-  "detail": "File size (15.50MB) exceeds maximum allowed size of 10MB"
-}
-```
-
-**Too Many Rows (400 Bad Request):**
-```json
-{
-  "detail": "CSV exceeds maximum allowed rows of 10000"
-}
-```
-
-**Invalid File Type (400 Bad Request):**
-```json
-{
-  "detail": "Only CSV files are allowed"
-}
-```
-
-**Missing Columns (400 Bad Request):**
-```json
-{
-  "detail": "Missing required columns: efficacy"
-}
-```
-
-**Invalid Data (400 Bad Request):**
-```json
-{
-  "detail": "Row 3: efficacy must be between 0 and 100, got: 150"
-}
-```
-
-**Empty Fields (400 Bad Request):**
-```json
-{
-  "detail": "Row 2: drug_name cannot be empty"
-}
 ```
 
 ## Testing
@@ -481,8 +550,29 @@ open htmlcov/index.html
 - ✅ **Data Validation** - Comprehensive CSV structure and data validation
 - ✅ **Pagination** - Efficient cursor-based pagination for large datasets (default 10, max 1000 per page)
 - ✅ **Rate Limiting** - API Gateway throttling prevents abuse and controls costs
+- ✅ **Authentication** - JWT-based authentication with bcrypt password hashing
 
 ## Security
+
+### Authentication & Authorization
+
+**JWT Authentication:**
+- All endpoints (except `/login` and `/health`) require JWT token
+- Tokens expire after 24 hours (configurable)
+- Passwords hashed with bcrypt (never stored in plaintext)
+- Users stored in DynamoDB `users-{environment}` table
+
+**Implementation:**
+- FastAPI-level authentication (not API Gateway)
+- Chosen because app uses `/{proxy+}` routing pattern
+- Allows flexible public/protected route configuration
+- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#16-authentication-architecture-http-api-limitations) for architecture details
+
+**Security Best Practices:**
+- Store `JWT_SECRET` in AWS Secrets Manager (production)
+- Always use HTTPS in production
+- Implement token refresh for better UX (optional)
+- Add rate limiting on login endpoint to prevent brute force
 
 ### Rate Limiting
 
@@ -542,47 +632,11 @@ Key issues covered:
 - [x] Rate limiting (API Gateway throttling)
 - [x] S3 bucket encryption (SSE-S3 AES-256)
 - [x] CloudWatch Alarms (CSV Processor duration + errors)
+- [x] JWT Authentication with bcrypt password hashing
 
 ### Future Enhancements
 - [ ] **CSV Processing Failure Recovery** - Add DLQ + reprocess endpoint (see [TROUBLESHOOTING.md](TROUBLESHOOTING.md#14-csv-processing-failure-recovery))
-- [ ] **Authentication & Authorization** - API Keys (requires REST API) or Lambda Authorizer + JWT
+- [ ] **User Management API** - Registration, password reset, role-based access control (RBAC)
+- [ ] **Token Refresh** - Refresh tokens for better UX (avoid re-login every 24 hours)
 - [ ] **Additional CloudWatch Alarms** - API Lambda errors, API Gateway 5xx errors, DynamoDB throttling
 - [ ] **CloudWatch Dashboards** - Operational visibility for API, Lambda, DynamoDB metrics
-
-=======
-## Testing
-
-### Run Tests
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run specific test file
-pytest tests/test_file_service.py -v
-
-# Run specific test
-pytest tests/test_file_service.py::TestFileService::test_parse_csv_success -v
-```
-
-### Code Coverage
-
-```bash
-# Run tests with coverage report
-pytest tests/ --cov=src --cov-report=term-missing
-
-# Generate HTML coverage report
-pytest tests/ --cov=src --cov-report=html
-
-# View HTML report (opens in browser)
-# Windows
-start htmlcov/index.html
-
-# Linux/Mac
-open htmlcov/index.html
-```
-
-
-## Troubleshooting
-
-For known issues and workarounds, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)

@@ -1226,7 +1226,260 @@ This feature is documented but not yet implemented. Priority: Medium
 
 ---
 
-## 15. Multipart Upload: When and Why
+## 15. Authentication Architecture: HTTP API Limitations
+
+### Issue
+
+HTTP API Gateway (v2) does not support Lambda Authorizers in the same way as REST API Gateway (v1), making API Gateway-level JWT authentication impractical for proxy-integrated applications.
+
+### Context
+
+When implementing JWT authentication, there are two architectural approaches:
+1. **API Gateway-level:** Lambda Authorizer validates tokens before reaching application
+2. **Application-level:** FastAPI validates tokens using dependency injection
+
+### Why API Gateway Lambda Authorizer Doesn't Work Well
+
+**Problem 1: HTTP API Authorizer Limitations**
+
+HTTP API supports Lambda Authorizers, but with significant limitations:
+
+```yaml
+# HTTP API Authorizer (Limited)
+DrugAnalyticsApi:
+  Type: AWS::Serverless::HttpApi
+  Properties:
+    Auth:
+      Authorizers:
+        JwtAuthorizer:
+          AuthorizerType: JWT
+          IdentitySource: $request.header.Authorization
+          JwtConfiguration:
+            Audience:
+              - api-audience
+            Issuer: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_xxxxx
+      DefaultAuthorizer: JwtAuthorizer
+```
+
+**Limitations:**
+- ❌ Only supports JWT authorizers (not custom Lambda authorizers for HTTP API)
+- ❌ Requires AWS Cognito or external OAuth provider (can't use custom user table)
+- ❌ Cannot easily mix public and protected routes with `/{proxy+}` pattern
+- ❌ More complex setup and configuration
+
+**Problem 2: Proxy Integration Pattern**
+
+Our application uses `/{proxy+}` routing (monolithic API pattern):
+
+```yaml
+DrugApiFunction:
+  Events:
+    ApiEvent:
+      Type: HttpApi
+      Properties:
+        Path: /{proxy+}  # All routes go to one Lambda
+        Method: ANY
+```
+
+**Challenges:**
+- All routes share same authorization configuration
+- Cannot easily exclude `/login` and `/health` from authorization
+- Would require complex route definitions to support mixed auth
+
+**Problem 3: Route Definition Complexity**
+
+To support mixed public/protected routes with API Gateway auth:
+
+```yaml
+# Would need to define EVERY route explicitly
+DrugApiFunction:
+  Events:
+    # Public routes
+    LoginRoute:
+      Type: HttpApi
+      Properties:
+        Path: /v1/api/auth/login
+        Method: POST
+        Auth:
+          Authorizer: NONE
+    
+    HealthRoute:
+      Type: HttpApi
+      Properties:
+        Path: /v1/api/health
+        Method: GET
+        Auth:
+          Authorizer: NONE
+    
+    # Protected routes (must define each one)
+    UploadRoute:
+      Type: HttpApi
+      Properties:
+        Path: /v1/api/uploads
+        Method: POST
+        Auth:
+          Authorizer: JwtAuthorizer
+    
+    # ... 10+ more route definitions ...
+```
+
+**Problems:**
+- ❌ Verbose configuration (10+ route definitions)
+- ❌ Loses flexibility of FastAPI routing
+- ❌ Must update SAM template for every new endpoint
+- ❌ Breaks monolithic API pattern
+
+### Solution: FastAPI-Level Authentication
+
+**Implementation:**
+
+```python
+# src/core/auth_dependencies.py
+from fastapi import Depends, HTTPException, Header
+import jwt
+
+def verify_token(authorization: str = Header(None)) -> str:
+    """Validate JWT token and return username."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid token")
+    
+    token = authorization.replace("Bearer ", "")
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+        return payload["sub"]  # username
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# src/api/routes/drug_routes.py
+from src.core.auth_dependencies import verify_token
+
+@router.post("/uploads")
+def upload_csv(
+    file: UploadFile,
+    username: str = Depends(verify_token)  # Protected
+):
+    # Only executes if token is valid
+    pass
+
+@router.get("/health")
+def health_check():
+    # No Depends(verify_token) = public endpoint
+    return {"status": "healthy"}
+```
+
+**Benefits:**
+- ✅ Simple configuration (no SAM template changes)
+- ✅ Flexible route protection (add `Depends(verify_token)` per route)
+- ✅ Works with custom user table (DynamoDB)
+- ✅ Maintains `/{proxy+}` pattern
+- ✅ Easy to test (mock dependencies)
+- ✅ Full control over authentication logic
+
+### HTTP API vs REST API for Authentication
+
+| Feature | HTTP API + FastAPI Auth | REST API + Lambda Authorizer |
+|---------|------------------------|------------------------------|
+| **Cost** | $1.00/million | $3.50/million |
+| **Performance** | Fast (~50ms) | Slower (~100ms + authorizer) |
+| **Flexibility** | High (code-level) | Medium (config-level) |
+| **User Storage** | Any (DynamoDB, RDS) | Cognito or custom |
+| **Route Config** | Simple (`/{proxy+}`) | Complex (explicit routes) |
+| **Testing** | Easy (mock deps) | Complex (mock authorizer) |
+| **Maintenance** | Low (code changes) | High (SAM template changes) |
+
+### When to Use Each Approach
+
+**Use FastAPI-Level Auth (Current) when:**
+- ✅ Using `/{proxy+}` proxy integration
+- ✅ Want flexibility in route protection
+- ✅ Using custom user storage (DynamoDB, RDS)
+- ✅ Cost optimization is important
+- ✅ Monolithic API pattern
+
+**Use API Gateway Lambda Authorizer when:**
+- ✅ Microservices architecture (separate Lambdas per route)
+- ✅ Need centralized auth across multiple APIs
+- ✅ Using AWS Cognito for user management
+- ✅ Compliance requires gateway-level auth
+- ✅ Want to block unauthorized requests before Lambda (cost savings at scale)
+
+### Architecture Decision
+
+**Chosen:** FastAPI-level JWT authentication
+
+**Rationale:**
+1. Application uses `/{proxy+}` pattern (monolithic API)
+2. Custom user storage in DynamoDB (not Cognito)
+3. Need flexible public/protected route configuration
+4. Simpler implementation and testing
+5. Lower cost (HTTP API vs REST API)
+6. Faster performance (no authorizer Lambda)
+
+**Trade-offs:**
+- ❌ Authentication happens inside Lambda (not at gateway)
+- ❌ Unauthorized requests still invoke Lambda (minimal cost impact)
+- ✅ Full control over authentication logic
+- ✅ Easy to extend (password reset, 2FA, etc.)
+
+### Alternative: Microservices Architecture
+
+If switching to microservices (separate Lambda per route):
+
+```yaml
+# Separate Lambda functions
+UploadFunction:
+  Type: AWS::Serverless::Function
+  Events:
+    UploadApi:
+      Type: HttpApi
+      Properties:
+        Path: /v1/api/uploads
+        Method: POST
+        Auth:
+          Authorizer: JwtAuthorizer
+
+GetDrugsFunction:
+  Type: AWS::Serverless::Function
+  Events:
+    GetDrugsApi:
+      Type: HttpApi
+      Properties:
+        Path: /v1/api/drugs
+        Method: GET
+        Auth:
+          Authorizer: JwtAuthorizer
+
+LoginFunction:
+  Type: AWS::Serverless::Function
+  Events:
+    LoginApi:
+      Type: HttpApi
+      Properties:
+        Path: /v1/api/auth/login
+        Method: POST
+        Auth:
+          Authorizer: NONE  # Public
+```
+
+**When to consider:**
+- API grows to 20+ endpoints
+- Different endpoints have different scaling needs
+- Team grows and needs service ownership boundaries
+- Need independent deployment of services
+
+**Current recommendation:** Keep monolithic pattern with FastAPI auth until scale requires microservices.
+
+### References
+- [HTTP API Authorizers](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html)
+- [REST API Lambda Authorizers](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html)
+- [FastAPI Security](https://fastapi.tiangolo.com/tutorial/security/)
+- [Monolith vs Microservices](https://martinfowler.com/articles/microservices.html)
+
+---
+
+## 16. Multipart Upload: When and Why
 
 ### Question
 
