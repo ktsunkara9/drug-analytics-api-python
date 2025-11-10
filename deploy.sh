@@ -3,6 +3,27 @@ set -e
 
 ENVIRONMENT=${1:-dev}
 STACK_NAME="drug-analytics-api"
+REGION="us-east-1"
+
+# Create JWT secret parameter if it doesn't exist
+echo "Checking JWT secret parameter..."
+PARAMETER_NAME="/drug-analytics-api/${ENVIRONMENT}/jwt-secret"
+
+if aws ssm get-parameter --name "${PARAMETER_NAME}" --region ${REGION} &>/dev/null; then
+    echo "JWT secret parameter already exists"
+else
+    echo "Creating JWT secret parameter..."
+    SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(48))")
+    
+    aws ssm put-parameter \
+        --name "${PARAMETER_NAME}" \
+        --value "${SECRET}" \
+        --type "SecureString" \
+        --description "JWT signing secret for ${ENVIRONMENT} environment" \
+        --region ${REGION}
+    
+    echo "JWT secret parameter created"
+fi
 
 echo "Building SAM application..."
 "/c/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd" build
