@@ -207,9 +207,8 @@ aws dynamodb put-item \
 
 - **JWT Secret:** Set `JWT_SECRET` environment variable (use AWS Secrets Manager in production)
 - **Password Storage:** Passwords are hashed with bcrypt (never stored in plaintext)
-- **HTTPS Required:** Always use HTTPS in production to protect tokens in transit
 - **Token Storage:** Store tokens securely (e.g., httpOnly cookies, secure storage)
-- **Rate Limiting:** Login endpoint is protected by API Gateway throttling (100 burst, 50/sec)
+- **Rate Limiting:** Login endpoint is protected by API Gateway throttling
 
 ## API Endpoints
 
@@ -566,7 +565,6 @@ open htmlcov/index.html
 - FastAPI-level authentication (not API Gateway)
 - Chosen because app uses `/{proxy+}` routing pattern
 - Allows flexible public/protected route configuration
-- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md#16-authentication-architecture-http-api-limitations) for architecture details
 
 **Security Best Practices:**
 - Store `JWT_SECRET` in AWS Secrets Manager (production)
@@ -605,17 +603,6 @@ API Gateway enforces rate limiting to prevent abuse, protect backend services, a
 - Use pagination to reduce request frequency
 - Monitor CloudWatch for throttling events
 
-## Troubleshooting
-
-For known issues and workarounds, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-
-Key issues covered:
-- Python 3.13 compatibility with Moto
-- SAM circular dependency with S3/Lambda
-- Settings import patterns for testing
-- API Gateway routing
-- DynamoDB type conversions
-- Upload status race condition fix
 
 ## Project Status
 
@@ -635,7 +622,7 @@ Key issues covered:
 - [x] JWT Authentication with bcrypt password hashing
 
 ### Future Enhancements
-- [ ] **CSV Processing Failure Recovery** - Add DLQ + reprocess endpoint (see [TROUBLESHOOTING.md](TROUBLESHOOTING.md#14-csv-processing-failure-recovery))
+- [ ] **CSV Processing Failure Recovery** - Add DLQ + reprocess endpoint
 - [ ] **User Management API** - Registration, password reset, role-based access control (RBAC)
 - [ ] **Token Refresh** - Refresh tokens for better UX (avoid re-login every 24 hours)
 - [ ] **Additional CloudWatch Alarms** - API Lambda errors, API Gateway 5xx errors, DynamoDB throttling
