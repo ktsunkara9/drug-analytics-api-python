@@ -1,32 +1,65 @@
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> pytest tests\test_api_integration.py -v
-========================================================== test session starts ===========================================================
-platform win32 -- Python 3.12.7, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\ktsun\AppData\Local\Programs\Python\Python312\python.exe
-cachedir: .pytest_cache
-rootdir: D:\coding\GIT_Work_Space\drug-analytics-api-python
-plugins: anyio-4.11.0, asyncio-1.2.0, cov-7.0.0
-asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collected 8 items                                                                                                                         
+            properties,
+        ) = self._resolve_endpoint_ruleset(
+            operation_model, api_params, request_context
+        )
+        if properties:
+            # Pass arbitrary endpoint info with the Request
+            # for use during construction.
+            request_context['endpoint_properties'] = properties
+        request_dict = self._convert_to_request_dict(
+            api_params=api_params,
+            operation_model=operation_model,
+            endpoint_url=endpoint_url,
+            context=request_context,
+            headers=additional_headers,
+        )
+        resolve_checksum_context(request_dict, operation_model, api_params)
 
-tests/test_api_integration.py::TestAPIIntegration::test_health_check PASSED                                                         [ 12%]
-tests/test_api_integration.py::TestAPIIntegration::test_hello_endpoint PASSED                                                       [ 25%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success FAILED                                                   [ 37%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_file_type PASSED                                         [ 50%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_missing_columns PASSED                                           [ 62%]
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data FAILED                                              [ 75%]
-tests/test_api_integration.py::TestAPIIntegration::test_get_all_drugs_empty PASSED                                                  [ 87%]
-tests/test_api_integration.py::TestAPIIntegration::test_get_drug_by_name_not_found PASSED                                           [100%]
+        service_id = self._service_model.service_id.hyphenize()
+        handler, event_response = self.meta.events.emit_until_response(
+            f'before-call.{service_id}.{operation_name}',
+            model=operation_model,
+            params=request_dict,
+            request_signer=self._request_signer,
+            context=request_context,
+        )
 
-================================================================ FAILURES ================================================================ 
-_______________________________________________ TestAPIIntegration.test_upload_csv_success _______________________________________________ 
+        if event_response is not None:
+            http, parsed_response = event_response
+        else:
+            maybe_compress_request(
+                self.meta.config, request_dict, operation_model
+            )
+            apply_request_checksum(request_dict)
+            http, parsed_response = self._make_request(
+                operation_model, request_dict, request_context
+            )
 
-self = <tests.test_api_integration.TestAPIIntegration object at 0x00000272A1F44350>
+        self.meta.events.emit(
+            f'after-call.{service_id}.{operation_name}',
+            http_response=http,
+            parsed=parsed_response,
+            model=operation_model,
+            context=request_context,
+        )
+
+        if http.status_code >= 300:
+            error_info = parsed_response.get("Error", {})
+            error_code = request_context.get(
+                'error_code_override'
+            ) or error_info.get("Code")
+            error_class = self.exceptions.from_code(error_code)
+>           raise error_class(parsed_response, operation_name)
+E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the GetItem operation: Requested resource not found
+
+venv\Lib\site-packages\botocore\client.py:1078: ResourceNotFoundException
+_________________________ TestAuthRoutes.test_login_wrong_password __________________________ 
+
+self = <tests.test_auth_routes.TestAuthRoutes object at 0x00000154AC5B4E60>
 
     @mock_aws
-    def test_upload_csv_success(self):
-        """Test successful CSV file upload."""
-        from src.core import config
-        config.settings = config.Settings()
-
+    def test_login_wrong_password(self):
+        """Test login with wrong password."""
         s3 = boto3.client('s3', region_name='us-east-1')
         s3.create_bucket(Bucket='test-bucket')
 
@@ -43,29 +76,226 @@ self = <tests.test_api_integration.TestAPIIntegration object at 0x00000272A1F443
             ],
             BillingMode='PAY_PER_REQUEST'
         )
+        dynamodb.create_table(
+            TableName='UploadStatus-test',
+            KeySchema=[{'AttributeName': 'upload_id', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[{'AttributeName': 'upload_id', 'AttributeType': 'S'}],      
+            BillingMode='PAY_PER_REQUEST'
+        )
+        dynamodb.create_table(
+            TableName='users-test',
+            KeySchema=[{'AttributeName': 'username', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[{'AttributeName': 'username', 'AttributeType': 'S'}],       
+            BillingMode='PAY_PER_REQUEST'
+        )
+
+        table = dynamodb.Table('users-test')
+        password_hash = bcrypt.hashpw('password123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        table.put_item(Item={
+            'username': 'alice',
+            'password_hash': password_hash
+        })
+
+        config.settings = config.Settings()
 
         from src.main import app
         client = TestClient(app)
 
-        csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,85.5\nIbuprofen,COX-1,90.0"
-        files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
+>       response = client.post(
+            "/v1/api/auth/login",
+            json={"username": "alice", "password": "wrong_password"}
+        )
 
-        response = client.post("/v1/api/drugs/upload", files=files)
->       assert response.status_code == 202
-E       assert 500 == 202
-E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+tests\test_auth_routes.py:145:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+venv\Lib\site-packages\starlette\testclient.py:552: in post
+    return super().post(
+venv\Lib\site-packages\httpx\_client.py:1144: in post
+    return self.request(
+venv\Lib\site-packages\starlette\testclient.py:451: in request
+    return super().request(
+venv\Lib\site-packages\httpx\_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\httpx\_client.py:914: in send
+    response = self._send_handling_auth(
+venv\Lib\site-packages\httpx\_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+venv\Lib\site-packages\httpx\_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\httpx\_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\starlette\testclient.py:354: in handle_request
+    raise exc
+venv\Lib\site-packages\starlette\testclient.py:351: in handle_request
+    portal.call(self.app, scope, receive, send)
+venv\Lib\site-packages\anyio\from_thread.py:321: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+venv\Lib\site-packages\anyio\from_thread.py:252: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\fastapi\applications.py:1134: in __call__
+    await super().__call__(scope, receive, send)
+venv\Lib\site-packages\starlette\applications.py:113: in __call__
+    await self.middleware_stack(scope, receive, send)
+venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+venv\Lib\site-packages\fastapi\routing.py:125: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+venv\Lib\site-packages\fastapi\routing.py:111: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\fastapi\routing.py:391: in app
+    raw_response = await run_endpoint_function(
+venv\Lib\site-packages\fastapi\routing.py:290: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\api\routes\auth_routes.py:21: in login
+    user = authenticate_user(request.username, request.password)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\services\auth_service.py:62: in authenticate_user
+    response = table.get_item(Key={'username': username})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\factory.py:581: in do_action
+    response = action(self, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\action.py:88: in __call__
+    response = getattr(parent.meta.client, operation_name)(*args, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-tests\test_api_integration.py:133: AssertionError
-____________________________________________ TestAPIIntegration.test_upload_csv_invalid_data _____________________________________________ 
+self = <botocore.client.DynamoDB object at 0x00000154AF2E86B0>, operation_name = 'GetItem'
+api_params = {'Key': {'username': {'S': 'alice'}}, 'TableName': 'Users-dev'}
 
-self = <tests.test_api_integration.TestAPIIntegration object at 0x00000272A1F447D0>
+    @with_current_context()
+    def _make_api_call(self, operation_name, api_params):
+        operation_model = self._service_model.operation_model(operation_name)
+        service_name = self._service_model.service_name
+        history_recorder.record(
+            'API_CALL',
+            {
+                'service': service_name,
+                'operation': operation_name,
+                'params': api_params,
+            },
+        )
+        if operation_model.deprecated:
+            logger.debug(
+                'Warning: %s.%s() is deprecated', service_name, operation_name
+            )
+        request_context = {
+            'client_region': self.meta.region_name,
+            'client_config': self.meta.config,
+            'has_streaming_input': operation_model.has_streaming_input,
+            'auth_type': operation_model.resolved_auth_type,
+            'unsigned_payload': operation_model.unsigned_payload,
+            'auth_options': self._service_model.metadata.get('auth'),
+        }
+
+        api_params = self._emit_api_params(
+            api_params=api_params,
+            operation_model=operation_model,
+            context=request_context,
+        )
+        (
+            endpoint_url,
+            additional_headers,
+            properties,
+        ) = self._resolve_endpoint_ruleset(
+            operation_model, api_params, request_context
+        )
+        if properties:
+            # Pass arbitrary endpoint info with the Request
+            # for use during construction.
+            request_context['endpoint_properties'] = properties
+        request_dict = self._convert_to_request_dict(
+            api_params=api_params,
+            operation_model=operation_model,
+            endpoint_url=endpoint_url,
+            context=request_context,
+            headers=additional_headers,
+        )
+        resolve_checksum_context(request_dict, operation_model, api_params)
+
+        service_id = self._service_model.service_id.hyphenize()
+        handler, event_response = self.meta.events.emit_until_response(
+            f'before-call.{service_id}.{operation_name}',
+            model=operation_model,
+            params=request_dict,
+            request_signer=self._request_signer,
+            context=request_context,
+        )
+
+        if event_response is not None:
+            http, parsed_response = event_response
+        else:
+            maybe_compress_request(
+                self.meta.config, request_dict, operation_model
+            )
+            apply_request_checksum(request_dict)
+            http, parsed_response = self._make_request(
+                operation_model, request_dict, request_context
+            )
+
+        self.meta.events.emit(
+            f'after-call.{service_id}.{operation_name}',
+            http_response=http,
+            parsed=parsed_response,
+            model=operation_model,
+            context=request_context,
+        )
+
+        if http.status_code >= 300:
+            error_info = parsed_response.get("Error", {})
+            error_code = request_context.get(
+                'error_code_override'
+            ) or error_info.get("Code")
+            error_class = self.exceptions.from_code(error_code)
+>           raise error_class(parsed_response, operation_name)
+E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the GetItem operation: Requested resource not found
+
+venv\Lib\site-packages\botocore\client.py:1078: ResourceNotFoundException
+_________________________ TestAuthRoutes.test_login_user_not_found __________________________ 
+
+self = <tests.test_auth_routes.TestAuthRoutes object at 0x00000154AC5B51C0>
 
     @mock_aws
-    def test_upload_csv_invalid_data(self):
-        """Test upload with invalid efficacy value."""
-        from src.core import config
-        config.settings = config.Settings()
-
+    def test_login_user_not_found(self):
+        """Test login with non-existent user."""
         s3 = boto3.client('s3', region_name='us-east-1')
         s3.create_bucket(Bucket='test-bucket')
 
@@ -82,47 +312,665 @@ self = <tests.test_api_integration.TestAPIIntegration object at 0x00000272A1F447
             ],
             BillingMode='PAY_PER_REQUEST'
         )
+        dynamodb.create_table(
+            TableName='UploadStatus-test',
+            KeySchema=[{'AttributeName': 'upload_id', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[{'AttributeName': 'upload_id', 'AttributeType': 'S'}],      
+            BillingMode='PAY_PER_REQUEST'
+        )
+        dynamodb.create_table(
+            TableName='users-test',
+            KeySchema=[{'AttributeName': 'username', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[{'AttributeName': 'username', 'AttributeType': 'S'}],       
+            BillingMode='PAY_PER_REQUEST'
+        )
+
+        config.settings = config.Settings()
 
         from src.main import app
         client = TestClient(app)
 
-        csv_content = b"drug_name,target,efficacy\nAspirin,COX-2,invalid"
-        files = {"file": ("test.csv", io.BytesIO(csv_content), "text/csv")}
+>       response = client.post(
+            "/v1/api/auth/login",
+            json={"username": "nonexistent", "password": "password123"}
+        )
 
-        response = client.post("/v1/api/drugs/upload", files=files)
-        # File is uploaded successfully (202), validation happens async
->       assert response.status_code == 202
-E       assert 500 == 202
-E        +  where 500 = <Response [500 Internal Server Error]>.status_code
+tests\test_auth_routes.py:190:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+venv\Lib\site-packages\starlette\testclient.py:552: in post
+    return super().post(
+venv\Lib\site-packages\httpx\_client.py:1144: in post
+    return self.request(
+venv\Lib\site-packages\starlette\testclient.py:451: in request
+    return super().request(
+venv\Lib\site-packages\httpx\_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\httpx\_client.py:914: in send
+    response = self._send_handling_auth(
+venv\Lib\site-packages\httpx\_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+venv\Lib\site-packages\httpx\_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\httpx\_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\starlette\testclient.py:354: in handle_request
+    raise exc
+venv\Lib\site-packages\starlette\testclient.py:351: in handle_request
+    portal.call(self.app, scope, receive, send)
+venv\Lib\site-packages\anyio\from_thread.py:321: in call
+    return cast(T_Retval, self.start_task_soon(func, *args).result())
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\ktsun\AppData\Local\Programs\Python\Python312\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+venv\Lib\site-packages\anyio\from_thread.py:252: in _call_func
+    retval = await retval_or_awaitable
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\fastapi\applications.py:1134: in __call__
+    await super().__call__(scope, receive, send)
+venv\Lib\site-packages\starlette\applications.py:113: in __call__
+    await self.middleware_stack(scope, receive, send)
+venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+venv\Lib\site-packages\starlette\routing.py:716: in __call__
+    await self.middleware_stack(scope, receive, send)
+venv\Lib\site-packages\starlette\routing.py:736: in app
+    await route.handle(scope, receive, send)
+venv\Lib\site-packages\starlette\routing.py:290: in handle
+    await self.app(scope, receive, send)
+venv\Lib\site-packages\fastapi\routing.py:125: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+venv\Lib\site-packages\fastapi\routing.py:111: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\fastapi\routing.py:391: in app
+    raw_response = await run_endpoint_function(
+venv\Lib\site-packages\fastapi\routing.py:290: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\api\routes\auth_routes.py:21: in login
+    user = authenticate_user(request.username, request.password)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\services\auth_service.py:62: in authenticate_user
+    response = table.get_item(Key={'username': username})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\factory.py:581: in do_action
+    response = action(self, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\action.py:88: in __call__
+    response = getattr(parent.meta.client, operation_name)(*args, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-tests\test_api_integration.py:236: AssertionError
-============================================================ warnings summary ============================================================ 
-tests/test_api_integration.py::TestAPIIntegration::test_health_check
+self = <botocore.client.DynamoDB object at 0x00000154AFC794C0>, operation_name = 'GetItem'    
+api_params = {'Key': {'username': {'S': 'nonexistent'}}, 'TableName': 'Users-dev'}
+
+    @with_current_context()
+    def _make_api_call(self, operation_name, api_params):
+        operation_model = self._service_model.operation_model(operation_name)
+        service_name = self._service_model.service_name
+        history_recorder.record(
+            'API_CALL',
+            {
+                'service': service_name,
+                'operation': operation_name,
+                'params': api_params,
+            },
+        )
+        if operation_model.deprecated:
+            logger.debug(
+                'Warning: %s.%s() is deprecated', service_name, operation_name
+            )
+        request_context = {
+            'client_region': self.meta.region_name,
+            'client_config': self.meta.config,
+            'has_streaming_input': operation_model.has_streaming_input,
+            'auth_type': operation_model.resolved_auth_type,
+            'unsigned_payload': operation_model.unsigned_payload,
+            'auth_options': self._service_model.metadata.get('auth'),
+        }
+
+        api_params = self._emit_api_params(
+            api_params=api_params,
+            operation_model=operation_model,
+            context=request_context,
+        )
+        (
+            endpoint_url,
+            additional_headers,
+            properties,
+        ) = self._resolve_endpoint_ruleset(
+            operation_model, api_params, request_context
+        )
+        if properties:
+            # Pass arbitrary endpoint info with the Request
+            # for use during construction.
+            request_context['endpoint_properties'] = properties
+        request_dict = self._convert_to_request_dict(
+            api_params=api_params,
+            operation_model=operation_model,
+            endpoint_url=endpoint_url,
+            context=request_context,
+            headers=additional_headers,
+        )
+        resolve_checksum_context(request_dict, operation_model, api_params)
+
+        service_id = self._service_model.service_id.hyphenize()
+        handler, event_response = self.meta.events.emit_until_response(
+            f'before-call.{service_id}.{operation_name}',
+            model=operation_model,
+            params=request_dict,
+            request_signer=self._request_signer,
+            context=request_context,
+        )
+
+        if event_response is not None:
+            http, parsed_response = event_response
+        else:
+            maybe_compress_request(
+                self.meta.config, request_dict, operation_model
+            )
+            apply_request_checksum(request_dict)
+            http, parsed_response = self._make_request(
+                operation_model, request_dict, request_context
+            )
+
+        self.meta.events.emit(
+            f'after-call.{service_id}.{operation_name}',
+            http_response=http,
+            parsed=parsed_response,
+            model=operation_model,
+            context=request_context,
+        )
+
+        if http.status_code >= 300:
+            error_info = parsed_response.get("Error", {})
+            error_code = request_context.get(
+                'error_code_override'
+            ) or error_info.get("Code")
+            error_class = self.exceptions.from_code(error_code)
+>           raise error_class(parsed_response, operation_name)
+E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the GetItem operation: Requested resource not found
+
+venv\Lib\site-packages\botocore\client.py:1078: ResourceNotFoundException
+______________________ TestAuthService.test_authenticate_user_success _______________________ 
+
+self = <tests.test_auth_service.TestAuthService object at 0x00000154AC5B67B0>
+
+    @mock_aws
+    def test_authenticate_user_success(self):
+        """Test successful user authentication."""
+        # Create DynamoDB table first
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb.create_table(
+            TableName='users-test',
+            KeySchema=[{'AttributeName': 'username', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[{'AttributeName': 'username', 'AttributeType': 'S'}],       
+            BillingMode='PAY_PER_REQUEST'
+        )
+
+        # Add test user
+        table = dynamodb.Table('users-test')
+        password_hash = bcrypt.hashpw('password123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        table.put_item(Item={
+            'username': 'alice',
+            'password_hash': password_hash,
+            'role': 'admin'
+        })
+
+        # Set environment and reload settings AFTER table creation
+        os.environ['AWS_REGION'] = 'us-east-1'
+        os.environ['USERS_TABLE_NAME'] = 'users-test'
+        config.settings = config.Settings()
+
+        # Test authentication
+>       user = authenticate_user('alice', 'password123')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_auth_service.py:97:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src\services\auth_service.py:62: in authenticate_user
+    response = table.get_item(Key={'username': username})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\factory.py:581: in do_action
+    response = action(self, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\action.py:88: in __call__
+    response = getattr(parent.meta.client, operation_name)(*args, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <botocore.client.DynamoDB object at 0x00000154AF6E7200>, operation_name = 'GetItem'    
+api_params = {'Key': {'username': {'S': 'alice'}}, 'TableName': 'Users-dev'}
+
+    @with_current_context()
+    def _make_api_call(self, operation_name, api_params):
+        operation_model = self._service_model.operation_model(operation_name)
+        service_name = self._service_model.service_name
+        history_recorder.record(
+            'API_CALL',
+            {
+                'service': service_name,
+                'operation': operation_name,
+                'params': api_params,
+            },
+        )
+        if operation_model.deprecated:
+            logger.debug(
+                'Warning: %s.%s() is deprecated', service_name, operation_name
+            )
+        request_context = {
+            'client_region': self.meta.region_name,
+            'client_config': self.meta.config,
+            'has_streaming_input': operation_model.has_streaming_input,
+            'auth_type': operation_model.resolved_auth_type,
+            'unsigned_payload': operation_model.unsigned_payload,
+            'auth_options': self._service_model.metadata.get('auth'),
+        }
+
+        api_params = self._emit_api_params(
+            api_params=api_params,
+            operation_model=operation_model,
+            context=request_context,
+        )
+        (
+            endpoint_url,
+            additional_headers,
+            properties,
+        ) = self._resolve_endpoint_ruleset(
+            operation_model, api_params, request_context
+        )
+        if properties:
+            # Pass arbitrary endpoint info with the Request
+            # for use during construction.
+            request_context['endpoint_properties'] = properties
+        request_dict = self._convert_to_request_dict(
+            api_params=api_params,
+            operation_model=operation_model,
+            endpoint_url=endpoint_url,
+            context=request_context,
+            headers=additional_headers,
+        )
+        resolve_checksum_context(request_dict, operation_model, api_params)
+
+        service_id = self._service_model.service_id.hyphenize()
+        handler, event_response = self.meta.events.emit_until_response(
+            f'before-call.{service_id}.{operation_name}',
+            model=operation_model,
+            params=request_dict,
+            request_signer=self._request_signer,
+            context=request_context,
+        )
+
+        if event_response is not None:
+            http, parsed_response = event_response
+        else:
+            maybe_compress_request(
+                self.meta.config, request_dict, operation_model
+            )
+            apply_request_checksum(request_dict)
+            http, parsed_response = self._make_request(
+                operation_model, request_dict, request_context
+            )
+
+        self.meta.events.emit(
+            f'after-call.{service_id}.{operation_name}',
+            http_response=http,
+            parsed=parsed_response,
+            model=operation_model,
+            context=request_context,
+        )
+
+        if http.status_code >= 300:
+            error_info = parsed_response.get("Error", {})
+            error_code = request_context.get(
+                'error_code_override'
+            ) or error_info.get("Code")
+            error_class = self.exceptions.from_code(error_code)
+>           raise error_class(parsed_response, operation_name)
+E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the GetItem operation: Requested resource not found
+
+venv\Lib\site-packages\botocore\client.py:1078: ResourceNotFoundException
+___________________ TestAuthService.test_authenticate_user_wrong_password ___________________ 
+
+self = <tests.test_auth_service.TestAuthService object at 0x00000154AC5B6900>
+
+    @mock_aws
+    def test_authenticate_user_wrong_password(self):
+        """Test authentication with wrong password."""
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb.create_table(
+            TableName='users-test',
+            KeySchema=[{'AttributeName': 'username', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[{'AttributeName': 'username', 'AttributeType': 'S'}],       
+            BillingMode='PAY_PER_REQUEST'
+        )
+
+        table = dynamodb.Table('users-test')
+        password_hash = bcrypt.hashpw('password123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        table.put_item(Item={
+            'username': 'alice',
+            'password_hash': password_hash
+        })
+
+        os.environ['AWS_REGION'] = 'us-east-1'
+        os.environ['USERS_TABLE_NAME'] = 'users-test'
+        config.settings = config.Settings()
+
+>       user = authenticate_user('alice', 'wrong_password')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_auth_service.py:127:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src\services\auth_service.py:62: in authenticate_user
+    response = table.get_item(Key={'username': username})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\factory.py:581: in do_action
+    response = action(self, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\action.py:88: in __call__
+    response = getattr(parent.meta.client, operation_name)(*args, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <botocore.client.DynamoDB object at 0x00000154AC801FD0>, operation_name = 'GetItem'    
+api_params = {'Key': {'username': {'S': 'alice'}}, 'TableName': 'Users-dev'}
+
+    @with_current_context()
+    def _make_api_call(self, operation_name, api_params):
+        operation_model = self._service_model.operation_model(operation_name)
+        service_name = self._service_model.service_name
+        history_recorder.record(
+            'API_CALL',
+            {
+                'service': service_name,
+                'operation': operation_name,
+                'params': api_params,
+            },
+        )
+        if operation_model.deprecated:
+            logger.debug(
+                'Warning: %s.%s() is deprecated', service_name, operation_name
+            )
+        request_context = {
+            'client_region': self.meta.region_name,
+            'client_config': self.meta.config,
+            'has_streaming_input': operation_model.has_streaming_input,
+            'auth_type': operation_model.resolved_auth_type,
+            'unsigned_payload': operation_model.unsigned_payload,
+            'auth_options': self._service_model.metadata.get('auth'),
+        }
+
+        api_params = self._emit_api_params(
+            api_params=api_params,
+            operation_model=operation_model,
+            context=request_context,
+        )
+        (
+            endpoint_url,
+            additional_headers,
+            properties,
+        ) = self._resolve_endpoint_ruleset(
+            operation_model, api_params, request_context
+        )
+        if properties:
+            # Pass arbitrary endpoint info with the Request
+            # for use during construction.
+            request_context['endpoint_properties'] = properties
+        request_dict = self._convert_to_request_dict(
+            api_params=api_params,
+            operation_model=operation_model,
+            endpoint_url=endpoint_url,
+            context=request_context,
+            headers=additional_headers,
+        )
+        resolve_checksum_context(request_dict, operation_model, api_params)
+
+        service_id = self._service_model.service_id.hyphenize()
+        handler, event_response = self.meta.events.emit_until_response(
+            f'before-call.{service_id}.{operation_name}',
+            model=operation_model,
+            params=request_dict,
+            request_signer=self._request_signer,
+            context=request_context,
+        )
+
+        if event_response is not None:
+            http, parsed_response = event_response
+        else:
+            maybe_compress_request(
+                self.meta.config, request_dict, operation_model
+            )
+            apply_request_checksum(request_dict)
+            http, parsed_response = self._make_request(
+                operation_model, request_dict, request_context
+            )
+
+        self.meta.events.emit(
+            f'after-call.{service_id}.{operation_name}',
+            http_response=http,
+            parsed=parsed_response,
+            model=operation_model,
+            context=request_context,
+        )
+
+        if http.status_code >= 300:
+            error_info = parsed_response.get("Error", {})
+            error_code = request_context.get(
+                'error_code_override'
+            ) or error_info.get("Code")
+            error_class = self.exceptions.from_code(error_code)
+>           raise error_class(parsed_response, operation_name)
+E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the GetItem operation: Requested resource not found
+
+venv\Lib\site-packages\botocore\client.py:1078: ResourceNotFoundException
+_____________________ TestAuthService.test_authenticate_user_not_found ______________________ 
+
+self = <tests.test_auth_service.TestAuthService object at 0x00000154AC5B6A50>
+
+    @mock_aws
+    def test_authenticate_user_not_found(self):
+        """Test authentication with non-existent user."""
+        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+        dynamodb.create_table(
+            TableName='users-test',
+            KeySchema=[{'AttributeName': 'username', 'KeyType': 'HASH'}],
+            AttributeDefinitions=[{'AttributeName': 'username', 'AttributeType': 'S'}],       
+            BillingMode='PAY_PER_REQUEST'
+        )
+
+        os.environ['AWS_REGION'] = 'us-east-1'
+        os.environ['USERS_TABLE_NAME'] = 'users-test'
+        config.settings = config.Settings()
+
+>       user = authenticate_user('nonexistent', 'password123')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_auth_service.py:148:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src\services\auth_service.py:62: in authenticate_user
+    response = table.get_item(Key={'username': username})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\factory.py:581: in do_action
+    response = action(self, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\boto3\resources\action.py:88: in __call__
+    response = getattr(parent.meta.client, operation_name)(*args, **params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\client.py:602: in _api_call
+    return self._make_api_call(operation_name, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\botocore\context.py:123: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <botocore.client.DynamoDB object at 0x00000154B17F0290>, operation_name = 'GetItem'    
+api_params = {'Key': {'username': {'S': 'nonexistent'}}, 'TableName': 'Users-dev'}
+
+    @with_current_context()
+    def _make_api_call(self, operation_name, api_params):
+        operation_model = self._service_model.operation_model(operation_name)
+        service_name = self._service_model.service_name
+        history_recorder.record(
+            'API_CALL',
+            {
+                'service': service_name,
+                'operation': operation_name,
+                'params': api_params,
+            },
+        )
+        if operation_model.deprecated:
+            logger.debug(
+                'Warning: %s.%s() is deprecated', service_name, operation_name
+            )
+        request_context = {
+            'client_region': self.meta.region_name,
+            'client_config': self.meta.config,
+            'has_streaming_input': operation_model.has_streaming_input,
+            'auth_type': operation_model.resolved_auth_type,
+            'unsigned_payload': operation_model.unsigned_payload,
+            'auth_options': self._service_model.metadata.get('auth'),
+        }
+
+        api_params = self._emit_api_params(
+            api_params=api_params,
+            operation_model=operation_model,
+            context=request_context,
+        )
+        (
+            endpoint_url,
+            additional_headers,
+            properties,
+        ) = self._resolve_endpoint_ruleset(
+            operation_model, api_params, request_context
+        )
+        if properties:
+            # Pass arbitrary endpoint info with the Request
+            # for use during construction.
+            request_context['endpoint_properties'] = properties
+        request_dict = self._convert_to_request_dict(
+            api_params=api_params,
+            operation_model=operation_model,
+            endpoint_url=endpoint_url,
+            context=request_context,
+            headers=additional_headers,
+        )
+        resolve_checksum_context(request_dict, operation_model, api_params)
+
+        service_id = self._service_model.service_id.hyphenize()
+        handler, event_response = self.meta.events.emit_until_response(
+            f'before-call.{service_id}.{operation_name}',
+            model=operation_model,
+            params=request_dict,
+            request_signer=self._request_signer,
+            context=request_context,
+        )
+
+        if event_response is not None:
+            http, parsed_response = event_response
+        else:
+            maybe_compress_request(
+                self.meta.config, request_dict, operation_model
+            )
+            apply_request_checksum(request_dict)
+            http, parsed_response = self._make_request(
+                operation_model, request_dict, request_context
+            )
+
+        self.meta.events.emit(
+            f'after-call.{service_id}.{operation_name}',
+            http_response=http,
+            parsed=parsed_response,
+            model=operation_model,
+            context=request_context,
+        )
+
+        if http.status_code >= 300:
+            error_info = parsed_response.get("Error", {})
+            error_code = request_context.get(
+                'error_code_override'
+            ) or error_info.get("Code")
+            error_class = self.exceptions.from_code(error_code)
+>           raise error_class(parsed_response, operation_name)
+E           botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundException) when calling the GetItem operation: Requested resource not found
+
+venv\Lib\site-packages\botocore\client.py:1078: ResourceNotFoundException
+===================================== warnings summary ====================================== 
+src\core\config.py:9
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\core\config.py:9: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
     class Settings(BaseSettings):
 
-tests/test_api_integration.py::TestAPIIntegration::test_health_check
+tests/test_auth_routes.py::TestAuthRoutes::test_login_success
   D:\coding\GIT_Work_Space\drug-analytics-api-python\src\models\dto\drug_dto.py:31: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
     class DrugResponse(BaseModel):
 
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:68: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    now = datetime.utcnow()
+tests/test_auth_service.py::TestAuthService::test_create_access_token_success
+tests/test_auth_service.py::TestAuthService::test_create_access_token_expiration
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\services\auth_service.py:22: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expiration = datetime.utcnow() + timedelta(hours=settings.jwt_expiration_hours)
 
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\repositories\s3_repository.py:54: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    'upload_timestamp': datetime.utcnow().isoformat()
+tests/test_auth_service.py::TestAuthService::test_create_access_token_success
+tests/test_auth_service.py::TestAuthService::test_create_access_token_expiration
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\services\auth_service.py:27: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "iat": datetime.utcnow()
 
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success
-tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data
-  D:\coding\GIT_Work_Space\drug-analytics-api-python\src\services\drug_service.py:63: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
-    created_at=datetime.utcnow()
+tests/test_auth_service.py::TestAuthService::test_create_access_token_expiration
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\tests\test_auth_service.py:39: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    before_creation = datetime.utcnow()
+
+tests/test_auth_service.py::TestAuthService::test_create_access_token_expiration
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\tests\test_auth_service.py:41: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    after_creation = datetime.utcnow()
+
+tests/test_auth_service.py::TestAuthService::test_create_access_token_expiration
+  D:\coding\GIT_Work_Space\drug-analytics-api-python\tests\test_auth_service.py:47: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
+    exp_time = datetime.utcfromtimestamp(payload["exp"])
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-======================================================== short test summary info ========================================================= 
-FAILED tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_success - assert 500 == 202
-FAILED tests/test_api_integration.py::TestAPIIntegration::test_upload_csv_invalid_data - assert 500 == 202
-================================================ 2 failed, 6 passed, 8 warnings in 3.10s ================================================= 
-PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
+================================== short test summary info ================================== 
+FAILED tests/test_auth_routes.py::TestAuthRoutes::test_login_success - botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundExcep...
+FAILED tests/test_auth_routes.py::TestAuthRoutes::test_login_wrong_password - botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundExcep...
+FAILED tests/test_auth_routes.py::TestAuthRoutes::test_login_user_not_found - botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundExcep...
+FAILED tests/test_auth_service.py::TestAuthService::test_authenticate_user_success - botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundExcep...
+FAILED tests/test_auth_service.py::TestAuthService::test_authenticate_user_wrong_password - botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundExcep...    
+FAILED tests/test_auth_service.py::TestAuthService::test_authenticate_user_not_found - botocore.errorfactory.ResourceNotFoundException: An error occurred (ResourceNotFoundExcep...
+========================== 6 failed, 6 passed, 9 warnings in 6.75s ========================== 
+(venv) PS D:\coding\GIT_Work_Space\drug-analytics-api-python> 
