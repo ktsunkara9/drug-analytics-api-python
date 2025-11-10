@@ -7,23 +7,28 @@ REGION="us-east-1"
 
 # Create JWT secret parameter if it doesn't exist
 echo "Checking JWT secret parameter..."
-PARAMETER_NAME="/drug-analytics-api/${ENVIRONMENT}/jwt-secret"
+PARAM_NAME="/drug-analytics-api/${ENVIRONMENT}/jwt-secret"
 
-if aws ssm get-parameter --name "${PARAMETER_NAME}" --region ${REGION} &>/dev/null; then
+# Disable Git Bash path conversion for this command
+export MSYS_NO_PATHCONV=1
+
+if aws ssm get-parameter --name "${PARAM_NAME}" --region ${REGION} &>/dev/null; then
     echo "JWT secret parameter already exists"
 else
     echo "Creating JWT secret parameter..."
     SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(48))")
     
     aws ssm put-parameter \
-        --name "${PARAMETER_NAME}" \
+        --name "${PARAM_NAME}" \
         --value "${SECRET}" \
-        --type "SecureString" \
+        --type SecureString \
         --description "JWT signing secret for ${ENVIRONMENT} environment" \
         --region ${REGION}
     
     echo "JWT secret parameter created"
 fi
+
+unset MSYS_NO_PATHCONV
 
 echo "Building SAM application..."
 "/c/Program Files/Amazon/AWSSAMCLI/bin/sam.cmd" build

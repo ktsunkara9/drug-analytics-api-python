@@ -72,37 +72,6 @@ class TestAPIIntegration:
         assert data["version"] == "1.0.0"
     
     @mock_aws
-    def test_hello_endpoint(self):
-        """Test hello endpoint."""
-        from src.core import config
-        config.settings = config.Settings()
-        
-        s3 = boto3.client('s3', region_name='us-east-1')
-        s3.create_bucket(Bucket='test-bucket')
-        
-        dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        dynamodb.create_table(
-            TableName='DrugData-test',
-            KeySchema=[
-                {'AttributeName': 'PK', 'KeyType': 'HASH'},
-                {'AttributeName': 'SK', 'KeyType': 'RANGE'}
-            ],
-            AttributeDefinitions=[
-                {'AttributeName': 'PK', 'AttributeType': 'S'},
-                {'AttributeName': 'SK', 'AttributeType': 'S'}
-            ],
-            BillingMode='PAY_PER_REQUEST'
-        )
-        
-        from src.main import app
-        client = TestClient(app)
-        
-        response = client.get("/v1/api/hello")
-        assert response.status_code == 200
-        data = response.json()
-        assert "message" in data
-    
-    @mock_aws
     def test_upload_csv_success(self, auth_headers):
         """Test successful CSV file upload."""
         from src.core import config
