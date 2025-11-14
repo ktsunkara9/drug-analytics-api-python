@@ -5,7 +5,10 @@ Triggered by S3 ObjectCreated events.
 import json
 import re
 from src.services.drug_service import DrugService
+from src.repositories.s3_repository import S3Repository
+from src.repositories.dynamo_repository import DynamoRepository
 from src.repositories.upload_status_repository import UploadStatusRepository
+from src.services.file_service import FileService
 from src.core.exceptions import CSVProcessingException, ValidationException, DynamoDBException
 
 
@@ -20,7 +23,12 @@ def handler(event, context):
     Returns:
         dict: Processing result with status and count
     """
-    drug_service = DrugService()
+    drug_service = DrugService(
+        s3_repository=S3Repository(),
+        db_repository=DynamoRepository(),
+        file_service=FileService(),
+        upload_status_repository=UploadStatusRepository()
+    )
     upload_status_repo = UploadStatusRepository()
     
     try:

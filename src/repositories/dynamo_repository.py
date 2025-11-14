@@ -12,9 +12,10 @@ from botocore.exceptions import ClientError
 from src.core import config
 from src.core.exceptions import DynamoDBException, DrugNotFoundException, ValidationException
 from src.models.drug_model import Drug
+from src.repositories.db_repository import DBRepository
 
 
-class DynamoRepository:
+class DynamoRepository(DBRepository):
     """Repository for DynamoDB operations."""
     
     def __init__(self):

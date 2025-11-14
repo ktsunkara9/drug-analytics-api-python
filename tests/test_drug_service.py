@@ -39,7 +39,7 @@ class TestDrugService:
         """Create DrugService with mocked dependencies."""
         return DrugService(
             s3_repository=mock_s3_repo,
-            dynamo_repository=mock_dynamo_repo,
+            db_repository=mock_dynamo_repo,
             upload_status_repository=mock_upload_status_repo,
             file_service=mock_file_service
         )

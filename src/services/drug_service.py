@@ -10,7 +10,7 @@ from src.models.drug_model import Drug
 from src.models.upload_status import UploadStatus
 from src.models.dto.drug_dto import DrugUploadResponse, DrugResponse, DrugListResponse, UploadStatusResponse
 from src.repositories.s3_repository import S3Repository
-from src.repositories.dynamo_repository import DynamoRepository
+from src.repositories.db_repository import DBRepository
 from src.repositories.upload_status_repository import UploadStatusRepository
 from src.services.file_service import FileService
 from src.core import config
@@ -21,15 +21,15 @@ class DrugService:
     
     def __init__(
         self,
-        s3_repository: S3Repository = None,
-        dynamo_repository: DynamoRepository = None,
-        file_service: FileService = None,
-        upload_status_repository: UploadStatusRepository = None
+        s3_repository: S3Repository,
+        db_repository: DBRepository,
+        file_service: FileService,
+        upload_status_repository: UploadStatusRepository
     ):
-        self.s3_repository = s3_repository or S3Repository()
-        self.dynamo_repository = dynamo_repository or DynamoRepository()
-        self.file_service = file_service or FileService()
-        self.upload_status_repository = upload_status_repository or UploadStatusRepository()
+        self.s3_repository = s3_repository
+        self.db_repository = db_repository
+        self.file_service = file_service
+        self.upload_status_repository = upload_status_repository
     
     def upload_drug_data(self, file: BinaryIO, filename: str) -> DrugUploadResponse:
         """
@@ -90,7 +90,7 @@ class DrugService:
             DrugNotFoundException: If drug not found
             DynamoDBException: If query fails
         """
-        drugs = self.dynamo_repository.find_by_drug_name(drug_name)
+        drugs = self.db_repository.find_by_drug_name(drug_name)
         
         drug_responses = [
             DrugResponse(
@@ -114,7 +114,7 @@ class DrugService:
         Raises:
             DynamoDBException: If scan fails
         """
-        drugs = self.dynamo_repository.find_all()
+        drugs = self.db_repository.find_all()
         
         drug_responses = [
             DrugResponse(
@@ -143,7 +143,7 @@ class DrugService:
             DynamoDBException: If query fails
             ValidationException: If next_token is invalid
         """
-        drugs, next_token = self.dynamo_repository.find_all_paginated(limit, next_token)
+        drugs, next_token = self.db_repository.find_all_paginated(limit, next_token)
         
         drug_responses = [
             DrugResponse(
@@ -187,7 +187,7 @@ class DrugService:
             drug.s3_key = s3_key
         
         # Batch save to DynamoDB (efficient!)
-        self.dynamo_repository.batch_save(drugs)
+        self.db_repository.batch_save(drugs)
         
         return len(drugs)
     

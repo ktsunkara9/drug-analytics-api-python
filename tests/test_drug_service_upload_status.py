@@ -18,7 +18,7 @@ class TestDrugServiceUploadStatus:
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
         return DrugService(
             s3_repository=s3_repo,
-            dynamo_repository=dynamo_repo,
+            db_repository=dynamo_repo,
             upload_status_repository=upload_status_repo,
             file_service=Mock()
         )
@@ -51,7 +51,7 @@ class TestDrugServiceUploadStatus:
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
         service = DrugService(
             s3_repository=s3_repo,
-            dynamo_repository=dynamo_repo,
+            db_repository=dynamo_repo,
             upload_status_repository=upload_status_repo,
             file_service=Mock()
         )
@@ -78,7 +78,7 @@ class TestDrugServiceUploadStatus:
         s3_repo, dynamo_repo, upload_status_repo = mock_repositories
         service = DrugService(
             s3_repository=s3_repo,
-            dynamo_repository=dynamo_repo,
+            db_repository=dynamo_repo,
             upload_status_repository=upload_status_repo,
             file_service=Mock()
         )
